@@ -124,7 +124,7 @@ function generateOrderEmailHTML(data: OrderData): string {
           
           <tr>
             <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; font-weight: bold;">XTREME PEPTIDES NZ</h1>
+              <img src="https://xtremepeptides.nz/logo.png" alt="XTREME PEPTIDES NZ" style="max-width: 200px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
               <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
             </td>
           </tr>
