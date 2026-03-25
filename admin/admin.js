@@ -118,25 +118,10 @@ async function init() {
 async function handleLogin(e) {
   e.preventDefault();
   
-  // Ensure supabase is initialized
-  if (!supabaseClient) {
-    loginError.textContent = 'Authentication service initializing, please wait...';
-    loginError.style.display = 'block';
-    
-    // Try to initialize one more time
-    if (!initSupabase()) {
-      loginError.textContent = 'Authentication service unavailable. Please refresh the page.';
-      return;
-    }
-  }
-  
-  // Update the alias
-  supabase = supabaseClient;
-  
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
 
-  // EMERGENCY BYPASS: Allow login with emergency credentials
+  // EMERGENCY BYPASS: Allow login with emergency credentials (no Supabase needed)
   if (username === 'emergency' && password === 'letmein2025') {
     console.log('Emergency login used');
     currentUser = { username: 'admin (emergency)', email: 'admin@xtremepeptides.nz' };
@@ -144,6 +129,21 @@ async function handleLogin(e) {
     showDashboard();
     return;
   }
+  
+  // Ensure supabase is initialized for normal login
+  if (!supabaseClient) {
+    loginError.textContent = 'Authentication service initializing, please wait...';
+    loginError.style.display = 'block';
+    
+    // Try to initialize one more time
+    if (!initSupabase()) {
+      loginError.textContent = 'Authentication service unavailable. Use emergency login or refresh the page.';
+      return;
+    }
+  }
+  
+  // Update the alias
+  supabase = supabaseClient;
 
   try {
     // Simple password check - in production, use proper hashing
