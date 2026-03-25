@@ -6,6 +6,53 @@
   <title>Admin Dashboard - XTREME PEPTIDES NZ</title>
   <link rel="stylesheet" href="/admin/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .sidebar-nav {
+      flex: 1;
+    }
+    .sidebar-footer {
+      border-top: 1px solid #1a3a5c;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      color: #8b9cb5;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: #1a2a3a;
+      color: #e0e6ed;
+    }
+    .nav-btn.active {
+      background: #0f4c75;
+      color: #00d4ff;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .email-preview-box {
+      background: #1a2a3a;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 3px solid #00d4ff;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
 </head>
 <body>
   <div id="app">
@@ -45,21 +92,57 @@
 
       <div class="main-content">
         <aside class="sidebar">
-          <nav>
-            <button class="nav-btn active" data-section="orders">
-              📦 Orders
-            </button>
-            <button class="nav-btn" data-section="email-logs">
-              📧 Email Logs
-            </button>
-          </nav>
+          <div class="sidebar-nav">
+            <nav>
+              <button class="nav-btn active" data-section="orders">
+                📦 All Orders
+              </button>
+              <button class="nav-btn" data-section="orders-pending">
+                ⏳ Pending
+              </button>
+              <button class="nav-btn" data-section="orders-processing">
+                ⚙️ Processing
+              </button>
+              <button class="nav-btn" data-section="orders-shipped">
+                🚚 Shipped
+              </button>
+              <button class="nav-btn" data-section="orders-delivered">
+                ✅ Delivered
+              </button>
+              <button class="nav-btn" data-section="orders-completed">
+                🏁 Completed
+              </button>
+              <button class="nav-btn" data-section="orders-cancelled">
+                ❌ Cancelled
+              </button>
+              <button class="nav-btn" data-section="orders-delayed">
+                ⏱️ Delayed
+              </button>
+              <button class="nav-btn" data-section="orders-refunded">
+                💰 Refunded
+              </button>
+              <button class="nav-btn" data-section="email-logs">
+                📧 Email Logs
+              </button>
+            </nav>
+          </div>
+          <div class="sidebar-footer">
+            <nav>
+              <button class="nav-btn" data-section="deleted-orders">
+                🗑️ Deleted Orders
+              </button>
+              <button class="nav-btn" data-section="deleted-emails">
+                🗑️ Deleted Emails
+              </button>
+            </nav>
+          </div>
         </aside>
 
         <main class="content">
-          <!-- Orders Section -->
+          <!-- All Orders Section -->
           <section id="orders-section" class="section">
             <div class="section-header">
-              <h2>Orders</h2>
+              <h2>All Orders</h2>
               <div class="filters">
                 <select id="status-filter">
                   <option value="">All Statuses</option>
@@ -69,6 +152,8 @@
                   <option value="delivered">Delivered</option>
                   <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
+                  <option value="delayed">Delayed</option>
+                  <option value="refunded">Refunded</option>
                 </select>
                 <input type="text" id="search-input" placeholder="Search orders...">
                 <button id="refresh-btn" class="btn btn-secondary">🔄 Refresh</button>
@@ -94,10 +179,234 @@
             </div>
           </section>
 
+          <!-- Status-specific Order Sections -->
+          <section id="orders-pending-section" class="section hidden">
+            <div class="section-header">
+              <h2>⏳ Pending Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="pending">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-pending-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-processing-section" class="section hidden">
+            <div class="section-header">
+              <h2>⚙️ Processing Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="processing">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-processing-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-shipped-section" class="section hidden">
+            <div class="section-header">
+              <h2>🚚 Shipped Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="shipped">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-shipped-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-delivered-section" class="section hidden">
+            <div class="section-header">
+              <h2>✅ Delivered Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="delivered">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-delivered-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-completed-section" class="section hidden">
+            <div class="section-header">
+              <h2>🏁 Completed Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="completed">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-completed-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-cancelled-section" class="section hidden">
+            <div class="section-header">
+              <h2>❌ Cancelled Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="cancelled">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-cancelled-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-delayed-section" class="section hidden">
+            <div class="section-header">
+              <h2>⏱️ Delayed Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="delayed">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-delayed-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="orders-refunded-section" class="section hidden">
+            <div class="section-header">
+              <h2>💰 Refunded Orders</h2>
+              <button class="btn btn-secondary refresh-status-btn" data-status="refunded">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-refunded-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Deleted Orders Section -->
+          <section id="deleted-orders-section" class="section hidden">
+            <div class="section-header">
+              <h2>🗑️ Deleted Orders</h2>
+              <button id="refresh-deleted-btn" class="btn btn-secondary">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table id="deleted-orders-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Deleted At</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="deleted-orders-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Deleted Emails Section -->
+          <section id="deleted-emails-section" class="section hidden">
+            <div class="section-header">
+              <h2>🗑️ Deleted Emails</h2>
+              <button id="refresh-deleted-emails-btn" class="btn btn-secondary">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table id="deleted-emails-table">
+                <thead>
+                  <tr>
+                    <th>Deleted At</th>
+                    <th>Order #</th>
+                    <th>Recipient</th>
+                    <th>Type</th>
+                    <th>Subject</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="deleted-emails-tbody"></tbody>
+              </table>
+            </div>
+          </section>
+
           <!-- Email Logs Section -->
           <section id="email-logs-section" class="section hidden">
             <div class="section-header">
-              <h2>Email Logs</h2>
+              <h2>📧 Email Logs</h2>
               <button id="refresh-logs-btn" class="btn btn-secondary">🔄 Refresh</button>
             </div>
             <div class="table-container">
@@ -110,6 +419,7 @@
                     <th>Type</th>
                     <th>Subject</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="email-logs-tbody">
@@ -133,8 +443,7 @@
           <!-- Order details will be loaded here -->
         </div>
         <div class="modal-footer">
-          <button id="send-status-email-btn" class="btn btn-primary">Send Status Email</button>
-          <button id="send-custom-email-btn" class="btn btn-secondary">Send Custom Message</button>
+          <button id="send-email-btn" class="btn btn-primary">Send Email</button>
         </div>
       </div>
     </div>
@@ -150,8 +459,25 @@
           <form id="email-form">
             <input type="hidden" id="email-order-number">
             <input type="hidden" id="email-recipient">
+            
+            <!-- Email Type Selector -->
             <div class="form-group">
-              <label>Status Update</label>
+              <label>Email Type *</label>
+              <select id="email-type" required>
+                <option value="">Select email type...</option>
+                <option value="payment_confirmed">💳 Payment Confirmed</option>
+                <option value="order_shipped">🚚 Order Shipped</option>
+                <option value="order_delivered">✅ Order Delivered</option>
+                <option value="order_cancelled">❌ Order Cancelled</option>
+                <option value="order_refunded">💰 Order Refunded</option>
+                <option value="order_delayed">⏳ Order Delayed</option>
+                <option value="custom">✏️ Custom Message</option>
+              </select>
+            </div>
+
+            <!-- Status Update (shown for most types) -->
+            <div class="form-group" id="status-group">
+              <label>Update Order Status</label>
               <select id="email-status">
                 <option value="">No status change</option>
                 <option value="pending">Pending</option>
@@ -160,16 +486,39 @@
                 <option value="delivered">Delivered</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="delayed">Delayed</option>
+                <option value="refunded">Refunded</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Tracking Number (optional)</label>
-              <input type="text" id="email-tracking" placeholder="Enter tracking number">
+
+            <!-- Tracking Number (only for shipped) -->
+            <div class="form-group hidden" id="tracking-group">
+              <label>Tracking Number *</label>
+              <input type="text" id="email-tracking" placeholder="Enter tracking number (required for shipped orders)">
             </div>
-            <div class="form-group">
-              <label>Message</label>
-              <textarea id="email-message" rows="5" placeholder="Enter your message..."></textarea>
+
+            <!-- Reason (for delayed, cancelled, refunded) -->
+            <div class="form-group hidden" id="reason-group">
+              <label id="reason-label">Reason</label>
+              <select id="email-reason">
+                <!-- Options populated dynamically based on email type -->
+              </select>
             </div>
+
+            <!-- Custom Message (only for custom) -->
+            <div class="form-group hidden" id="custom-message-group">
+              <label>Custom Message *</label>
+              <textarea id="email-message" rows="5" placeholder="Enter your custom message..."></textarea>
+            </div>
+
+            <!-- Preview of email content -->
+            <div class="form-group" id="email-preview-group">
+              <label>Email Preview</label>
+              <div id="email-preview" class="email-preview-box">
+                <em style="color: #8b9cb5;">Select an email type to see preview...</em>
+              </div>
+            </div>
+
             <div id="email-error" class="error-message"></div>
             <div id="email-success" class="success-message"></div>
           </form>
@@ -182,6 +531,9 @@
     </div>
   </div>
 
-  <script src="/admin/admin.js"></script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <script src="/admin/admin.js?v=11"></script>
 </body>
 </html>
