@@ -163,7 +163,19 @@ body {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex: 1;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.header h1 {
+  font-size: 20px;
+  color: #00d4ff;
 }
 
 .header-logo {
@@ -172,17 +184,12 @@ body {
   display: block;
 }
 
-.header-title {
-  color: #8b9cb5;
-  font-size: 13px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 15px;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .header-right span {
