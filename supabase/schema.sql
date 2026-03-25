@@ -106,10 +106,16 @@ CREATE POLICY "Allow read access on orders"
   TO authenticated, anon
   USING (true);
 
--- Allow update only to authenticated users
+-- Allow update to authenticated and anon users (admin panel uses anon key)
 CREATE POLICY "Allow update on orders"
   ON orders FOR UPDATE
-  TO authenticated
+  TO authenticated, anon
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow delete on orders"
+  ON orders FOR DELETE
+  TO authenticated, anon
   USING (true);
 
 -- Policies for email_logs table
