@@ -7,14 +7,17 @@ const FROM_EMAIL = 'support@xtremepeptides.nz';
 function generateOrderConfirmationHTML(data) {
   const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod } = data;
   
-  const itemsHTML = items.map(item => `
+  const itemsHTML = items.map(item => {
+    const price = parseFloat(item.price) || 0;
+    const quantity = parseInt(item.quantity) || 0;
+    return `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed;">${item.name}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${item.price.toFixed(2)}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed;">${item.name || 'Product'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed; text-align: center;">${quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${price.toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${(price * quantity).toFixed(2)}</td>
     </tr>
-  `).join('');
+  `}).join('');
 
   return `<!DOCTYPE html>
 <html>
@@ -137,10 +140,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { orderData } = req.body;
-
-    if (!orderData || !orderData.customerEmail || !orderData.orderNumber) {
-      return res.status(400).json({ error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required' });
+    // FIX: Support both data formats:
+    // 1. { orderData: { ... } } - original expected format
+    // 2. { orderNumber, customerEmail, ... } - flat format from frontend
+    const body = req.body;
+    
+    // Check if data is wrapped in orderData or flat
+    let orderData;
+    if (body.orderData && body.orderData.customerEmail) {
+      orderData = body.orderData;
+    } else if (body.customerEmail && body.orderNumber) {
+      orderData = body;
+    } else {
+      return res.status(400).json({ 
+        error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required',
+        received: Object.keys(body)
+      });
     }
 
     const htmlContent = generateOrderConfirmationHTML(orderData);
