@@ -49,6 +49,9 @@
             <button class="nav-btn active" data-section="orders">
               📦 Orders
             </button>
+            <button class="nav-btn" data-section="deleted-orders">
+              🗑️ Deleted Orders
+            </button>
             <button class="nav-btn" data-section="email-logs">
               📧 Email Logs
             </button>
@@ -94,6 +97,32 @@
             </div>
           </section>
 
+          <!-- Deleted Orders Section -->
+          <section id="deleted-orders-section" class="section hidden">
+            <div class="section-header">
+              <h2>Deleted Orders</h2>
+              <button id="refresh-deleted-btn" class="btn btn-secondary">🔄 Refresh</button>
+            </div>
+            <div class="table-container">
+              <table id="deleted-orders-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Deleted At</th>
+                    <th>Customer</th>
+                    <th>Email</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="deleted-orders-tbody">
+                  <!-- Deleted orders will be loaded here -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <!-- Email Logs Section -->
           <section id="email-logs-section" class="section hidden">
             <div class="section-header">
@@ -134,8 +163,7 @@
           <!-- Order details will be loaded here -->
         </div>
         <div class="modal-footer">
-          <button id="send-status-email-btn" class="btn btn-primary">Send Status Email</button>
-          <button id="send-custom-email-btn" class="btn btn-secondary">Send Custom Message</button>
+          <button id="send-email-btn" class="btn btn-primary">Send Email</button>
         </div>
       </div>
     </div>
@@ -188,15 +216,11 @@
               <input type="text" id="email-tracking" placeholder="Enter tracking number (required for shipped orders)">
             </div>
 
-            <!-- Delay Reason (only for delayed) -->
-            <div class="form-group hidden" id="delay-reason-group">
-              <label>Delay Reason</label>
-              <select id="delay-reason">
-                <option value="high_demand">High Demand</option>
-                <option value="shipping_delay">Shipping Carrier Delay</option>
-                <option value="out_of_stock">Temporary Stock Shortage</option>
-                <option value="weather">Weather Conditions</option>
-                <option value="other">Other</option>
+            <!-- Reason (for delayed, cancelled, refunded) -->
+            <div class="form-group hidden" id="reason-group">
+              <label id="reason-label">Reason</label>
+              <select id="email-reason">
+                <!-- Options populated dynamically based on email type -->
               </select>
             </div>
 
@@ -229,6 +253,6 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="/admin/admin.js?v=7"></script>
+  <script src="/admin/admin.js?v=8"></script>
 </body>
 </html>

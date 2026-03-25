@@ -133,7 +133,7 @@ async function init() {
 
   // Input listeners for live preview updates
   const trackingInput = document.getElementById('email-tracking');
-  const delayReasonSelect = document.getElementById('delay-reason');
+  const delayReasonSelect = document.getElementById('email-reason');
   const messageInput = document.getElementById('email-message');
   
   if (trackingInput) {
@@ -162,9 +162,17 @@ async function init() {
         
         if (section === 'email-logs') {
           loadEmailLogs();
+        } else if (section === 'deleted-orders') {
+          loadDeletedOrders();
         }
       });
     });
+  }
+
+  // Refresh deleted orders button
+  const refreshDeletedBtn = document.getElementById('refresh-deleted-btn');
+  if (refreshDeletedBtn) {
+    refreshDeletedBtn.addEventListener('click', loadDeletedOrders);
   }
 
   // Modal close buttons - use event delegation for dynamically added content
@@ -176,18 +184,10 @@ async function init() {
 
   // Modal actions - use event delegation
   document.body.addEventListener('click', (e) => {
-    const btn = e.target.closest('#send-status-email-btn');
+    const btn = e.target.closest('#send-email-btn');
     if (btn) {
-      console.log('Send Status Email button clicked');
-      openEmailModal('status');
-    }
-  });
-  
-  document.body.addEventListener('click', (e) => {
-    const btn = e.target.closest('#send-custom-email-btn');
-    if (btn) {
-      console.log('Send Custom Message button clicked');
-      openEmailModal('custom');
+      console.log('Send Email button clicked');
+      openEmailModal();
     }
   });
   
@@ -369,6 +369,27 @@ async function deleteOrder(orderId, orderNumber) {
   }
 
   try {
+    // First, insert into deleted_orders table for tracking
+    const { data: orderData } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (orderData) {
+      await supabaseClient.from('deleted_orders').insert({
+        original_order_id: orderId,
+        order_number: orderData.order_number,
+        customer_name: orderData.customer_name,
+        customer_email: orderData.customer_email,
+        total: orderData.total,
+        status: orderData.status,
+        deleted_at: new Date().toISOString(),
+        deleted_by: currentUser?.username || 'unknown'
+      });
+    }
+
+    // Then delete from orders
     const { error } = await supabaseClient
       .from('orders')
       .delete()
@@ -380,6 +401,78 @@ async function deleteOrder(orderId, orderNumber) {
     loadOrders(); // Refresh the orders list
   } catch (error) {
     console.error('Error deleting order:', error);
+    alert('Failed to delete order: ' + error.message);
+  }
+}
+
+// Deleted Orders
+async function loadDeletedOrders() {
+  console.log('Loading deleted orders...');
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+  
+  const deletedOrdersTb = document.getElementById('deleted-orders-tbody');
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('deleted_orders')
+      .select('*')
+      .order('deleted_at', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    renderDeletedOrders(data || []);
+  } catch (error) {
+    console.error('Error loading deleted orders:', error);
+    alert('Failed to load deleted orders: ' + error.message);
+  }
+}
+
+function renderDeletedOrders(ordersToRender) {
+  const deletedOrdersTb = document.getElementById('deleted-orders-tbody');
+  if (!deletedOrdersTb) return;
+  
+  deletedOrdersTb.innerHTML = ordersToRender.map(order => `
+    <tr>
+      <td>${order.order_number || ''}</td>
+      <td>${order.deleted_at ? new Date(order.deleted_at).toLocaleString() : ''}</td>
+      <td>${order.customer_name || ''}</td>
+      <td>${order.customer_email || ''}</td>
+      <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+      <td><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="permanentlyDeleteOrder('${order.id}', '${order.order_number}')" style="background: #dc3545;">Permanently Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Permanently delete from deleted_orders table
+async function permanentlyDeleteOrder(deletedOrderId, orderNumber) {
+  if (!confirm(`Are you sure you want to PERMANENTLY delete order ${orderNumber}? This action cannot be undone.`)) {
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('deleted_orders')
+      .delete()
+      .eq('id', deletedOrderId);
+
+    if (error) throw error;
+
+    console.log(`Order ${orderNumber} permanently deleted`);
+    loadDeletedOrders(); // Refresh the deleted orders list
+  } catch (error) {
+    console.error('Error permanently deleting order:', error);
     alert('Failed to delete order: ' + error.message);
   }
 }
@@ -509,6 +602,7 @@ const EMAIL_TEMPLATES = {
     status: 'processing',
     requiresTracking: false,
     showCustomMessage: false,
+    showReason: false,
     preview: (data) => `Thank you for your payment! Your order <strong>${data.orderNumber}</strong> has been confirmed and is now being processed. We'll notify you once your order ships.`
   },
   order_shipped: {
@@ -516,6 +610,7 @@ const EMAIL_TEMPLATES = {
     status: 'shipped',
     requiresTracking: true,
     showCustomMessage: false,
+    showReason: false,
     preview: (data) => `Great news! Your order <strong>${data.orderNumber}</strong> has been shipped. Tracking: <strong>${data.trackingNumber || '[REQUIRED]'}</strong>`
   },
   order_delivered: {
@@ -523,6 +618,7 @@ const EMAIL_TEMPLATES = {
     status: 'delivered',
     requiresTracking: false,
     showCustomMessage: false,
+    showReason: false,
     preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been delivered! Thank you for shopping with XTREME PEPTIDES NZ.`
   },
   order_cancelled: {
@@ -530,37 +626,61 @@ const EMAIL_TEMPLATES = {
     status: 'cancelled',
     requiresTracking: false,
     showCustomMessage: false,
-    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. If you have any questions, please contact us.`
+    showReason: true,
+    reasonType: 'cancellation',
+    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. Reason: ${data.reason || 'Not specified'}.`
   },
   order_refunded: {
     subject: 'Refund Processed - Order {orderNumber}',
     status: 'refunded',
     requiresTracking: false,
     showCustomMessage: false,
-    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Please allow 3-5 business days for the funds to appear in your account.`
+    showReason: true,
+    reasonType: 'refund',
+    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Reason: ${data.reason || 'Not specified'}. Please allow 3-5 business days for the funds to appear in your account.`
   },
   order_delayed: {
     subject: 'Order Delay - {orderNumber}',
     status: 'processing',
     requiresTracking: false,
     showCustomMessage: false,
-    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.delayReason || 'unforeseen circumstances'}. We appreciate your patience.`
+    showReason: true,
+    reasonType: 'delay',
+    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.reason || 'unforeseen circumstances'}. We appreciate your patience.`
   },
   custom: {
     subject: 'Message Regarding Your Order - {orderNumber}',
     status: '',
     requiresTracking: false,
     showCustomMessage: true,
+    showReason: false,
     preview: (data) => `Custom message: "${data.customMessage || '[Enter your message below...]'}"`
   }
 };
 
-const DELAY_REASONS = {
-  high_demand: 'high demand',
-  shipping_delay: 'shipping carrier delays',
-  out_of_stock: 'temporary stock shortage',
-  weather: 'weather conditions',
-  other: 'unforeseen circumstances'
+const REASONS = {
+  cancellation: {
+    customer_request: 'Customer requested cancellation',
+    out_of_stock: 'Product out of stock',
+    payment_failed: 'Payment processing failed',
+    suspicious_activity: 'Suspicious activity detected',
+    other: 'Other'
+  },
+  refund: {
+    customer_request: 'Customer requested refund',
+    product_defect: 'Product defect/damage',
+    wrong_item: 'Wrong item sent',
+    not_as_described: 'Product not as described',
+    late_delivery: 'Late delivery',
+    other: 'Other'
+  },
+  delay: {
+    high_demand: 'High demand',
+    shipping_delay: 'Shipping carrier delays',
+    out_of_stock: 'Temporary stock shortage',
+    weather: 'Weather conditions',
+    other: 'Other'
+  }
 };
 
 // Email Logs
@@ -641,8 +761,8 @@ async function deleteEmailLog(logId) {
 }
 
 // Email Sending
-function openEmailModal(type) {
-  console.log('Opening email modal, type:', type, 'currentOrder:', currentOrder);
+function openEmailModal() {
+  console.log('Opening email modal, currentOrder:', currentOrder);
   if (!currentOrder) {
     console.error('No current order selected');
     return;
@@ -675,19 +795,21 @@ function openEmailModal(type) {
 
 function resetEmailFormFields() {
   const trackingGroup = document.getElementById('tracking-group');
-  const delayReasonGroup = document.getElementById('delay-reason-group');
+  const reasonGroup = document.getElementById('reason-group');
   const customMessageGroup = document.getElementById('custom-message-group');
   const previewBox = document.getElementById('email-preview');
   const statusSelect = document.getElementById('email-status');
   const trackingInput = document.getElementById('email-tracking');
   const messageInput = document.getElementById('email-message');
+  const reasonSelect = document.getElementById('email-reason');
 
   if (trackingGroup) trackingGroup.classList.add('hidden');
-  if (delayReasonGroup) delayReasonGroup.classList.add('hidden');
+  if (reasonGroup) reasonGroup.classList.add('hidden');
   if (customMessageGroup) customMessageGroup.classList.add('hidden');
   if (statusSelect) statusSelect.value = '';
   if (trackingInput) trackingInput.value = '';
   if (messageInput) messageInput.value = '';
+  if (reasonSelect) reasonSelect.innerHTML = '';
   if (previewBox) previewBox.innerHTML = '<em style="color: #8b9cb5;">Select an email type to see preview...</em>';
 }
 
@@ -701,7 +823,9 @@ function handleEmailTypeChange(e) {
   }
 
   const trackingGroup = document.getElementById('tracking-group');
-  const delayReasonGroup = document.getElementById('delay-reason-group');
+  const reasonGroup = document.getElementById('reason-group');
+  const reasonLabel = document.getElementById('reason-label');
+  const reasonSelect = document.getElementById('email-reason');
   const customMessageGroup = document.getElementById('custom-message-group');
   const statusSelect = document.getElementById('email-status');
   const previewBox = document.getElementById('email-preview');
@@ -710,11 +834,29 @@ function handleEmailTypeChange(e) {
   if (trackingGroup) {
     trackingGroup.classList.toggle('hidden', !template.requiresTracking);
   }
-  if (delayReasonGroup) {
-    delayReasonGroup.classList.toggle('hidden', emailType !== 'order_delayed');
+  if (reasonGroup) {
+    reasonGroup.classList.toggle('hidden', !template.showReason);
   }
   if (customMessageGroup) {
     customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
+  }
+
+  // Populate reason dropdown if needed
+  if (template.showReason && reasonSelect && template.reasonType) {
+    const reasons = REASONS[template.reasonType] || {};
+    reasonSelect.innerHTML = Object.entries(reasons).map(([key, value]) => 
+      `<option value="${key}">${value}</option>`
+    ).join('');
+    
+    // Update label based on type
+    if (reasonLabel) {
+      const labels = {
+        delay: 'Delay Reason',
+        cancellation: 'Cancellation Reason',
+        refund: 'Refund Reason'
+      };
+      reasonLabel.textContent = labels[template.reasonType] || 'Reason';
+    }
   }
 
   // Auto-set status if defined
@@ -730,7 +872,7 @@ function updateEmailPreview() {
   const emailType = document.getElementById('email-type')?.value;
   const orderNumber = document.getElementById('email-order-number')?.value;
   const trackingNumber = document.getElementById('email-tracking')?.value;
-  const delayReason = document.getElementById('delay-reason')?.value;
+  const reason = document.getElementById('email-reason')?.value;
   const customMessage = document.getElementById('email-message')?.value;
   const previewBox = document.getElementById('email-preview');
 
@@ -739,10 +881,16 @@ function updateEmailPreview() {
   const template = EMAIL_TEMPLATES[emailType];
   if (!template) return;
 
+  // Get reason text
+  let reasonText = '';
+  if (template.reasonType && reason) {
+    reasonText = REASONS[template.reasonType]?.[reason] || reason;
+  }
+
   const data = {
     orderNumber,
     trackingNumber,
-    delayReason: DELAY_REASONS[delayReason] || delayReason,
+    reason: reasonText,
     customMessage
   };
 
@@ -796,7 +944,7 @@ async function handleSendEmail(e) {
   const status = document.getElementById('email-status')?.value || '';
   const trackingNumber = document.getElementById('email-tracking')?.value?.trim() || '';
   const message = document.getElementById('email-message')?.value?.trim() || '';
-  const delayReason = document.getElementById('delay-reason')?.value || '';
+  const reason = document.getElementById('email-reason')?.value || '';
 
   console.log('Sending email:', { emailType, orderNumber, recipient, status, trackingNumber: trackingNumber ? 'yes' : 'no', message: message ? 'yes' : 'no' });
 
@@ -823,6 +971,12 @@ async function handleSendEmail(e) {
       console.log('Order status updated successfully');
     }
 
+    // Get reason text if applicable
+    let reasonText = '';
+    if (template.reasonType && reason) {
+      reasonText = REASONS[template.reasonType]?.[reason] || reason;
+    }
+
     // Build email data
     const emailData = {
       email: recipient,
@@ -832,11 +986,16 @@ async function handleSendEmail(e) {
       emailType: emailType
     };
 
-    // Add custom message or delay reason
+    // Add custom message or reason-based message
     if (emailType === 'custom') {
       emailData.customMessage = message;
-    } else if (emailType === 'order_delayed') {
-      emailData.message = `We apologize for the delay. Your order is delayed due to ${DELAY_REASONS[delayReason] || 'unforeseen circumstances'}.`;
+    } else if (template.reasonType && reasonText) {
+      const reasonMessages = {
+        order_delayed: `We apologize for the delay. Your order is delayed due to ${reasonText}.`,
+        order_cancelled: `Your order has been cancelled. Reason: ${reasonText}.`,
+        order_refunded: `A refund has been processed for your order. Reason: ${reasonText}. Please allow 3-5 business days for the funds to appear in your account.`
+      };
+      emailData.message = reasonMessages[emailType] || '';
     }
 
     // Send email via API
@@ -926,3 +1085,4 @@ if (document.readyState === 'loading') {
 window.viewOrder = viewOrder;
 window.deleteOrder = deleteOrder;
 window.deleteEmailLog = deleteEmailLog;
+window.permanentlyDeleteOrder = permanentlyDeleteOrder;
