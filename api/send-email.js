@@ -207,7 +207,24 @@ module.exports = async function handler(req, res) {
     }
 
     console.log('Sending email to:', orderData.customerEmail);
-    const htmlContent = generateOrderConfirmationHTML(orderData);
+    
+    // Validate and sanitize data
+    const items = Array.isArray(orderData.items) ? orderData.items : [];
+    const subtotal = parseFloat(orderData.subtotal) || 0;
+    const shippingCost = parseFloat(orderData.shippingCost) || 0;
+    const total = parseFloat(orderData.total) || (subtotal + shippingCost);
+    const shippingAddress = orderData.shippingAddress || {};
+    
+    const htmlContent = generateOrderConfirmationHTML({
+      orderNumber: orderData.orderNumber,
+      customerEmail: orderData.customerEmail,
+      items: items,
+      subtotal: subtotal,
+      shippingCost: shippingCost,
+      total: total,
+      shippingAddress: shippingAddress,
+      paymentMethod: orderData.paymentMethod || 'bank_transfer'
+    });
 
     const postData = JSON.stringify({
       from: FROM_EMAIL,
