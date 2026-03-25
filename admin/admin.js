@@ -1119,13 +1119,16 @@ async function handleSendEmail(e) {
     // Add custom message or reason-based message
     if (emailType === 'custom') {
       emailData.customMessage = message;
-    } else if (template.reasonType && reasonText) {
-      const reasonMessages = {
-        order_delayed: `We apologize for the delay. Your order is delayed due to ${reasonText}.`,
-        order_cancelled: `Your order has been cancelled. Reason: ${reasonText}.`,
-        order_refunded: `A refund has been processed for your order. Reason: ${reasonText}. Please allow 3-5 business days for the funds to appear in your account.`
-      };
-      emailData.message = reasonMessages[emailType] || '';
+    } else {
+      if (message) emailData.customMessage = message;
+      if (template.reasonType && reasonText) {
+        const reasonMessages = {
+          order_delayed: `We apologize for the delay. Your order is delayed due to ${reasonText}.`,
+          order_cancelled: `Your order has been cancelled. Reason: ${reasonText}.`,
+          order_refunded: `A refund has been processed for your order. Reason: ${reasonText}. Please allow 3-5 business days for the funds to appear in your account.`
+        };
+        emailData.message = reasonMessages[emailType] || '';
+      }
     }
 
     // Send email via API
