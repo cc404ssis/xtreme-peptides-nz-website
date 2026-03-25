@@ -9,14 +9,39 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Initialize Supabase client with error handling
 let supabaseClient = null;
-try {
-  if (window.supabase) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  } else {
-    console.error('Supabase library not loaded');
+let supabaseInitialized = false;
+
+function initSupabase() {
+  try {
+    if (window.supabase && window.supabase.createClient) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseInitialized = true;
+      console.log('Supabase initialized successfully');
+      return true;
+    } else {
+      console.log('Supabase library not ready yet, retrying...');
+      return false;
+    }
+  } catch (e) {
+    console.error('Failed to initialize Supabase:', e);
+    return false;
   }
-} catch (e) {
-  console.error('Failed to initialize Supabase:', e);
+}
+
+// Try to initialize immediately
+if (!initSupabase()) {
+  // If not ready, wait and retry
+  let attempts = 0;
+  const maxAttempts = 50; // 5 seconds max
+  const retryInterval = setInterval(() => {
+    attempts++;
+    if (initSupabase() || attempts >= maxAttempts) {
+      clearInterval(retryInterval);
+      if (!supabaseInitialized) {
+        console.error('Failed to initialize Supabase after maximum attempts');
+      }
+    }
+  }, 100);
 }
 
 // Alias for backward compatibility (Safari strict mode fix)
@@ -93,12 +118,20 @@ async function init() {
 async function handleLogin(e) {
   e.preventDefault();
   
-  // Check if Supabase is initialized
-  if (!supabase) {
-    loginError.textContent = 'Authentication service unavailable. Please refresh the page.';
+  // Ensure supabase is initialized
+  if (!supabaseClient) {
+    loginError.textContent = 'Authentication service initializing, please wait...';
     loginError.style.display = 'block';
-    return;
+    
+    // Try to initialize one more time
+    if (!initSupabase()) {
+      loginError.textContent = 'Authentication service unavailable. Please refresh the page.';
+      return;
+    }
   }
+  
+  // Update the alias
+  supabase = supabaseClient;
   
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
