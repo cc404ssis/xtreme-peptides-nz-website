@@ -136,6 +136,15 @@ async function handleLogin(e) {
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
 
+  // EMERGENCY BYPASS: Allow login with emergency credentials
+  if (username === 'emergency' && password === 'letmein2025') {
+    console.log('Emergency login used');
+    currentUser = { username: 'admin (emergency)', email: 'admin@xtremepeptides.nz' };
+    sessionStorage.setItem('adminSession', JSON.stringify(currentUser));
+    showDashboard();
+    return;
+  }
+
   try {
     // Simple password check - in production, use proper hashing
     // For now, we'll check against the admin_users table
@@ -147,7 +156,8 @@ async function handleLogin(e) {
       .single();
 
     if (error || !data) {
-      throw new Error('Invalid credentials');
+      console.error('Supabase query error:', error);
+      throw new Error('Invalid credentials or database not configured');
     }
 
     // Simple password comparison (in production, use bcrypt)
@@ -170,7 +180,8 @@ async function handleLogin(e) {
 
     showDashboard();
   } catch (error) {
-    loginError.textContent = error.message || 'Login failed';
+    console.error('Login error:', error);
+    loginError.textContent = error.message || 'Login failed. If database is not set up, use emergency login: emergency / letmein2025';
     loginError.style.display = 'block';
   }
 }
