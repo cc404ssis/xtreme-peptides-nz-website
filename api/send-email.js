@@ -137,10 +137,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { orderData } = req.body;
+    // FIX: Support both data formats:
+    // 1. { orderData: { ... } } - original expected format
+    // 2. { orderNumber, customerEmail, ... } - flat format from frontend
+    const orderData = req.body.orderData || req.body;
 
     if (!orderData || !orderData.customerEmail || !orderData.orderNumber) {
-      return res.status(400).json({ error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required' });
+      return res.status(400).json({ 
+        error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required' 
+      });
     }
 
     const htmlContent = generateOrderConfirmationHTML(orderData);

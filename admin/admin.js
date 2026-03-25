@@ -7,8 +7,17 @@
 const SUPABASE_URL = 'https://bnqnsqfimobqkfwziz.supabase.co';
 const SUPABASE_ANON_KEY = 'your-anon-key-here'; // Get from Supabase Dashboard > Project Settings > API
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase client with error handling
+let supabase = null;
+try {
+  if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.error('Supabase library not loaded');
+  }
+} catch (e) {
+  console.error('Failed to initialize Supabase:', e);
+}
 
 // State
 let currentUser = null;
@@ -81,6 +90,13 @@ async function init() {
 async function handleLogin(e) {
   e.preventDefault();
   
+  // Check if Supabase is initialized
+  if (!supabase) {
+    loginError.textContent = 'Authentication service unavailable. Please refresh the page.';
+    loginError.style.display = 'block';
+    return;
+  }
+  
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
 
@@ -151,6 +167,11 @@ function showDashboard() {
 
 // Orders Management
 async function loadOrders() {
+  if (!supabase) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+  
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -205,6 +226,11 @@ function filterOrders() {
 }
 
 async function viewOrder(orderId) {
+  if (!supabase) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+  
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -292,6 +318,11 @@ function renderOrderModal(order) {
 
 // Email Logs
 async function loadEmailLogs() {
+  if (!supabase) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+  
   try {
     const { data, error } = await supabase
       .from('email_logs')
@@ -341,6 +372,13 @@ function openEmailModal(type) {
 
 async function handleSendEmail(e) {
   e.preventDefault();
+  
+  // Check if Supabase is initialized
+  if (!supabase) {
+    document.getElementById('email-error').textContent = 'Database connection unavailable. Please refresh the page.';
+    document.getElementById('email-error').style.display = 'block';
+    return;
+  }
 
   const orderNumber = document.getElementById('email-order-number').value;
   const recipient = document.getElementById('email-recipient').value;
