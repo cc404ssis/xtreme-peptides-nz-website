@@ -220,6 +220,19 @@
           <!-- Order details will be loaded here -->
         </div>
         <div class="modal-footer">
+          <div class="status-update-group">
+            <select id="update-status-select">
+              <option value="">Update Status...</option>
+              <option value="pending">Payment Pending</option>
+              <option value="processing">Payment Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="refunded">Refunded</option>
+              <option value="delayed">Delayed</option>
+            </select>
+            <button id="update-status-btn" class="btn btn-secondary">Update Status</button>
+          </div>
           <button id="send-email-btn" class="btn btn-primary">Send Email</button>
         </div>
       </div>

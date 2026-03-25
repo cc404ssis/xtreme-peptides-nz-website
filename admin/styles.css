@@ -427,8 +427,24 @@ tr:hover td {
   padding: 20px 25px;
   border-top: 1px solid #1a3a5c;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
+}
+
+.status-update-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-update-group select {
+  padding: 10px 12px;
+  background: #1a2a3a;
+  border: 1px solid #1a3a5c;
+  border-radius: 8px;
+  color: #e0e6ed;
+  font-size: 14px;
 }
 
 /* Order Modal Content */

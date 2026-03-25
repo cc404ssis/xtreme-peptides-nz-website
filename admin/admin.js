@@ -193,6 +193,12 @@ async function init() {
     }
   });
 
+  document.body.addEventListener('click', (e) => {
+    if (e.target.closest('#update-status-btn')) {
+      handleUpdateStatus();
+    }
+  });
+
   console.log('Admin dashboard initialized successfully');
 
   // Check if user is already logged in (session storage) — after listeners are set up
@@ -1157,6 +1163,34 @@ async function handleSendEmail(e) {
       error_message: error.message,
       sent_at: new Date().toISOString()
     });
+  }
+}
+
+async function handleUpdateStatus() {
+  const select = document.getElementById('update-status-select');
+  const newStatus = select?.value;
+
+  if (!newStatus) {
+    alert('Please select a status to update to.');
+    return;
+  }
+  if (!currentOrder) return;
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
+
+  try {
+    const { error } = await supabaseClient
+      .from('orders')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', currentOrder.id);
+
+    if (error) throw error;
+
+    if (select) select.value = '';
+    closeModals();
+    loadOrders();
+  } catch (error) {
+    console.error('Error updating status:', error);
+    alert('Failed to update status: ' + error.message);
   }
 }
 
