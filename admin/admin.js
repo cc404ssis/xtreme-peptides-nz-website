@@ -41,6 +41,7 @@ function initSupabase() {
 let currentUser = null;
 let currentOrder = null;
 let orders = [];
+let currentStatusFilter = '';
 
 // DOM Elements - initialized lazily
 let loginScreen, dashboardScreen, loginForm, loginError, logoutBtn;
@@ -142,39 +143,39 @@ async function init() {
 
         const section = btn.dataset.section;
         const status = btn.dataset.status !== undefined ? btn.dataset.status : null;
+        const label = btn.dataset.label || '';
 
         document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
         const sectionEl = document.getElementById(`${section}-section`);
-        if (sectionEl) {
-          sectionEl.classList.remove('hidden');
-        }
+        if (sectionEl) sectionEl.classList.remove('hidden');
 
         if (section === 'orders') {
+          currentStatusFilter = status || '';
           const heading = sectionEl?.querySelector('h2');
-          if (heading) {
-            heading.textContent = status
-              ? status.charAt(0).toUpperCase() + status.slice(1) + ' Orders'
-              : 'All Orders';
+          if (heading) heading.textContent = label || 'All Orders';
+          const searchInpt = document.getElementById('search-input');
+          if (searchInpt) {
+            searchInpt.placeholder = label ? `Search ${label}...` : 'Search orders...';
+            searchInpt.value = '';
           }
-          if (status) {
-            renderOrders(orders.filter(o => o.status === status));
-          } else {
-            renderOrders(orders);
-          }
+          renderOrders(currentStatusFilter ? orders.filter(o => o.status === currentStatusFilter) : orders);
         } else if (section === 'email-logs') {
           loadEmailLogs();
         } else if (section === 'deleted-orders') {
           loadDeletedOrders();
+        } else if (section === 'deleted-emails') {
+          loadDeletedEmails();
         }
       });
     });
   }
 
-  // Refresh deleted orders button
+  // Refresh buttons
   const refreshDeletedBtn = document.getElementById('refresh-deleted-btn');
-  if (refreshDeletedBtn) {
-    refreshDeletedBtn.addEventListener('click', loadDeletedOrders);
-  }
+  if (refreshDeletedBtn) refreshDeletedBtn.addEventListener('click', loadDeletedOrders);
+
+  const refreshDeletedEmailsBtn = document.getElementById('refresh-deleted-emails-btn');
+  if (refreshDeletedEmailsBtn) refreshDeletedEmailsBtn.addEventListener('click', loadDeletedEmails);
 
   // Modal close buttons - use event delegation for dynamically added content
   document.body.addEventListener('click', (e) => {
@@ -343,11 +344,29 @@ async function loadOrders() {
     if (error) throw error;
 
     orders = data || [];
-    renderOrders(orders);
+    updateNavCounts();
+    renderOrders(currentStatusFilter ? orders.filter(o => o.status === currentStatusFilter) : orders);
   } catch (error) {
     console.error('Error loading orders:', error);
     alert('Failed to load orders: ' + error.message);
   }
+}
+
+function updateNavCounts() {
+  const counts = {
+    all: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    processing: orders.filter(o => o.status === 'processing').length,
+    shipped: orders.filter(o => o.status === 'shipped').length
+  };
+  const set = (id, n) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = n > 0 ? `(${n})` : '';
+  };
+  set('count-all', counts.all);
+  set('count-pending', counts.pending);
+  set('count-processing', counts.processing);
+  set('count-shipped', counts.shipped);
 }
 
 function renderOrders(ordersToRender) {
@@ -490,21 +509,71 @@ async function permanentlyDeleteOrder(deletedOrderId, orderNumber) {
   }
 }
 
+// Deleted Emails
+async function loadDeletedEmails() {
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
+  try {
+    const { data, error } = await supabaseClient
+      .from('deleted_emails')
+      .select('*')
+      .order('deleted_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    renderDeletedEmails(data || []);
+  } catch (error) {
+    console.error('Error loading deleted emails:', error);
+    alert('Failed to load deleted emails: ' + error.message);
+  }
+}
+
+function renderDeletedEmails(emails) {
+  const tbody = document.getElementById('deleted-emails-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = emails.map(email => `
+    <tr>
+      <td>${email.deleted_at ? new Date(email.deleted_at).toLocaleString() : ''}</td>
+      <td>${email.order_number || '-'}</td>
+      <td>${email.recipient_email || ''}</td>
+      <td>${email.email_type || ''}</td>
+      <td>${email.subject || ''}</td>
+      <td><span class="status-badge ${email.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${email.status || 'failed'}</span></td>
+      <td>
+        <button class="btn btn-sm" onclick="permanentlyDeleteEmail('${email.id}')" style="background: #dc3545; color: white;">Permanently Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function permanentlyDeleteEmail(emailId) {
+  if (!confirm('Permanently delete this email record? This cannot be undone.')) return;
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
+  try {
+    const { error } = await supabaseClient.from('deleted_emails').delete().eq('id', emailId);
+    if (error) throw error;
+    loadDeletedEmails();
+  } catch (error) {
+    alert('Failed to delete: ' + error.message);
+  }
+}
+
 function filterOrders() {
   const statusFltr = document.getElementById('status-filter');
   const searchInpt = document.getElementById('search-input');
-  
-  const status = statusFltr ? statusFltr.value : '';
+
+  const dropdownStatus = statusFltr ? statusFltr.value : '';
   const search = searchInpt ? searchInpt.value.toLowerCase() : '';
 
-  let filtered = orders;
+  // Start from current tab's filtered set
+  let filtered = currentStatusFilter
+    ? orders.filter(o => o.status === currentStatusFilter)
+    : orders;
 
-  if (status) {
-    filtered = filtered.filter(o => o.status === status);
+  if (dropdownStatus) {
+    filtered = filtered.filter(o => o.status === dropdownStatus);
   }
 
   if (search) {
-    filtered = filtered.filter(o => 
+    filtered = filtered.filter(o =>
       (o.order_number || '').toLowerCase().includes(search) ||
       (o.customer_name || '').toLowerCase().includes(search) ||
       (o.customer_email || '').toLowerCase().includes(search)
@@ -746,18 +815,34 @@ function renderEmailLogs(logs) {
   `).join('');
 }
 
-// Delete Email Log
+// Delete Email Log (soft delete - moves to deleted_emails)
 async function deleteEmailLog(logId) {
-  if (!confirm('Are you sure you want to delete this email log? This cannot be undone.')) {
-    return;
-  }
-
-  if (!supabaseClient) {
-    alert('Database connection unavailable. Please refresh the page.');
-    return;
-  }
+  if (!confirm('Are you sure you want to delete this email log?')) return;
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
 
   try {
+    const { data: emailData } = await supabaseClient
+      .from('email_logs')
+      .select('*')
+      .eq('id', logId)
+      .single();
+
+    if (emailData) {
+      await supabaseClient.from('deleted_emails').insert({
+        original_email_id: logId,
+        order_number: emailData.order_number,
+        recipient_email: emailData.recipient_email,
+        email_type: emailData.email_type,
+        subject: emailData.subject,
+        status: emailData.status,
+        resend_email_id: emailData.resend_email_id,
+        error_message: emailData.error_message,
+        sent_at: emailData.sent_at,
+        deleted_at: new Date().toISOString(),
+        deleted_by: currentUser?.username || 'unknown'
+      });
+    }
+
     const { error } = await supabaseClient
       .from('email_logs')
       .delete()
@@ -1099,3 +1184,4 @@ window.viewOrder = viewOrder;
 window.deleteOrder = deleteOrder;
 window.deleteEmailLog = deleteEmailLog;
 window.permanentlyDeleteOrder = permanentlyDeleteOrder;
+window.permanentlyDeleteEmail = permanentlyDeleteEmail;
