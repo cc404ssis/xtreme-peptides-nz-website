@@ -13,8 +13,8 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 
 // Configuration - Production Supabase credentials
-const SUPABASE_URL = 'https://bnqnssfqfimobqkfwziz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucW5zc2ZxZmltb2Jxa2Z3eml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNTcyMzQsImV4cCI6MjA4OTgzMzIzNH0.cdoC6bPSTq_-VshuPxkMhLOr2F6Dh8q9MWbVhim8MwQ';
+const SUPABASE_URL = 'https://paenulyipooobvavjdkh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
 
 // Initialize Supabase client with error handling
 let supabaseClient = null;
@@ -89,20 +89,7 @@ async function init() {
     }, 500);
   }
 
-  // Check if user is already logged in (session storage)
-  const session = sessionStorage.getItem('adminSession');
-  if (session) {
-    try {
-      currentUser = JSON.parse(session);
-      showDashboard();
-      return;
-    } catch (e) {
-      console.error('Failed to parse session:', e);
-      sessionStorage.removeItem('adminSession');
-    }
-  }
-
-  // Event Listeners
+  // Event Listeners — always set up regardless of session state
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
   }
@@ -135,7 +122,7 @@ async function init() {
   const trackingInput = document.getElementById('email-tracking');
   const delayReasonSelect = document.getElementById('email-reason');
   const messageInput = document.getElementById('email-message');
-  
+
   if (trackingInput) {
     trackingInput.addEventListener('input', updateEmailPreview);
   }
@@ -152,15 +139,29 @@ async function init() {
       btn.addEventListener('click', () => {
         navButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         const section = btn.dataset.section;
+        const status = btn.dataset.status !== undefined ? btn.dataset.status : null;
+
         document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
         const sectionEl = document.getElementById(`${section}-section`);
         if (sectionEl) {
           sectionEl.classList.remove('hidden');
         }
-        
-        if (section === 'email-logs') {
+
+        if (section === 'orders') {
+          const heading = sectionEl?.querySelector('h2');
+          if (heading) {
+            heading.textContent = status
+              ? status.charAt(0).toUpperCase() + status.slice(1) + ' Orders'
+              : 'All Orders';
+          }
+          if (status) {
+            renderOrders(orders.filter(o => o.status === status));
+          } else {
+            renderOrders(orders);
+          }
+        } else if (section === 'email-logs') {
           loadEmailLogs();
         } else if (section === 'deleted-orders') {
           loadDeletedOrders();
@@ -190,8 +191,20 @@ async function init() {
       openEmailModal();
     }
   });
-  
+
   console.log('Admin dashboard initialized successfully');
+
+  // Check if user is already logged in (session storage) — after listeners are set up
+  const session = sessionStorage.getItem('adminSession');
+  if (session) {
+    try {
+      currentUser = JSON.parse(session);
+      showDashboard();
+    } catch (e) {
+      console.error('Failed to parse session:', e);
+      sessionStorage.removeItem('adminSession');
+    }
+  }
 }
 
 // Authentication

@@ -147,7 +147,68 @@ CREATE POLICY "Service role full access on admin_users"
   USING (true)
   WITH CHECK (true);
 
+-- Deleted orders table (soft delete archive)
+CREATE TABLE IF NOT EXISTS deleted_orders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  original_order_id UUID,
+  order_number VARCHAR(50),
+  customer_name VARCHAR(255),
+  customer_email VARCHAR(255),
+  total DECIMAL(10, 2),
+  status VARCHAR(50),
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_by VARCHAR(100)
+);
+
+-- Deleted email logs table (soft delete archive)
+CREATE TABLE IF NOT EXISTS deleted_emails (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  original_email_id UUID,
+  order_number VARCHAR(50),
+  recipient_email VARCHAR(255),
+  email_type VARCHAR(50),
+  subject VARCHAR(500),
+  status VARCHAR(50),
+  resend_email_id VARCHAR(255),
+  error_message TEXT,
+  sent_at TIMESTAMP WITH TIME ZONE,
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_by VARCHAR(100)
+);
+
+-- Enable RLS on deleted tables
+ALTER TABLE deleted_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deleted_emails ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for deleted_orders
+CREATE POLICY "Service role full access on deleted_orders"
+  ON deleted_orders FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow all access on deleted_orders for anon"
+  ON deleted_orders FOR ALL
+  TO anon
+  USING (true)
+  WITH CHECK (true);
+
+-- RLS policies for deleted_emails
+CREATE POLICY "Service role full access on deleted_emails"
+  ON deleted_emails FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow all access on deleted_emails for anon"
+  ON deleted_emails FOR ALL
+  TO anon
+  USING (true)
+  WITH CHECK (true);
+
 -- Comments for documentation
 COMMENT ON TABLE orders IS 'Stores all customer orders';
 COMMENT ON TABLE admin_users IS 'Admin users for dashboard authentication';
 COMMENT ON TABLE email_logs IS 'Logs of all emails sent through the system';
+COMMENT ON TABLE deleted_orders IS 'Archive of deleted orders';
+COMMENT ON TABLE deleted_emails IS 'Archive of deleted email logs';
