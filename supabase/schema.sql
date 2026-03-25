@@ -74,15 +74,16 @@ CREATE TRIGGER update_orders_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Insert default admin user (password: admin123 - CHANGE THIS!)
--- Password hash generated with bcrypt (10 rounds)
-INSERT INTO admin_users (username, password_hash, email)
+-- Insert default admin user
+-- Using plain text password for simplicity (admin123)
+INSERT INTO admin_users (username, password_hash, email, is_active)
 VALUES (
   'admin',
-  '$2a$10$YourHashHere_CHANGE_THIS', -- Replace with actual bcrypt hash
-  'admin@xtremepeptides.nz'
+  'admin123',
+  'admin@xtremepeptides.nz',
+  true
 )
-ON CONFLICT (username) DO NOTHING;
+ON CONFLICT (username) DO UPDATE SET password_hash = 'admin123';
 
 -- Row Level Security (RLS) Policies
 

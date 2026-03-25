@@ -3,14 +3,9 @@
  * Uses Supabase for database and authentication
  */
 
-// Configuration - REPLACE THESE WITH YOUR ACTUAL VALUES
-const SUPABASE_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:54321' // Local development
-  : 'YOUR_SUPABASE_URL';     // Production - replace with actual URL
-
-const SUPABASE_ANON_KEY = window.location.hostname === 'localhost'
-  ? 'YOUR_LOCAL_ANON_KEY'
-  : 'YOUR_SUPABASE_ANON_KEY'; // Production - replace with actual key
+// Configuration - Production Supabase credentials
+const SUPABASE_URL = 'https://bnqnsqfimobqkfwziz.supabase.co';
+const SUPABASE_ANON_KEY = 'your-anon-key-here'; // Get from Supabase Dashboard > Project Settings > API
 
 // Initialize Supabase client
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
