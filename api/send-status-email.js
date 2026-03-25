@@ -1,7 +1,7 @@
 // API endpoint for sending status update emails
 // Uses Resend API - requires RESEND_API_KEY environment variable
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_BkgL5J49_5idSZmG6ywuU8PzmuLKEc53r';
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'support@xtremepeptides.nz';
 
 function generateCustomMessageHTML(data) {
