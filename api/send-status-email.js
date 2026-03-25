@@ -38,19 +38,22 @@ function generateEmailHTML(data) {
       title: 'Order Cancelled',
       emoji: '❌',
       color: '#ef4444',
-      content: `Your order has been cancelled. If you have any questions, please contact us at support@xtremepeptides.nz`
+      content: `Your order has been cancelled. If you have any questions, please contact us at support@xtremepeptides.nz`,
+      closing: `We'd love to have you back — browse our full range at <a href="https://xtremepeptides.nz" style="color: #00d4ff;">xtremepeptides.nz</a> and place a new order any time.`
     },
     order_refunded: {
       title: 'Refund Processed',
       emoji: '💰',
       color: '#06b6d4',
-      content: `A refund has been processed for your order. Please allow 3-5 business days for the funds to appear in your account.`
+      content: `A refund has been processed for your order. Please allow 3-5 business days for the funds to appear in your account.`,
+      closing: `We hope to see you again soon — our full range is available at <a href="https://xtremepeptides.nz" style="color: #00d4ff;">xtremepeptides.nz</a> whenever you're ready.`
     },
     order_delayed: {
       title: 'Order Delay',
       emoji: '⏳',
       color: '#f59e0b',
-      content: message || `We're sorry, but your order has been delayed. We appreciate your patience and will keep you updated.`
+      content: message || `We're sorry, but your order has been delayed. We appreciate your patience and will keep you updated.`,
+      closing: `We will update you with your order status as soon as we can. Thank you for your patience.`
     },
     custom: {
       title: 'Message from XTREME PEPTIDES NZ',
@@ -73,13 +76,19 @@ function generateEmailHTML(data) {
   }
 
   let customMessageHTML = '';
-  if (emailType === 'custom' && customMessage) {
+  if (customMessage) {
     customMessageHTML = `
       <div style="background-color: #1a2a3a; border-left: 4px solid #06b6d4; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="color: #e0e6ed; margin: 0; line-height: 1.8; font-size: 15px;">${customMessage.replace(/\n/g, '<br>')}</p>
       </div>
     `;
   }
+
+  const closingHTML = config.closing ? `
+    <p style="color: #e0e6ed; font-size: 15px; line-height: 1.6; margin-top: 25px; padding-top: 20px; border-top: 1px solid #1a3a5c;">
+      ${config.closing}
+    </p>
+  ` : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -117,6 +126,7 @@ function generateEmailHTML(data) {
               
               ${customMessageHTML}
               ${trackingHTML}
+              ${closingHTML}
               
               <div style="background-color: #1a2a3a; border-left: 4px solid #00d4ff; padding: 20px; border-radius: 8px; margin-top: 20px;">
                 <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Order Number</p>
