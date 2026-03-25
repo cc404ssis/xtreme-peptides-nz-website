@@ -731,7 +731,7 @@ const EMAIL_TEMPLATES = {
   },
   order_delayed: {
     subject: 'Order Delay - {orderNumber}',
-    status: 'processing',
+    status: 'delayed',
     requiresTracking: false,
     showCustomMessage: false,
     showReason: true,
@@ -937,37 +937,25 @@ function handleEmailTypeChange(e) {
   const previewBox = document.getElementById('email-preview');
 
   // Show/hide fields based on email type
-  if (trackingGroup) {
-    trackingGroup.classList.toggle('hidden', !template.requiresTracking);
-  }
-  if (reasonGroup) {
-    reasonGroup.classList.toggle('hidden', !template.showReason);
-  }
-  if (customMessageGroup) {
-    customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
-  }
+  if (trackingGroup) trackingGroup.classList.toggle('hidden', !template.requiresTracking);
+  if (reasonGroup) reasonGroup.classList.toggle('hidden', !template.showReason);
+  if (customMessageGroup) customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
+
+  // Status dropdown: only show for custom emails (all others enforce their own status)
+  const statusGroup = document.getElementById('status-group');
+  if (statusGroup) statusGroup.classList.toggle('hidden', emailType !== 'custom');
+  if (statusSelect) statusSelect.value = template.status || '';
 
   // Populate reason dropdown if needed
   if (template.showReason && reasonSelect && template.reasonType) {
     const reasons = REASONS[template.reasonType] || {};
-    reasonSelect.innerHTML = Object.entries(reasons).map(([key, value]) => 
+    reasonSelect.innerHTML = Object.entries(reasons).map(([key, value]) =>
       `<option value="${key}">${value}</option>`
     ).join('');
-    
-    // Update label based on type
     if (reasonLabel) {
-      const labels = {
-        delay: 'Delay Reason',
-        cancellation: 'Cancellation Reason',
-        refund: 'Refund Reason'
-      };
+      const labels = { delay: 'Delay Reason', cancellation: 'Cancellation Reason', refund: 'Refund Reason' };
       reasonLabel.textContent = labels[template.reasonType] || 'Reason';
     }
-  }
-
-  // Auto-set status if defined
-  if (statusSelect && template.status) {
-    statusSelect.value = template.status;
   }
 
   // Update preview
