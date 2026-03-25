@@ -8,16 +8,19 @@ const SUPABASE_URL = 'https://bnqnsqfimobqkfwziz.supabase.co';
 const SUPABASE_ANON_KEY = 'your-anon-key-here'; // Get from Supabase Dashboard > Project Settings > API
 
 // Initialize Supabase client with error handling
-let supabase = null;
+let supabaseClient = null;
 try {
   if (window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } else {
     console.error('Supabase library not loaded');
   }
 } catch (e) {
   console.error('Failed to initialize Supabase:', e);
 }
+
+// Alias for backward compatibility (Safari strict mode fix)
+const supabase = supabaseClient;
 
 // State
 let currentUser = null;

@@ -7,14 +7,17 @@ const FROM_EMAIL = 'support@xtremepeptides.nz';
 function generateOrderConfirmationHTML(data) {
   const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod } = data;
   
-  const itemsHTML = items.map(item => `
+  const itemsHTML = items.map(item => {
+    const price = parseFloat(item.price) || 0;
+    const quantity = parseInt(item.quantity) || 0;
+    return `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed;">${item.name}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${item.price.toFixed(2)}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed;">${item.name || 'Product'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed; text-align: center;">${quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${price.toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${(price * quantity).toFixed(2)}</td>
     </tr>
-  `).join('');
+  `}).join('');
 
   return `<!DOCTYPE html>
 <html>
