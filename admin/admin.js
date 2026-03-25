@@ -1051,7 +1051,7 @@ async function handleSendEmail(e) {
     }
   }
 
-  if (template.showCustomMessage) {
+  if (emailType === 'custom') {
     const customMessage = document.getElementById('email-message')?.value?.trim();
     if (!customMessage) {
       const errorEl = document.getElementById('email-error');
