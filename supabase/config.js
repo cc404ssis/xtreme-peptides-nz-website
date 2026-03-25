@@ -10,7 +10,7 @@ const SUPABASE_CONFIG = {
   
   // Your Supabase anon key (safe for client-side)
   // Get this from: Supabase Dashboard > Project Settings > API > anon/public key
-  ANON_KEY: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucW5zc2ZxZmltb2Jxa2Z3eml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNTcyMzQsImV4cCI6MjA5ODgzMzIzNH0.cdoC6bPSTq_-VshuPxkMhLOr2F6Dh8q9MWbVhim8MwQ',
+  ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
   
   // Service role key - SERVER SIDE ONLY!
   // Get this from: Supabase Dashboard > Project Settings > API > service_role key

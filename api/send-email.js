@@ -140,11 +140,18 @@ export default async function handler(req, res) {
     // FIX: Support both data formats:
     // 1. { orderData: { ... } } - original expected format
     // 2. { orderNumber, customerEmail, ... } - flat format from frontend
-    const orderData = req.body.orderData || req.body;
-
-    if (!orderData || !orderData.customerEmail || !orderData.orderNumber) {
+    const body = req.body;
+    
+    // Check if data is wrapped in orderData or flat
+    let orderData;
+    if (body.orderData && body.orderData.customerEmail) {
+      orderData = body.orderData;
+    } else if (body.customerEmail && body.orderNumber) {
+      orderData = body;
+    } else {
       return res.status(400).json({ 
-        error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required' 
+        error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required',
+        received: Object.keys(body)
       });
     }
 
