@@ -1,5 +1,10 @@
 {
   "rewrites": [
+<<<<<<< HEAD
+=======
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/admin/(.*)", "destination": "/admin/$1" },
+>>>>>>> 45af5abe (v54 - Add Supabase credentials and email API fixes)
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
