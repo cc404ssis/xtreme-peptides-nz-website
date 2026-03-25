@@ -21,6 +21,8 @@ function generateOrderConfirmationHTML(data) {
     </tr>
   `}).join('');
 
+  const shippingAddr = shippingAddress || {};
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -89,10 +91,10 @@ function generateOrderConfirmationHTML(data) {
               <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin-top: 30px;">
                 <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Address</h4>
                 <p style="color: #e0e6ed; margin: 0; line-height: 1.6;">
-                  ${shippingAddress?.name || 'N/A'}<br>
-                  ${shippingAddress?.address || 'N/A'}<br>
-                  ${shippingAddress?.city || 'N/A'}, ${shippingAddress?.postcode || 'N/A'}<br>
-                  ${shippingAddress?.country || 'New Zealand'}
+                  ${shippingAddr.name || 'N/A'}<br>
+                  ${shippingAddr.address || 'N/A'}<br>
+                  ${shippingAddr.city || 'N/A'}, ${shippingAddr.postcode || 'N/A'}<br>
+                  ${shippingAddr.country || 'New Zealand'}
                 </p>
               </div>
               
@@ -139,8 +141,29 @@ function makeRequest(options, postData) {
   });
 }
 
+// Helper to parse request body
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    // If body is already parsed by Vercel
+    if (req.body && typeof req.body === 'object') {
+      return resolve(req.body);
+    }
+    
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body || '{}'));
+      } catch (e) {
+        resolve({});
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 module.exports = async function handler(req, res) {
-  console.log('send-email API called:', req.method);
+  console.log('send-email API called:', req.method, req.url);
   
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -163,7 +186,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body = req.body;
+    const body = await parseBody(req);
     console.log('Request body keys:', Object.keys(body));
     
     // Support both data formats
@@ -173,10 +196,11 @@ module.exports = async function handler(req, res) {
     } else if (body.customerEmail && body.orderNumber) {
       orderData = body;
     } else {
-      console.error('Invalid request body:', body);
+      console.error('Invalid request body:', JSON.stringify(body));
       return res.status(400).json({ 
         error: 'Missing required fields: customerEmail and orderNumber are required',
-        received: Object.keys(body)
+        received: Object.keys(body),
+        bodyPreview: JSON.stringify(body).substring(0, 200)
       });
     }
 

@@ -189,8 +189,27 @@ function makeRequest(options, postData) {
   });
 }
 
+// Helper to parse request body
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    if (req.body && typeof req.body === 'object') {
+      return resolve(req.body);
+    }
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(body || '{}'));
+      } catch (e) {
+        resolve({});
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 module.exports = async function handler(req, res) {
-  console.log('send-status-email API called:', req.method);
+  console.log('send-status-email API called:', req.method, req.url);
   
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -213,7 +232,8 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { email, orderNumber, status, message, trackingNumber, customMessage, emailType } = req.body;
+    const body = await parseBody(req);
+    const { email, orderNumber, status, message, trackingNumber, customMessage, emailType } = body;
 
     if (!email || !orderNumber) {
       return res.status(400).json({ error: 'Missing required fields: email and orderNumber are required' });
