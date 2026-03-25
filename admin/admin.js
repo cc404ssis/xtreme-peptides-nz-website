@@ -20,7 +20,7 @@ try {
 }
 
 // Alias for backward compatibility (Safari strict mode fix)
-const supabase = supabaseClient;
+let supabase = supabaseClient;
 
 // State
 let currentUser = null;
