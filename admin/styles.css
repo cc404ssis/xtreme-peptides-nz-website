@@ -198,11 +198,11 @@ body {
 }
 
 .header-logo {
-  height: 90px;
+  height: 130px;
   width: auto;
   display: block;
   position: relative;
-  top: 20px;
+  top: 30px;
   filter: drop-shadow(0 4px 12px rgba(0, 212, 255, 0.2));
 }
 
@@ -221,7 +221,7 @@ body {
 .main-content {
   display: flex;
   flex: 1;
-  padding-top: 28px;
+  padding-top: 42px;
 }
 
 .sidebar {
