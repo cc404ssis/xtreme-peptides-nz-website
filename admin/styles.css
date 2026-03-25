@@ -41,16 +41,19 @@ body {
   margin-bottom: 30px;
 }
 
-.login-logo h1 {
-  color: #00d4ff;
-  font-size: 24px;
-  margin-bottom: 5px;
+.login-logo-img {
+  width: 180px;
+  max-width: 100%;
+  display: block;
+  margin: 0 auto 8px;
 }
 
 .login-logo p {
   color: #8b9cb5;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
 }
 
 .form-group {
@@ -150,16 +153,30 @@ body {
 
 .header {
   background: #0f1f33;
-  padding: 15px 30px;
+  padding: 12px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #1a3a5c;
 }
 
-.header h1 {
-  font-size: 20px;
-  color: #00d4ff;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.header-title {
+  color: #8b9cb5;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .header-right {

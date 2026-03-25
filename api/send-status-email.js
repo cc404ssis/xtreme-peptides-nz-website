@@ -104,9 +104,8 @@ function generateEmailHTML(data) {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #0f1f33; border-radius: 16px; overflow: hidden; border: 1px solid #1a3a5c;">
           
           <tr>
-            <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; letter-spacing: 2px;">XTREME PEPTIDES NZ</h1>
-              <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
+            <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 30px 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
+              <img src="https://xtremepeptides.nz/logo.png" alt="XTREME PEPTIDES NZ" width="220" style="display: block; margin: 0 auto; max-width: 220px;">
             </td>
           </tr>
           
