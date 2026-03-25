@@ -228,7 +228,7 @@ module.exports = async function handler(req, res) {
     });
 
     const postData = JSON.stringify({
-      from: FROM_EMAIL,
+      from: `XTREME PEPTIDES NZ <${FROM_EMAIL}>`,`
       to: [orderData.customerEmail],
       subject: `Order Confirmation - ${orderData.orderNumber}`,
       html: htmlContent,
