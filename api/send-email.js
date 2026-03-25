@@ -208,12 +208,13 @@ module.exports = async function handler(req, res) {
 
     console.log('Sending email to:', orderData.customerEmail);
     
-    // Validate and sanitize data
+    // Validate and sanitize data - support both orderTotal and total
     const items = Array.isArray(orderData.items) ? orderData.items : [];
-    const subtotal = parseFloat(orderData.subtotal) || 0;
     const shippingCost = parseFloat(orderData.shippingCost) || 0;
-    const total = parseFloat(orderData.total) || (subtotal + shippingCost);
+    const total = parseFloat(orderData.total) || parseFloat(orderData.orderTotal) || 0;
+    const subtotal = parseFloat(orderData.subtotal) || (total - shippingCost) || 0;
     const shippingAddress = orderData.shippingAddress || {};
+    const customerName = orderData.customerName || shippingAddress?.name || orderData.customerEmail;
     
     const htmlContent = generateOrderConfirmationHTML({
       orderNumber: orderData.orderNumber,
