@@ -5,7 +5,7 @@
 
 // Configuration - Production Supabase credentials
 const SUPABASE_URL = 'https://bnqnsqfimobqkfwziz.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key-here'; // Get from Supabase Dashboard > Project Settings > API
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucW5zc2ZxZmltb2Jxa2Z3eml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNTcyMzQsImV4cCI6MjA5ODgzMzIzNH0.cdoC6bPSTq_-VshuPxkMhLOr2F6Dh8q9MWbVhim8MwQ';
 
 // Initialize Supabase client with error handling
 let supabaseClient = null;
