@@ -1106,6 +1106,11 @@ async function handleSendEmail(e) {
       body: JSON.stringify(emailData)
     });
 
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`API error (${response.status}): Function not available. Check Vercel function logs.`);
+    }
+
     const result = await response.json();
     console.log('API response:', result);
 
