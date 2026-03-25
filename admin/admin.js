@@ -3,6 +3,15 @@
  * Uses Supabase for database and authentication
  */
 
+// Global error handler
+window.addEventListener('error', (e) => {
+  console.error('Global error:', e.message, 'at', e.filename, ':', e.lineno);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise rejection:', e.reason);
+});
+
 // Configuration - Production Supabase credentials
 const SUPABASE_URL = 'https://bnqnssfqfimobqkfwziz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucW5zc2ZxZmltb2Jxa2Z3eml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNTcyMzQsImV4cCI6MjA4OTgzMzIzNH0.cdoC6bPSTq_-VshuPxkMhLOr2F6Dh8q9MWbVhim8MwQ';
@@ -137,20 +146,29 @@ async function init() {
     });
   }
 
-  // Modal close buttons
-  document.querySelectorAll('.close-btn, .close-modal').forEach(btn => {
-    btn.addEventListener('click', closeModals);
+  // Modal close buttons - use event delegation for dynamically added content
+  document.body.addEventListener('click', (e) => {
+    if (e.target.closest('.close-btn') || e.target.closest('.close-modal')) {
+      closeModals();
+    }
   });
 
-  // Modal actions
-  const statusEmailBtn = document.getElementById('send-status-email-btn');
-  const customEmailBtn = document.getElementById('send-custom-email-btn');
-  if (statusEmailBtn) {
-    statusEmailBtn.addEventListener('click', () => openEmailModal('status'));
-  }
-  if (customEmailBtn) {
-    customEmailBtn.addEventListener('click', () => openEmailModal('custom'));
-  }
+  // Modal actions - use event delegation
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('#send-status-email-btn');
+    if (btn) {
+      console.log('Send Status Email button clicked');
+      openEmailModal('status');
+    }
+  });
+  
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('#send-custom-email-btn');
+    if (btn) {
+      console.log('Send Custom Message button clicked');
+      openEmailModal('custom');
+    }
+  });
   
   console.log('Admin dashboard initialized successfully');
 }
