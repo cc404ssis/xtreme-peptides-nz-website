@@ -45,16 +45,48 @@
 
       <div class="main-content">
         <aside class="sidebar">
-          <nav>
-            <button class="nav-btn active" data-section="orders">
-              📦 Orders
-            </button>
-            <button class="nav-btn" data-section="deleted-orders">
-              🗑️ Deleted Orders
-            </button>
-            <button class="nav-btn" data-section="email-logs">
-              📧 Email Logs
-            </button>
+          <nav class="sidebar-nav">
+            <div class="nav-top">
+              <div class="nav-section-label">Orders</div>
+              <button class="nav-btn active" data-section="orders" data-status="">
+                📦 All Orders
+              </button>
+              <div class="nav-divider"></div>
+              <button class="nav-btn" data-section="orders" data-status="pending">
+                ⏳ Pending
+              </button>
+              <button class="nav-btn" data-section="orders" data-status="processing">
+                🔄 Processing
+              </button>
+              <div class="nav-divider"></div>
+              <button class="nav-btn" data-section="orders" data-status="shipped">
+                🚚 Shipped
+              </button>
+              <button class="nav-btn" data-section="orders" data-status="delivered">
+                📬 Delivered
+              </button>
+              <button class="nav-btn" data-section="orders" data-status="completed">
+                ✅ Completed
+              </button>
+              <div class="nav-divider"></div>
+              <button class="nav-btn" data-section="orders" data-status="cancelled">
+                ❌ Cancelled
+              </button>
+              <button class="nav-btn" data-section="orders" data-status="refunded">
+                💰 Refunded
+              </button>
+              <button class="nav-btn" data-section="orders" data-status="delayed">
+                ⏳ Delayed
+              </button>
+            </div>
+            <div class="nav-footer">
+              <button class="nav-btn" data-section="deleted-orders">
+                🗑️ Deleted Orders
+              </button>
+              <button class="nav-btn" data-section="email-logs">
+                📧 Email Logs
+              </button>
+            </div>
           </nav>
         </aside>
 
@@ -72,6 +104,8 @@
                   <option value="delivered">Delivered</option>
                   <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
+                  <option value="refunded">Refunded</option>
+                  <option value="delayed">Delayed</option>
                 </select>
                 <input type="text" id="search-input" placeholder="Search orders...">
                 <button id="refresh-btn" class="btn btn-secondary">🔄 Refresh</button>
@@ -253,6 +287,6 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="/admin/admin.js?v=8"></script>
+  <script src="/admin/admin.js?v=9"></script>
 </body>
 </html>
