@@ -971,6 +971,12 @@ function handleEmailTypeChange(e) {
   if (reasonGroup) reasonGroup.classList.toggle('hidden', !template.showReason);
   if (customMessageGroup) customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
 
+  // Update custom message label
+  const customMessageLabel = document.getElementById('custom-message-label');
+  if (customMessageLabel) {
+    customMessageLabel.textContent = emailType === 'custom' ? 'Custom Message *' : 'Custom Message (optional)';
+  }
+
   // Status dropdown: only show for custom emails (all others enforce their own status)
   const statusGroup = document.getElementById('status-group');
   if (statusGroup) statusGroup.classList.toggle('hidden', emailType !== 'custom');
