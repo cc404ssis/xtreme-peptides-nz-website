@@ -890,9 +890,31 @@ function openEmailModal() {
   // Reset form
   if (orderNumInput) orderNumInput.value = currentOrder.order_number || '';
   if (recipientInput) recipientInput.value = currentOrder.customer_email || '';
-  if (emailTypeSelect) emailTypeSelect.value = '';
   if (errorEl) errorEl.style.display = 'none';
   if (successEl) successEl.style.display = 'none';
+
+  // Filter email types based on current order status
+  const emailTypesByStatus = {
+    pending:    ['payment_confirmed', 'order_cancelled', 'order_delayed', 'order_refunded', 'custom'],
+    processing: ['order_shipped', 'order_cancelled', 'order_delayed', 'order_refunded', 'custom'],
+    shipped:    ['order_delivered', 'order_cancelled', 'order_delayed', 'order_refunded', 'custom'],
+    delivered:  ['custom'],
+  };
+  const allOptions = {
+    payment_confirmed: '💳 Payment Confirmed',
+    order_shipped:     '🚚 Order Shipped',
+    order_delivered:   '✅ Order Delivered',
+    order_cancelled:   '❌ Order Cancelled',
+    order_refunded:    '💰 Order Refunded',
+    order_delayed:     '⏳ Order Delayed',
+    custom:            '✏️ Custom Message',
+  };
+  const allowed = emailTypesByStatus[currentOrder.status] || Object.keys(allOptions);
+  if (emailTypeSelect) {
+    emailTypeSelect.innerHTML = '<option value="">Select email type...</option>' +
+      allowed.map(k => `<option value="${k}">${allOptions[k]}</option>`).join('');
+    emailTypeSelect.value = '';
+  }
 
   // Reset all dynamic fields
   resetEmailFormFields();
