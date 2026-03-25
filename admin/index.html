@@ -110,6 +110,7 @@
                     <th>Type</th>
                     <th>Subject</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody id="email-logs-tbody">
@@ -150,8 +151,25 @@
           <form id="email-form">
             <input type="hidden" id="email-order-number">
             <input type="hidden" id="email-recipient">
+            
+            <!-- Email Type Selector -->
             <div class="form-group">
-              <label>Status Update</label>
+              <label>Email Type *</label>
+              <select id="email-type" required>
+                <option value="">Select email type...</option>
+                <option value="payment_confirmed">💳 Payment Confirmed</option>
+                <option value="order_shipped">🚚 Order Shipped</option>
+                <option value="order_delivered">✅ Order Delivered</option>
+                <option value="order_cancelled">❌ Order Cancelled</option>
+                <option value="order_refunded">💰 Order Refunded</option>
+                <option value="order_delayed">⏳ Order Delayed</option>
+                <option value="custom">✏️ Custom Message</option>
+              </select>
+            </div>
+
+            <!-- Status Update (shown for most types) -->
+            <div class="form-group" id="status-group">
+              <label>Update Order Status</label>
               <select id="email-status">
                 <option value="">No status change</option>
                 <option value="pending">Pending</option>
@@ -160,16 +178,42 @@
                 <option value="delivered">Delivered</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="refunded">Refunded</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>Tracking Number (optional)</label>
-              <input type="text" id="email-tracking" placeholder="Enter tracking number">
+
+            <!-- Tracking Number (only for shipped) -->
+            <div class="form-group hidden" id="tracking-group">
+              <label>Tracking Number *</label>
+              <input type="text" id="email-tracking" placeholder="Enter tracking number (required for shipped orders)">
             </div>
-            <div class="form-group">
-              <label>Message</label>
-              <textarea id="email-message" rows="5" placeholder="Enter your message..."></textarea>
+
+            <!-- Delay Reason (only for delayed) -->
+            <div class="form-group hidden" id="delay-reason-group">
+              <label>Delay Reason</label>
+              <select id="delay-reason">
+                <option value="high_demand">High Demand</option>
+                <option value="shipping_delay">Shipping Carrier Delay</option>
+                <option value="out_of_stock">Temporary Stock Shortage</option>
+                <option value="weather">Weather Conditions</option>
+                <option value="other">Other</option>
+              </select>
             </div>
+
+            <!-- Custom Message (only for custom) -->
+            <div class="form-group hidden" id="custom-message-group">
+              <label>Custom Message *</label>
+              <textarea id="email-message" rows="5" placeholder="Enter your custom message..."></textarea>
+            </div>
+
+            <!-- Preview of email content -->
+            <div class="form-group" id="email-preview-group">
+              <label>Email Preview</label>
+              <div id="email-preview" class="email-preview-box" style="background: #1a2a3a; padding: 15px; border-radius: 8px; border-left: 3px solid #00d4ff; font-size: 13px; line-height: 1.6; max-height: 200px; overflow-y: auto;">
+                <em style="color: #8b9cb5;">Select an email type to see preview...</em>
+              </div>
+            </div>
+
             <div id="email-error" class="error-message"></div>
             <div id="email-success" class="success-message"></div>
           </form>
@@ -185,6 +229,6 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="/admin/admin.js?v=6"></script>
+  <script src="/admin/admin.js?v=7"></script>
 </body>
 </html>

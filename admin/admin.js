@@ -125,6 +125,27 @@ async function init() {
     emailForm.addEventListener('submit', handleSendEmail);
   }
 
+  // Email type change listener
+  const emailTypeSelect = document.getElementById('email-type');
+  if (emailTypeSelect) {
+    emailTypeSelect.addEventListener('change', handleEmailTypeChange);
+  }
+
+  // Input listeners for live preview updates
+  const trackingInput = document.getElementById('email-tracking');
+  const delayReasonSelect = document.getElementById('delay-reason');
+  const messageInput = document.getElementById('email-message');
+  
+  if (trackingInput) {
+    trackingInput.addEventListener('input', updateEmailPreview);
+  }
+  if (delayReasonSelect) {
+    delayReasonSelect.addEventListener('change', updateEmailPreview);
+  }
+  if (messageInput) {
+    messageInput.addEventListener('input', updateEmailPreview);
+  }
+
   // Navigation
   if (navButtons) {
     navButtons.forEach(btn => {
@@ -330,9 +351,37 @@ function renderOrders(ordersToRender) {
       <td><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background: #dc3545; margin-left: 5px;">Delete</button>
       </td>
     </tr>
   `).join('');
+}
+
+// Delete Order
+async function deleteOrder(orderId, orderNumber) {
+  if (!confirm(`Are you sure you want to delete order ${orderNumber}? This cannot be undone.`)) {
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('orders')
+      .delete()
+      .eq('id', orderId);
+
+    if (error) throw error;
+
+    console.log(`Order ${orderNumber} deleted successfully`);
+    loadOrders(); // Refresh the orders list
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    alert('Failed to delete order: ' + error.message);
+  }
 }
 
 function filterOrders() {
@@ -453,6 +502,67 @@ function renderOrderModal(order) {
   `;
 }
 
+// Email Templates
+const EMAIL_TEMPLATES = {
+  payment_confirmed: {
+    subject: 'Payment Confirmed - Order {orderNumber}',
+    status: 'processing',
+    requiresTracking: false,
+    showCustomMessage: false,
+    preview: (data) => `Thank you for your payment! Your order <strong>${data.orderNumber}</strong> has been confirmed and is now being processed. We'll notify you once your order ships.`
+  },
+  order_shipped: {
+    subject: 'Your Order Has Shipped - {orderNumber}',
+    status: 'shipped',
+    requiresTracking: true,
+    showCustomMessage: false,
+    preview: (data) => `Great news! Your order <strong>${data.orderNumber}</strong> has been shipped. Tracking: <strong>${data.trackingNumber || '[REQUIRED]'}</strong>`
+  },
+  order_delivered: {
+    subject: 'Your Order Has Been Delivered - {orderNumber}',
+    status: 'delivered',
+    requiresTracking: false,
+    showCustomMessage: false,
+    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been delivered! Thank you for shopping with XTREME PEPTIDES NZ.`
+  },
+  order_cancelled: {
+    subject: 'Order Cancelled - {orderNumber}',
+    status: 'cancelled',
+    requiresTracking: false,
+    showCustomMessage: false,
+    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. If you have any questions, please contact us.`
+  },
+  order_refunded: {
+    subject: 'Refund Processed - Order {orderNumber}',
+    status: 'refunded',
+    requiresTracking: false,
+    showCustomMessage: false,
+    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Please allow 3-5 business days for the funds to appear in your account.`
+  },
+  order_delayed: {
+    subject: 'Order Delay - {orderNumber}',
+    status: 'processing',
+    requiresTracking: false,
+    showCustomMessage: false,
+    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.delayReason || 'unforeseen circumstances'}. We appreciate your patience.`
+  },
+  custom: {
+    subject: 'Message Regarding Your Order - {orderNumber}',
+    status: '',
+    requiresTracking: false,
+    showCustomMessage: true,
+    preview: (data) => `Custom message: "${data.customMessage || '[Enter your message below...]'}"`
+  }
+};
+
+const DELAY_REASONS = {
+  high_demand: 'high demand',
+  shipping_delay: 'shipping carrier delays',
+  out_of_stock: 'temporary stock shortage',
+  weather: 'weather conditions',
+  other: 'unforeseen circumstances'
+};
+
 // Email Logs
 async function loadEmailLogs() {
   console.log('Loading email logs...');
@@ -496,8 +606,38 @@ function renderEmailLogs(logs) {
       <td>${log.email_type || ''}</td>
       <td>${log.subject || ''}</td>
       <td><span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span></td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="deleteEmailLog('${log.id}')" style="background: #dc3545;">Delete</button>
+      </td>
     </tr>
   `).join('');
+}
+
+// Delete Email Log
+async function deleteEmailLog(logId) {
+  if (!confirm('Are you sure you want to delete this email log? This cannot be undone.')) {
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('email_logs')
+      .delete()
+      .eq('id', logId);
+
+    if (error) throw error;
+
+    console.log('Email log deleted successfully');
+    loadEmailLogs(); // Refresh the email logs list
+  } catch (error) {
+    console.error('Error deleting email log:', error);
+    alert('Failed to delete email log: ' + error.message);
+  }
 }
 
 // Email Sending
@@ -508,26 +648,22 @@ function openEmailModal(type) {
     return;
   }
 
-  const modalTitle = document.getElementById('email-modal-title');
+  const emailMdl = document.getElementById('email-modal');
   const orderNumInput = document.getElementById('email-order-number');
   const recipientInput = document.getElementById('email-recipient');
-  const messageInput = document.getElementById('email-message');
-  const trackingInput = document.getElementById('email-tracking');
-  const statusInput = document.getElementById('email-status');
+  const emailTypeSelect = document.getElementById('email-type');
   const errorEl = document.getElementById('email-error');
   const successEl = document.getElementById('email-success');
-  const emailMdl = document.getElementById('email-modal');
 
-  if (modalTitle) {
-    modalTitle.textContent = type === 'status' ? 'Send Status Update' : 'Send Custom Message';
-  }
+  // Reset form
   if (orderNumInput) orderNumInput.value = currentOrder.order_number || '';
   if (recipientInput) recipientInput.value = currentOrder.customer_email || '';
-  if (messageInput) messageInput.value = '';
-  if (trackingInput) trackingInput.value = currentOrder.tracking_number || '';
-  if (statusInput) statusInput.value = '';
+  if (emailTypeSelect) emailTypeSelect.value = '';
   if (errorEl) errorEl.style.display = 'none';
   if (successEl) successEl.style.display = 'none';
+
+  // Reset all dynamic fields
+  resetEmailFormFields();
 
   if (emailMdl) {
     emailMdl.classList.remove('hidden');
@@ -537,27 +673,132 @@ function openEmailModal(type) {
   }
 }
 
+function resetEmailFormFields() {
+  const trackingGroup = document.getElementById('tracking-group');
+  const delayReasonGroup = document.getElementById('delay-reason-group');
+  const customMessageGroup = document.getElementById('custom-message-group');
+  const previewBox = document.getElementById('email-preview');
+  const statusSelect = document.getElementById('email-status');
+  const trackingInput = document.getElementById('email-tracking');
+  const messageInput = document.getElementById('email-message');
+
+  if (trackingGroup) trackingGroup.classList.add('hidden');
+  if (delayReasonGroup) delayReasonGroup.classList.add('hidden');
+  if (customMessageGroup) customMessageGroup.classList.add('hidden');
+  if (statusSelect) statusSelect.value = '';
+  if (trackingInput) trackingInput.value = '';
+  if (messageInput) messageInput.value = '';
+  if (previewBox) previewBox.innerHTML = '<em style="color: #8b9cb5;">Select an email type to see preview...</em>';
+}
+
+function handleEmailTypeChange(e) {
+  const emailType = e.target.value;
+  const template = EMAIL_TEMPLATES[emailType];
+  
+  if (!template) {
+    resetEmailFormFields();
+    return;
+  }
+
+  const trackingGroup = document.getElementById('tracking-group');
+  const delayReasonGroup = document.getElementById('delay-reason-group');
+  const customMessageGroup = document.getElementById('custom-message-group');
+  const statusSelect = document.getElementById('email-status');
+  const previewBox = document.getElementById('email-preview');
+
+  // Show/hide fields based on email type
+  if (trackingGroup) {
+    trackingGroup.classList.toggle('hidden', !template.requiresTracking);
+  }
+  if (delayReasonGroup) {
+    delayReasonGroup.classList.toggle('hidden', emailType !== 'order_delayed');
+  }
+  if (customMessageGroup) {
+    customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
+  }
+
+  // Auto-set status if defined
+  if (statusSelect && template.status) {
+    statusSelect.value = template.status;
+  }
+
+  // Update preview
+  updateEmailPreview();
+}
+
+function updateEmailPreview() {
+  const emailType = document.getElementById('email-type')?.value;
+  const orderNumber = document.getElementById('email-order-number')?.value;
+  const trackingNumber = document.getElementById('email-tracking')?.value;
+  const delayReason = document.getElementById('delay-reason')?.value;
+  const customMessage = document.getElementById('email-message')?.value;
+  const previewBox = document.getElementById('email-preview');
+
+  if (!previewBox || !emailType) return;
+
+  const template = EMAIL_TEMPLATES[emailType];
+  if (!template) return;
+
+  const data = {
+    orderNumber,
+    trackingNumber,
+    delayReason: DELAY_REASONS[delayReason] || delayReason,
+    customMessage
+  };
+
+  previewBox.innerHTML = template.preview(data);
+}
+
 async function handleSendEmail(e) {
   e.preventDefault();
   
   console.log('handleSendEmail called, currentOrder:', currentOrder);
   
-  if (!supabaseClient) {
+  const emailType = document.getElementById('email-type')?.value;
+  if (!emailType) {
     const errorEl = document.getElementById('email-error');
     if (errorEl) {
-      errorEl.textContent = 'Database connection unavailable. Please refresh the page.';
+      errorEl.textContent = 'Please select an email type';
       errorEl.style.display = 'block';
     }
     return;
   }
 
+  const template = EMAIL_TEMPLATES[emailType];
+  
+  // Validate required fields
+  if (template.requiresTracking) {
+    const trackingNumber = document.getElementById('email-tracking')?.value?.trim();
+    if (!trackingNumber) {
+      const errorEl = document.getElementById('email-error');
+      if (errorEl) {
+        errorEl.textContent = 'Tracking number is required for shipped orders';
+        errorEl.style.display = 'block';
+      }
+      return;
+    }
+  }
+
+  if (template.showCustomMessage) {
+    const customMessage = document.getElementById('email-message')?.value?.trim();
+    if (!customMessage) {
+      const errorEl = document.getElementById('email-error');
+      if (errorEl) {
+        errorEl.textContent = 'Please enter a custom message';
+        errorEl.style.display = 'block';
+      }
+      return;
+    }
+  }
+
   const orderNumber = document.getElementById('email-order-number')?.value || '';
   const recipient = document.getElementById('email-recipient')?.value || '';
   const status = document.getElementById('email-status')?.value || '';
-  const trackingNumber = document.getElementById('email-tracking')?.value || '';
-  const message = document.getElementById('email-message')?.value || '';
+  const trackingNumber = document.getElementById('email-tracking')?.value?.trim() || '';
+  const message = document.getElementById('email-message')?.value?.trim() || '';
+  const delayReason = document.getElementById('delay-reason')?.value || '';
 
-  console.log('Sending email:', { orderNumber, recipient, status, message: message ? 'yes' : 'no' });
+  console.log('Sending email:', { emailType, orderNumber, recipient, status, trackingNumber: trackingNumber ? 'yes' : 'no', message: message ? 'yes' : 'no' });
 
   const errorEl = document.getElementById('email-error');
   const successEl = document.getElementById('email-success');
@@ -575,23 +816,35 @@ async function handleSendEmail(e) {
         })
         .eq('id', currentOrder.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating order:', updateError);
+        throw updateError;
+      }
+      console.log('Order status updated successfully');
+    }
+
+    // Build email data
+    const emailData = {
+      email: recipient,
+      orderNumber: orderNumber,
+      status: status || currentOrder?.status,
+      trackingNumber: trackingNumber,
+      emailType: emailType
+    };
+
+    // Add custom message or delay reason
+    if (emailType === 'custom') {
+      emailData.customMessage = message;
+    } else if (emailType === 'order_delayed') {
+      emailData.message = `We apologize for the delay. Your order is delayed due to ${DELAY_REASONS[delayReason] || 'unforeseen circumstances'}.`;
     }
 
     // Send email via API
-    console.log('Calling send-status-email API...');
+    console.log('Calling send-status-email API with data:', emailData);
     const response = await fetch('/api/send-status-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: recipient,
-        orderNumber: orderNumber,
-        status: status || currentOrder?.status,
-        message: message,
-        trackingNumber: trackingNumber,
-        customMessage: message,
-        emailType: message ? 'custom' : 'status'
-      })
+      body: JSON.stringify(emailData)
     });
 
     const result = await response.json();
@@ -603,15 +856,23 @@ async function handleSendEmail(e) {
 
     // Log email to database
     console.log('Logging email to database...');
-    await supabaseClient.from('email_logs').insert({
+    const { error: logError } = await supabaseClient.from('email_logs').insert({
       order_id: currentOrder?.id,
       order_number: orderNumber,
       recipient_email: recipient,
-      email_type: message ? 'custom' : 'status_update',
-      subject: message ? `Message Regarding Your Order - ${orderNumber}` : `Order Status Update - ${orderNumber}`,
+      email_type: emailType,
+      subject: template.subject.replace('{orderNumber}', orderNumber),
       status: 'sent',
-      resend_email_id: result.emailId
+      resend_email_id: result.emailId,
+      sent_at: new Date().toISOString()
     });
+
+    if (logError) {
+      console.error('Error logging email:', logError);
+      // Don't throw - email was sent successfully
+    } else {
+      console.log('Email logged successfully');
+    }
 
     if (successEl) {
       successEl.textContent = 'Email sent successfully!';
@@ -637,10 +898,11 @@ async function handleSendEmail(e) {
       order_id: currentOrder?.id,
       order_number: orderNumber,
       recipient_email: recipient,
-      email_type: message ? 'custom' : 'status_update',
-      subject: message ? `Message Regarding Your Order - ${orderNumber}` : `Order Status Update - ${orderNumber}`,
+      email_type: emailType || 'unknown',
+      subject: template?.subject?.replace('{orderNumber}', orderNumber) || 'Unknown',
       status: 'failed',
-      error_message: error.message
+      error_message: error.message,
+      sent_at: new Date().toISOString()
     });
   }
 }
@@ -662,3 +924,5 @@ if (document.readyState === 'loading') {
 
 // Expose functions to window for onclick handlers
 window.viewOrder = viewOrder;
+window.deleteOrder = deleteOrder;
+window.deleteEmailLog = deleteEmailLog;
