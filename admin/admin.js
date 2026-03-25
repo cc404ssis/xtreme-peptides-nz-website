@@ -160,20 +160,41 @@ async function init() {
           sectionEl.classList.remove('hidden');
         }
         
+        // Load appropriate data based on section
         if (section === 'email-logs') {
           loadEmailLogs();
         } else if (section === 'deleted-orders') {
           loadDeletedOrders();
+        } else if (section === 'deleted-emails') {
+          loadDeletedEmails();
+        } else if (section.startsWith('orders-') && section !== 'orders-section') {
+          const status = section.replace('orders-', '');
+          loadOrdersByStatus(status);
         }
       });
     });
   }
 
-  // Refresh deleted orders button
+  // Refresh buttons for all sections
   const refreshDeletedBtn = document.getElementById('refresh-deleted-btn');
   if (refreshDeletedBtn) {
     refreshDeletedBtn.addEventListener('click', loadDeletedOrders);
   }
+
+  const refreshDeletedEmailsBtn = document.getElementById('refresh-deleted-emails-btn');
+  if (refreshDeletedEmailsBtn) {
+    refreshDeletedEmailsBtn.addEventListener('click', loadDeletedEmails);
+  }
+
+  // Status refresh buttons
+  document.querySelectorAll('.refresh-status-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const status = e.target.dataset.status;
+      if (status) {
+        loadOrdersByStatus(status);
+      }
+    });
+  });
 
   // Modal close buttons - use event delegation for dynamically added content
   document.body.addEventListener('click', (e) => {
@@ -474,6 +495,192 @@ async function permanentlyDeleteOrder(deletedOrderId, orderNumber) {
   } catch (error) {
     console.error('Error permanently deleting order:', error);
     alert('Failed to delete order: ' + error.message);
+  }
+}
+
+// Load orders filtered by status for status tabs
+async function loadOrdersByStatus(status) {
+  console.log(`Loading ${status} orders...`);
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+  
+  const tbody = document.getElementById(`orders-${status}-tbody`);
+  if (!tbody) return;
+  
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Loading...</td></tr>';
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('orders')
+      .select('*')
+      .eq('status', status)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    renderOrdersByStatus(status, data || []);
+  } catch (error) {
+    console.error(`Error loading ${status} orders:`, error);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#dc3545;">Error: ${error.message}</td></tr>`;
+    }
+  }
+}
+
+// Render orders to a status-specific table
+function renderOrdersByStatus(status, ordersToRender) {
+  const tbody = document.getElementById(`orders-${status}-tbody`);
+  if (!tbody) return;
+  
+  if (ordersToRender.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#8b9cb5;">No ${status} orders found</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = ordersToRender.map(order => `
+    <tr>
+      <td>${order.order_number || ''}</td>
+      <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
+      <td>${order.customer_name || ''}</td>
+      <td>${order.customer_email || ''}</td>
+      <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background: #dc3545; margin-left: 5px;">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Deleted Emails
+async function loadDeletedEmails() {
+  console.log('Loading deleted emails...');
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+  
+  const tbody = document.getElementById('deleted-emails-tbody');
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('deleted_emails')
+      .select('*')
+      .order('deleted_at', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    renderDeletedEmails(data || []);
+  } catch (error) {
+    console.error('Error loading deleted emails:', error);
+    alert('Failed to load deleted emails: ' + error.message);
+  }
+}
+
+function renderDeletedEmails(logs) {
+  const tbody = document.getElementById('deleted-emails-tbody');
+  if (!tbody) return;
+  
+  if (logs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#8b9cb5;">No deleted emails found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = logs.map(log => `
+    <tr>
+      <td>${log.deleted_at ? new Date(log.deleted_at).toLocaleString() : ''}</td>
+      <td>${log.order_number || '-'}</td>
+      <td>${log.recipient_email || ''}</td>
+      <td>${log.email_type || ''}</td>
+      <td>${log.subject || ''}</td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="permanentlyDeleteEmail('${log.id}')" style="background: #dc3545;">Permanently Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Permanently delete from deleted_emails table
+async function permanentlyDeleteEmail(deletedEmailId) {
+  if (!confirm('Are you sure you want to PERMANENTLY delete this email record? This action cannot be undone.')) {
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient
+      .from('deleted_emails')
+      .delete()
+      .eq('id', deletedEmailId);
+
+    if (error) throw error;
+
+    console.log('Email permanently deleted');
+    loadDeletedEmails();
+  } catch (error) {
+    console.error('Error permanently deleting email:', error);
+    alert('Failed to delete email: ' + error.message);
+  }
+}
+
+// Modified deleteEmailLog that moves to deleted_emails first
+async function deleteEmailLog(logId) {
+  if (!confirm('Are you sure you want to delete this email log?')) {
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Database connection unavailable. Please refresh the page.');
+    return;
+  }
+
+  try {
+    // First, get the email log data
+    const { data: logData, error: fetchError } = await supabaseClient
+      .from('email_logs')
+      .select('*')
+      .eq('id', logId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    if (logData) {
+      // Move to deleted_emails
+      await supabaseClient.from('deleted_emails').insert({
+        original_log_id: logId,
+        order_id: logData.order_id,
+        order_number: logData.order_number,
+        recipient_email: logData.recipient_email,
+        email_type: logData.email_type,
+        subject: logData.subject,
+        status: logData.status,
+        sent_at: logData.sent_at,
+        resend_email_id: logData.resend_email_id,
+        deleted_at: new Date().toISOString(),
+        deleted_by: currentUser?.username || 'unknown'
+      });
+    }
+
+    // Delete from email_logs
+    const { error } = await supabaseClient
+      .from('email_logs')
+      .delete()
+      .eq('id', logId);
+
+    if (error) throw error;
+
+    console.log('Email log moved to deleted emails');
+    loadEmailLogs();
+  } catch (error) {
+    console.error('Error deleting email log:', error);
+    alert('Failed to delete email log: ' + error.message);
   }
 }
 
@@ -1086,3 +1293,6 @@ window.viewOrder = viewOrder;
 window.deleteOrder = deleteOrder;
 window.deleteEmailLog = deleteEmailLog;
 window.permanentlyDeleteOrder = permanentlyDeleteOrder;
+window.loadOrdersByStatus = loadOrdersByStatus;
+window.loadDeletedEmails = loadDeletedEmails;
+window.permanentlyDeleteEmail = permanentlyDeleteEmail;
