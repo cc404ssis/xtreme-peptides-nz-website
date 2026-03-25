@@ -188,6 +188,7 @@ module.exports = async function handler(req, res) {
   try {
     const body = await parseBody(req);
     console.log('Request body keys:', Object.keys(body));
+    console.log('Request body:', JSON.stringify(body).substring(0, 500));
     
     // Support both data formats
     let orderData;
@@ -196,10 +197,11 @@ module.exports = async function handler(req, res) {
     } else if (body.customerEmail && body.orderNumber) {
       orderData = body;
     } else {
-      console.error('Invalid request body:', JSON.stringify(body));
+      console.error('Invalid request body - missing customerEmail or orderNumber');
       return res.status(400).json({ 
         error: 'Missing required fields: customerEmail and orderNumber are required',
         received: Object.keys(body),
+        bodyType: typeof body,
         bodyPreview: JSON.stringify(body).substring(0, 200)
       });
     }
