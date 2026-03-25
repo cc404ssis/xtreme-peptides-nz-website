@@ -234,7 +234,7 @@ async function handleLogin(e) {
   } catch (error) {
     console.error('Login error:', error);
     if (errorEl) {
-      errorEl.textContent = error.message || 'Login failed. Use emergency login: emergency / letmein2025';
+      errorEl.textContent = error.message || 'Login failed. Please check your credentials.';
       errorEl.style.display = 'block';
     }
   }
@@ -437,6 +437,7 @@ function renderOrderModal(order) {
 
 // Email Logs
 async function loadEmailLogs() {
+  console.log('Loading email logs...');
   if (!supabaseClient) {
     alert('Database connection unavailable. Please refresh the page.');
     return;
@@ -445,18 +446,23 @@ async function loadEmailLogs() {
   const emailLogsTb = document.getElementById('email-logs-tbody');
   
   try {
+    console.log('Querying email_logs table...');
     const { data, error } = await supabaseClient
       .from('email_logs')
       .select('*')
       .order('sent_at', { ascending: false })
       .limit(100);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error loading email logs:', error);
+      throw error;
+    }
 
+    console.log('Email logs loaded:', data?.length || 0, 'records');
     renderEmailLogs(data || []);
   } catch (error) {
     console.error('Error loading email logs:', error);
-    alert('Failed to load email logs');
+    alert('Failed to load email logs: ' + error.message);
   }
 }
 
@@ -478,7 +484,11 @@ function renderEmailLogs(logs) {
 
 // Email Sending
 function openEmailModal(type) {
-  if (!currentOrder) return;
+  console.log('Opening email modal, type:', type, 'currentOrder:', currentOrder);
+  if (!currentOrder) {
+    console.error('No current order selected');
+    return;
+  }
 
   const modalTitle = document.getElementById('email-modal-title');
   const orderNumInput = document.getElementById('email-order-number');
@@ -501,11 +511,18 @@ function openEmailModal(type) {
   if (errorEl) errorEl.style.display = 'none';
   if (successEl) successEl.style.display = 'none';
 
-  if (emailMdl) emailMdl.classList.remove('hidden');
+  if (emailMdl) {
+    emailMdl.classList.remove('hidden');
+    console.log('Email modal opened');
+  } else {
+    console.error('Email modal element not found');
+  }
 }
 
 async function handleSendEmail(e) {
   e.preventDefault();
+  
+  console.log('handleSendEmail called, currentOrder:', currentOrder);
   
   if (!supabaseClient) {
     const errorEl = document.getElementById('email-error');
@@ -522,12 +539,15 @@ async function handleSendEmail(e) {
   const trackingNumber = document.getElementById('email-tracking')?.value || '';
   const message = document.getElementById('email-message')?.value || '';
 
+  console.log('Sending email:', { orderNumber, recipient, status, message: message ? 'yes' : 'no' });
+
   const errorEl = document.getElementById('email-error');
   const successEl = document.getElementById('email-success');
 
   try {
     // Update order status if changed
     if (status && currentOrder && currentOrder.status !== status) {
+      console.log('Updating order status to:', status);
       const { error: updateError } = await supabaseClient
         .from('orders')
         .update({ 
@@ -541,6 +561,7 @@ async function handleSendEmail(e) {
     }
 
     // Send email via API
+    console.log('Calling send-status-email API...');
     const response = await fetch('/api/send-status-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -556,12 +577,14 @@ async function handleSendEmail(e) {
     });
 
     const result = await response.json();
+    console.log('API response:', result);
 
     if (!response.ok) {
       throw new Error(result.error || 'Failed to send email');
     }
 
     // Log email to database
+    console.log('Logging email to database...');
     await supabaseClient.from('email_logs').insert({
       order_id: currentOrder?.id,
       order_number: orderNumber,
@@ -584,6 +607,7 @@ async function handleSendEmail(e) {
     }, 1500);
 
   } catch (error) {
+    console.error('Error sending email:', error);
     if (errorEl) {
       errorEl.textContent = error.message || 'Failed to send email';
       errorEl.style.display = 'block';
