@@ -726,7 +726,7 @@ const EMAIL_TEMPLATES = {
     showCustomMessage: true,
     showReason: true,
     reasonType: 'cancellation',
-    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. Reason: ${data.reason || 'Not specified'}.${data.customMessage ? ` ${data.customMessage}` : ''}`
+    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. Reason: ${data.reason || 'Not specified'}.${data.customMessage ? ` ${data.customMessage}` : ''}<br><br><em>We'd love to have you back — browse our full range at xtremepeptides.nz and place a new order any time.</em>`
   },
   order_refunded: {
     subject: 'Refund Processed - Order {orderNumber}',
@@ -735,7 +735,7 @@ const EMAIL_TEMPLATES = {
     showCustomMessage: true,
     showReason: true,
     reasonType: 'refund',
-    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Reason: ${data.reason || 'Not specified'}. Please allow 3-5 business days for the funds to appear in your account.${data.customMessage ? ` ${data.customMessage}` : ''}`
+    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Reason: ${data.reason || 'Not specified'}. Please allow 3-5 business days for the funds to appear in your account.${data.customMessage ? ` ${data.customMessage}` : ''}<br><br><em>We hope to see you again soon — our full range is available at xtremepeptides.nz whenever you're ready.</em>`
   },
   order_delayed: {
     subject: 'Order Delay - {orderNumber}',
@@ -744,7 +744,7 @@ const EMAIL_TEMPLATES = {
     showCustomMessage: true,
     showReason: true,
     reasonType: 'delay',
-    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.reason || 'unforeseen circumstances'}. We appreciate your patience.${data.customMessage ? ` ${data.customMessage}` : ''}`
+    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.reason || 'unforeseen circumstances'}. We appreciate your patience.${data.customMessage ? ` ${data.customMessage}` : ''}<br><br><em>We will update you with your order status as soon as we can. Thank you for your patience.</em>`
   },
   custom: {
     subject: 'Message Regarding Your Order - {orderNumber}',
