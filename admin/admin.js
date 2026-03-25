@@ -372,6 +372,14 @@ function updateNavCounts() {
 function renderOrders(ordersToRender) {
   const ordersTb = document.getElementById('orders-tbody');
   if (!ordersTb) return;
+
+  // Update section heading with count
+  const heading = document.querySelector('#orders-section h2');
+  if (heading) {
+    const activeBtn = document.querySelector('.nav-btn.active');
+    const label = activeBtn?.dataset.label || 'All Orders';
+    heading.textContent = `${label} (${ordersToRender.length})`;
+  }
   
   ordersTb.innerHTML = ordersToRender.map(order => `
     <tr>
