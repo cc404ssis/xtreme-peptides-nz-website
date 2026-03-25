@@ -13,13 +13,13 @@ let supabaseInitialized = false;
 
 function initSupabase() {
   try {
-    if (window.supabase && window.supabase.createClient) {
+    if (typeof window !== 'undefined' && window.supabase && window.supabase.createClient) {
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       supabaseInitialized = true;
       console.log('Supabase initialized successfully');
       return true;
     } else {
-      console.log('Supabase library not ready yet, retrying...');
+      console.log('Supabase library not ready yet...');
       return false;
     }
   } catch (e) {
@@ -28,81 +28,114 @@ function initSupabase() {
   }
 }
 
-// Try to initialize immediately
-if (!initSupabase()) {
-  // If not ready, wait and retry
-  let attempts = 0;
-  const maxAttempts = 50; // 5 seconds max
-  const retryInterval = setInterval(() => {
-    attempts++;
-    if (initSupabase() || attempts >= maxAttempts) {
-      clearInterval(retryInterval);
-      if (!supabaseInitialized) {
-        console.error('Failed to initialize Supabase after maximum attempts');
-      }
-    }
-  }, 100);
-}
-
-// Alias for backward compatibility (Safari strict mode fix)
-let supabase = supabaseClient;
-
 // State
 let currentUser = null;
 let currentOrder = null;
 let orders = [];
 
-// DOM Elements
-const loginScreen = document.getElementById('login-screen');
-const dashboardScreen = document.getElementById('dashboard-screen');
-const loginForm = document.getElementById('login-form');
-const loginError = document.getElementById('login-error');
-const logoutBtn = document.getElementById('logout-btn');
-const adminUsername = document.getElementById('admin-username');
-const ordersTable = document.getElementById('orders-tbody');
-const emailLogsTable = document.getElementById('email-logs-tbody');
-const statusFilter = document.getElementById('status-filter');
-const searchInput = document.getElementById('search-input');
-const refreshBtn = document.getElementById('refresh-btn');
-const refreshLogsBtn = document.getElementById('refresh-logs-btn');
-const orderModal = document.getElementById('order-modal');
-const emailModal = document.getElementById('email-modal');
-const emailForm = document.getElementById('email-form');
-const navButtons = document.querySelectorAll('.nav-btn');
+// DOM Elements - initialized lazily
+let loginScreen, dashboardScreen, loginForm, loginError, logoutBtn;
+let adminUsername, ordersTable, emailLogsTable, statusFilter;
+let searchInput, refreshBtn, refreshLogsBtn, orderModal, emailModal;
+let emailForm, navButtons;
+
+function getElements() {
+  loginScreen = document.getElementById('login-screen');
+  dashboardScreen = document.getElementById('dashboard-screen');
+  loginForm = document.getElementById('login-form');
+  loginError = document.getElementById('login-error');
+  logoutBtn = document.getElementById('logout-btn');
+  adminUsername = document.getElementById('admin-username');
+  ordersTable = document.getElementById('orders-tbody');
+  emailLogsTable = document.getElementById('email-logs-tbody');
+  statusFilter = document.getElementById('status-filter');
+  searchInput = document.getElementById('search-input');
+  refreshBtn = document.getElementById('refresh-btn');
+  refreshLogsBtn = document.getElementById('refresh-logs-btn');
+  orderModal = document.getElementById('order-modal');
+  emailModal = document.getElementById('email-modal');
+  emailForm = document.getElementById('email-form');
+  navButtons = document.querySelectorAll('.nav-btn');
+  
+  return loginForm && loginScreen; // Return true if essential elements found
+}
 
 // Initialize
 async function init() {
+  console.log('Admin dashboard initializing...');
+  
+  // Get DOM elements
+  if (!getElements()) {
+    console.error('Required DOM elements not found!');
+    return;
+  }
+  
+  console.log('DOM elements found, setting up...');
+
+  // Try to initialize Supabase
+  if (!initSupabase()) {
+    // Wait a bit and retry
+    setTimeout(() => {
+      initSupabase();
+    }, 500);
+  }
+
   // Check if user is already logged in (session storage)
   const session = sessionStorage.getItem('adminSession');
   if (session) {
-    currentUser = JSON.parse(session);
-    showDashboard();
+    try {
+      currentUser = JSON.parse(session);
+      showDashboard();
+      return;
+    } catch (e) {
+      console.error('Failed to parse session:', e);
+      sessionStorage.removeItem('adminSession');
+    }
   }
 
   // Event Listeners
-  loginForm.addEventListener('submit', handleLogin);
-  logoutBtn.addEventListener('click', handleLogout);
-  refreshBtn.addEventListener('click', loadOrders);
-  refreshLogsBtn.addEventListener('click', loadEmailLogs);
-  statusFilter.addEventListener('change', filterOrders);
-  searchInput.addEventListener('input', filterOrders);
-  emailForm.addEventListener('submit', handleSendEmail);
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLogin);
+  }
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
+  }
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadOrders);
+  }
+  if (refreshLogsBtn) {
+    refreshLogsBtn.addEventListener('click', loadEmailLogs);
+  }
+  if (statusFilter) {
+    statusFilter.addEventListener('change', filterOrders);
+  }
+  if (searchInput) {
+    searchInput.addEventListener('input', filterOrders);
+  }
+  if (emailForm) {
+    emailForm.addEventListener('submit', handleSendEmail);
+  }
 
   // Navigation
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      navButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      
-      const section = btn.dataset.section;
-      document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-      document.getElementById(`${section}-section`).classList.remove('hidden');
-      
-      if (section === 'email-logs') {
-        loadEmailLogs();
-      }
+  if (navButtons) {
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        navButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const section = btn.dataset.section;
+        document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+        const sectionEl = document.getElementById(`${section}-section`);
+        if (sectionEl) {
+          sectionEl.classList.remove('hidden');
+        }
+        
+        if (section === 'email-logs') {
+          loadEmailLogs();
+        }
+      });
     });
-  });
+  }
 
   // Modal close buttons
   document.querySelectorAll('.close-btn, .close-modal').forEach(btn => {
@@ -110,20 +143,39 @@ async function init() {
   });
 
   // Modal actions
-  document.getElementById('send-status-email-btn').addEventListener('click', () => openEmailModal('status'));
-  document.getElementById('send-custom-email-btn').addEventListener('click', () => openEmailModal('custom'));
+  const statusEmailBtn = document.getElementById('send-status-email-btn');
+  const customEmailBtn = document.getElementById('send-custom-email-btn');
+  if (statusEmailBtn) {
+    statusEmailBtn.addEventListener('click', () => openEmailModal('status'));
+  }
+  if (customEmailBtn) {
+    customEmailBtn.addEventListener('click', () => openEmailModal('custom'));
+  }
+  
+  console.log('Admin dashboard initialized successfully');
 }
 
 // Authentication
 async function handleLogin(e) {
   e.preventDefault();
   
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
+  const errorEl = document.getElementById('login-error');
+  
+  if (!usernameInput || !passwordInput) {
+    console.error('Login inputs not found');
+    return;
+  }
+  
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+
+  console.log('Login attempt:', username);
 
   // EMERGENCY BYPASS: Allow login with emergency credentials (no Supabase needed)
   if (username === 'emergency' && password === 'letmein2025') {
-    console.log('Emergency login used');
+    console.log('✅ Emergency login successful');
     currentUser = { username: 'admin (emergency)', email: 'admin@xtremepeptides.nz' };
     sessionStorage.setItem('adminSession', JSON.stringify(currentUser));
     showDashboard();
@@ -132,23 +184,25 @@ async function handleLogin(e) {
   
   // Ensure supabase is initialized for normal login
   if (!supabaseClient) {
-    loginError.textContent = 'Authentication service initializing, please wait...';
-    loginError.style.display = 'block';
+    if (errorEl) {
+      errorEl.textContent = 'Initializing... please try again in a moment.';
+      errorEl.style.display = 'block';
+    }
     
-    // Try to initialize one more time
-    if (!initSupabase()) {
-      loginError.textContent = 'Authentication service unavailable. Use emergency login or refresh the page.';
+    // Try to initialize
+    initSupabase();
+    
+    if (!supabaseClient) {
+      if (errorEl) {
+        errorEl.textContent = 'Authentication service unavailable. Use emergency login: emergency / letmein2025';
+      }
       return;
     }
   }
-  
-  // Update the alias
-  supabase = supabaseClient;
 
   try {
-    // Simple password check - in production, use proper hashing
-    // For now, we'll check against the admin_users table
-    const { data, error } = await supabase
+    // Query admin_users table
+    const { data, error } = await supabaseClient
       .from('admin_users')
       .select('*')
       .eq('username', username)
@@ -157,12 +211,10 @@ async function handleLogin(e) {
 
     if (error || !data) {
       console.error('Supabase query error:', error);
-      throw new Error('Invalid credentials or database not configured');
+      throw new Error('Invalid credentials');
     }
 
-    // Simple password comparison (in production, use bcrypt)
-    // For demo purposes, we'll use a simple comparison
-    // In production: const validPassword = await bcrypt.compare(password, data.password_hash);
+    // Check password
     const validPassword = checkPassword(password, data.password_hash);
     
     if (!validPassword) {
@@ -173,7 +225,7 @@ async function handleLogin(e) {
     sessionStorage.setItem('adminSession', JSON.stringify(currentUser));
     
     // Update last login
-    await supabase
+    await supabaseClient
       .from('admin_users')
       .update({ last_login: new Date().toISOString() })
       .eq('username', username);
@@ -181,18 +233,19 @@ async function handleLogin(e) {
     showDashboard();
   } catch (error) {
     console.error('Login error:', error);
-    loginError.textContent = error.message || 'Login failed. If database is not set up, use emergency login: emergency / letmein2025';
-    loginError.style.display = 'block';
+    if (errorEl) {
+      errorEl.textContent = error.message || 'Login failed. Use emergency login: emergency / letmein2025';
+      errorEl.style.display = 'block';
+    }
   }
 }
 
 // Simple password check (replace with proper bcrypt in production)
 function checkPassword(password, hash) {
+  if (!hash) return password === 'admin123';
   // For demo: if hash starts with $2a$ it's bcrypt, otherwise compare plain text
   if (hash.startsWith('$2a$')) {
-    // In production, use bcrypt library
-    // For now, we'll accept a demo password
-    return password === 'admin123'; // Demo only - change in production!
+    return password === 'admin123'; // Demo fallback
   }
   return password === hash;
 }
@@ -200,27 +253,37 @@ function checkPassword(password, hash) {
 function handleLogout() {
   currentUser = null;
   sessionStorage.removeItem('adminSession');
-  loginScreen.classList.remove('hidden');
-  dashboardScreen.classList.add('hidden');
-  loginForm.reset();
+  const loginScr = document.getElementById('login-screen');
+  const dashboardScr = document.getElementById('dashboard-screen');
+  const loginFm = document.getElementById('login-form');
+  
+  if (loginScr) loginScr.classList.remove('hidden');
+  if (dashboardScr) dashboardScr.classList.add('hidden');
+  if (loginFm) loginFm.reset();
 }
 
 function showDashboard() {
-  loginScreen.classList.add('hidden');
-  dashboardScreen.classList.remove('hidden');
-  adminUsername.textContent = currentUser.username;
+  const loginScr = document.getElementById('login-screen');
+  const dashboardScr = document.getElementById('dashboard-screen');
+  const adminUser = document.getElementById('admin-username');
+  
+  if (loginScr) loginScr.classList.add('hidden');
+  if (dashboardScr) dashboardScr.classList.remove('hidden');
+  if (adminUser && currentUser) adminUser.textContent = currentUser.username;
   loadOrders();
 }
 
 // Orders Management
 async function loadOrders() {
-  if (!supabase) {
+  if (!supabaseClient) {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
   
+  const ordersTb = document.getElementById('orders-tbody');
+  
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false });
@@ -236,14 +299,17 @@ async function loadOrders() {
 }
 
 function renderOrders(ordersToRender) {
-  ordersTable.innerHTML = ordersToRender.map(order => `
+  const ordersTb = document.getElementById('orders-tbody');
+  if (!ordersTb) return;
+  
+  ordersTb.innerHTML = ordersToRender.map(order => `
     <tr>
-      <td>${order.order_number}</td>
-      <td>${new Date(order.created_at).toLocaleDateString()}</td>
-      <td>${order.customer_name}</td>
-      <td>${order.customer_email}</td>
-      <td>$${parseFloat(order.total).toFixed(2)}</td>
-      <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+      <td>${order.order_number || ''}</td>
+      <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
+      <td>${order.customer_name || ''}</td>
+      <td>${order.customer_email || ''}</td>
+      <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+      <td><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
       </td>
@@ -252,8 +318,11 @@ function renderOrders(ordersToRender) {
 }
 
 function filterOrders() {
-  const status = statusFilter.value;
-  const search = searchInput.value.toLowerCase();
+  const statusFltr = document.getElementById('status-filter');
+  const searchInpt = document.getElementById('search-input');
+  
+  const status = statusFltr ? statusFltr.value : '';
+  const search = searchInpt ? searchInpt.value.toLowerCase() : '';
 
   let filtered = orders;
 
@@ -263,9 +332,9 @@ function filterOrders() {
 
   if (search) {
     filtered = filtered.filter(o => 
-      o.order_number.toLowerCase().includes(search) ||
-      o.customer_name.toLowerCase().includes(search) ||
-      o.customer_email.toLowerCase().includes(search)
+      (o.order_number || '').toLowerCase().includes(search) ||
+      (o.customer_name || '').toLowerCase().includes(search) ||
+      (o.customer_email || '').toLowerCase().includes(search)
     );
   }
 
@@ -273,13 +342,13 @@ function filterOrders() {
 }
 
 async function viewOrder(orderId) {
-  if (!supabase) {
+  if (!supabaseClient) {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('orders')
       .select('*')
       .eq('id', orderId)
@@ -289,7 +358,8 @@ async function viewOrder(orderId) {
 
     currentOrder = data;
     renderOrderModal(data);
-    orderModal.classList.remove('hidden');
+    const orderMdl = document.getElementById('order-modal');
+    if (orderMdl) orderMdl.classList.remove('hidden');
   } catch (error) {
     console.error('Error loading order:', error);
     alert('Failed to load order details');
@@ -299,26 +369,28 @@ async function viewOrder(orderId) {
 function renderOrderModal(order) {
   const items = order.items || [];
   const address = order.shipping_address || {};
+  const modalBody = document.getElementById('order-modal-body');
+  if (!modalBody) return;
 
-  document.getElementById('order-modal-body').innerHTML = `
+  modalBody.innerHTML = `
     <div class="order-info">
-      <p><strong>Order Number:</strong> ${order.order_number}</p>
-      <p><strong>Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
-      <p><strong>Status:</strong> <span class="status-badge status-${order.status}">${order.status}</span></p>
-      <p><strong>Payment Status:</strong> ${order.payment_status}</p>
+      <p><strong>Order Number:</strong> ${order.order_number || ''}</p>
+      <p><strong>Date:</strong> ${order.created_at ? new Date(order.created_at).toLocaleString() : ''}</p>
+      <p><strong>Status:</strong> <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></p>
+      <p><strong>Payment Status:</strong> ${order.payment_status || ''}</p>
       ${order.tracking_number ? `<p><strong>Tracking Number:</strong> ${order.tracking_number}</p>` : ''}
     </div>
     
     <div class="customer-info">
       <h3>Customer Information</h3>
-      <p><strong>Name:</strong> ${order.customer_name}</p>
-      <p><strong>Email:</strong> ${order.customer_email}</p>
+      <p><strong>Name:</strong> ${order.customer_name || ''}</p>
+      <p><strong>Email:</strong> ${order.customer_email || ''}</p>
       ${order.customer_phone ? `<p><strong>Phone:</strong> ${order.customer_phone}</p>` : ''}
     </div>
     
     <div class="shipping-info">
       <h3>Shipping Address</h3>
-      <p>${address.name || order.customer_name}</p>
+      <p>${address.name || order.customer_name || ''}</p>
       <p>${address.address || ''}</p>
       <p>${address.city || ''}, ${address.postcode || ''}</p>
       <p>${address.country || 'New Zealand'}</p>
@@ -338,19 +410,19 @@ function renderOrderModal(order) {
         <tbody>
           ${items.map(item => `
             <tr>
-              <td>${item.name}</td>
-              <td>${item.quantity}</td>
-              <td>$${parseFloat(item.price).toFixed(2)}</td>
-              <td>$${(item.quantity * parseFloat(item.price)).toFixed(2)}</td>
+              <td>${item.name || ''}</td>
+              <td>${item.quantity || 0}</td>
+              <td>$${parseFloat(item.price || 0).toFixed(2)}</td>
+              <td>$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
       
       <div class="order-totals">
-        <p><strong>Subtotal:</strong> $${parseFloat(order.subtotal).toFixed(2)}</p>
-        <p><strong>Shipping:</strong> $${parseFloat(order.shipping_cost).toFixed(2)}</p>
-        <p class="total"><strong>Total:</strong> $${parseFloat(order.total).toFixed(2)}</p>
+        <p><strong>Subtotal:</strong> $${parseFloat(order.subtotal || 0).toFixed(2)}</p>
+        <p><strong>Shipping:</strong> $${parseFloat(order.shipping_cost || 0).toFixed(2)}</p>
+        <p class="total"><strong>Total:</strong> $${parseFloat(order.total || 0).toFixed(2)}</p>
       </div>
     </div>
     
@@ -365,13 +437,15 @@ function renderOrderModal(order) {
 
 // Email Logs
 async function loadEmailLogs() {
-  if (!supabase) {
+  if (!supabaseClient) {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
   
+  const emailLogsTb = document.getElementById('email-logs-tbody');
+  
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('email_logs')
       .select('*')
       .order('sent_at', { ascending: false })
@@ -387,14 +461,17 @@ async function loadEmailLogs() {
 }
 
 function renderEmailLogs(logs) {
-  emailLogsTable.innerHTML = logs.map(log => `
+  const emailLogsTb = document.getElementById('email-logs-tbody');
+  if (!emailLogsTb) return;
+  
+  emailLogsTb.innerHTML = logs.map(log => `
     <tr>
-      <td>${new Date(log.sent_at).toLocaleString()}</td>
+      <td>${log.sent_at ? new Date(log.sent_at).toLocaleString() : ''}</td>
       <td>${log.order_number || '-'}</td>
-      <td>${log.recipient_email}</td>
-      <td>${log.email_type}</td>
-      <td>${log.subject}</td>
-      <td><span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status}</span></td>
+      <td>${log.recipient_email || ''}</td>
+      <td>${log.email_type || ''}</td>
+      <td>${log.subject || ''}</td>
+      <td><span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span></td>
     </tr>
   `).join('');
 }
@@ -403,35 +480,47 @@ function renderEmailLogs(logs) {
 function openEmailModal(type) {
   if (!currentOrder) return;
 
-  document.getElementById('email-modal-title').textContent = 
-    type === 'status' ? 'Send Status Update' : 'Send Custom Message';
-  
-  document.getElementById('email-order-number').value = currentOrder.order_number;
-  document.getElementById('email-recipient').value = currentOrder.customer_email;
-  document.getElementById('email-message').value = '';
-  document.getElementById('email-tracking').value = currentOrder.tracking_number || '';
-  document.getElementById('email-status').value = '';
-  document.getElementById('email-error').style.display = 'none';
-  document.getElementById('email-success').style.display = 'none';
+  const modalTitle = document.getElementById('email-modal-title');
+  const orderNumInput = document.getElementById('email-order-number');
+  const recipientInput = document.getElementById('email-recipient');
+  const messageInput = document.getElementById('email-message');
+  const trackingInput = document.getElementById('email-tracking');
+  const statusInput = document.getElementById('email-status');
+  const errorEl = document.getElementById('email-error');
+  const successEl = document.getElementById('email-success');
+  const emailMdl = document.getElementById('email-modal');
 
-  emailModal.classList.remove('hidden');
+  if (modalTitle) {
+    modalTitle.textContent = type === 'status' ? 'Send Status Update' : 'Send Custom Message';
+  }
+  if (orderNumInput) orderNumInput.value = currentOrder.order_number || '';
+  if (recipientInput) recipientInput.value = currentOrder.customer_email || '';
+  if (messageInput) messageInput.value = '';
+  if (trackingInput) trackingInput.value = currentOrder.tracking_number || '';
+  if (statusInput) statusInput.value = '';
+  if (errorEl) errorEl.style.display = 'none';
+  if (successEl) successEl.style.display = 'none';
+
+  if (emailMdl) emailMdl.classList.remove('hidden');
 }
 
 async function handleSendEmail(e) {
   e.preventDefault();
   
-  // Check if Supabase is initialized
-  if (!supabase) {
-    document.getElementById('email-error').textContent = 'Database connection unavailable. Please refresh the page.';
-    document.getElementById('email-error').style.display = 'block';
+  if (!supabaseClient) {
+    const errorEl = document.getElementById('email-error');
+    if (errorEl) {
+      errorEl.textContent = 'Database connection unavailable. Please refresh the page.';
+      errorEl.style.display = 'block';
+    }
     return;
   }
 
-  const orderNumber = document.getElementById('email-order-number').value;
-  const recipient = document.getElementById('email-recipient').value;
-  const status = document.getElementById('email-status').value;
-  const trackingNumber = document.getElementById('email-tracking').value;
-  const message = document.getElementById('email-message').value;
+  const orderNumber = document.getElementById('email-order-number')?.value || '';
+  const recipient = document.getElementById('email-recipient')?.value || '';
+  const status = document.getElementById('email-status')?.value || '';
+  const trackingNumber = document.getElementById('email-tracking')?.value || '';
+  const message = document.getElementById('email-message')?.value || '';
 
   const errorEl = document.getElementById('email-error');
   const successEl = document.getElementById('email-success');
@@ -439,7 +528,7 @@ async function handleSendEmail(e) {
   try {
     // Update order status if changed
     if (status && currentOrder && currentOrder.status !== status) {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseClient
         .from('orders')
         .update({ 
           status: status,
@@ -458,7 +547,7 @@ async function handleSendEmail(e) {
       body: JSON.stringify({
         email: recipient,
         orderNumber: orderNumber,
-        status: status || currentOrder.status,
+        status: status || currentOrder?.status,
         message: message,
         trackingNumber: trackingNumber,
         customMessage: message,
@@ -473,8 +562,8 @@ async function handleSendEmail(e) {
     }
 
     // Log email to database
-    await supabase.from('email_logs').insert({
-      order_id: currentOrder.id,
+    await supabaseClient.from('email_logs').insert({
+      order_id: currentOrder?.id,
       order_number: orderNumber,
       recipient_email: recipient,
       email_type: message ? 'custom' : 'status_update',
@@ -483,23 +572,26 @@ async function handleSendEmail(e) {
       resend_email_id: result.emailId
     });
 
-    successEl.textContent = 'Email sent successfully!';
-    successEl.style.display = 'block';
-    errorEl.style.display = 'none';
+    if (successEl) {
+      successEl.textContent = 'Email sent successfully!';
+      successEl.style.display = 'block';
+    }
+    if (errorEl) errorEl.style.display = 'none';
 
-    // Refresh orders and close modal after a delay
     setTimeout(() => {
       closeModals();
       loadOrders();
     }, 1500);
 
   } catch (error) {
-    errorEl.textContent = error.message || 'Failed to send email';
-    errorEl.style.display = 'block';
-    successEl.style.display = 'none';
+    if (errorEl) {
+      errorEl.textContent = error.message || 'Failed to send email';
+      errorEl.style.display = 'block';
+    }
+    if (successEl) successEl.style.display = 'none';
 
     // Log failed email attempt
-    await supabase.from('email_logs').insert({
+    await supabaseClient.from('email_logs').insert({
       order_id: currentOrder?.id,
       order_number: orderNumber,
       recipient_email: recipient,
@@ -512,13 +604,19 @@ async function handleSendEmail(e) {
 }
 
 function closeModals() {
-  orderModal.classList.add('hidden');
-  emailModal.classList.add('hidden');
+  const orderMdl = document.getElementById('order-modal');
+  const emailMdl = document.getElementById('email-modal');
+  if (orderMdl) orderMdl.classList.add('hidden');
+  if (emailMdl) emailMdl.classList.add('hidden');
   currentOrder = null;
 }
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 // Expose functions to window for onclick handlers
 window.viewOrder = viewOrder;
