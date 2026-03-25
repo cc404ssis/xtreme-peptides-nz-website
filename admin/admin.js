@@ -363,7 +363,8 @@ function updateNavCounts() {
     all: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
     processing: orders.filter(o => o.status === 'processing').length,
-    shipped: orders.filter(o => o.status === 'shipped').length
+    shipped: orders.filter(o => o.status === 'shipped').length,
+    delayed: orders.filter(o => o.status === 'delayed').length
   };
   const set = (id, n) => {
     const el = document.getElementById(id);
@@ -373,6 +374,7 @@ function updateNavCounts() {
   set('count-pending', counts.pending);
   set('count-processing', counts.processing);
   set('count-shipped', counts.shipped);
+  set('count-delayed', counts.delayed);
 }
 
 function renderOrders(ordersToRender) {
