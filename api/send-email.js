@@ -1,8 +1,10 @@
 // API endpoint for sending order confirmation emails
 // Uses Resend API - requires RESEND_API_KEY environment variable
 
+const https = require('https');
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = 'support@xtremepeptides.nz';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@xtremepeptides.nz';
 
 function generateOrderConfirmationHTML(data) {
   const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod } = data;
@@ -34,7 +36,7 @@ function generateOrderConfirmationHTML(data) {
           
           <tr>
             <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <img src="https://xtremepeptides.nz/logo.png" alt="XTREME PEPTIDES NZ" style="max-width: 200px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
+              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; letter-spacing: 2px;">XTREME PEPTIDES NZ</h1>
               <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
             </td>
           </tr>
@@ -48,23 +50,20 @@ function generateOrderConfirmationHTML(data) {
                 Thank you for your order. We've received your payment and are processing your items.
               </p>
               
-              <div style="background-color: #1a2a3a; border-left: 4px solid #00d4ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Order Number</p>
-                <p style="color: #00d4ff; margin: 0; font-size: 24px; font-family: monospace; font-weight: bold;">${orderNumber}</p>
+                <p style="color: #00d4ff; margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">${orderNumber}</p>
               </div>
-            </td>
-          </tr>
-          
-          <tr>
-            <td style="padding: 0 40px 40px 40px;">
-              <h3 style="color: #00d4ff; margin-bottom: 15px;">Order Summary</h3>
-              <table width="100%" style="border-collapse: collapse;">
+              
+              <h3 style="color: #00d4ff; margin: 30px 0 15px 0; border-bottom: 1px solid #1a3a5c; padding-bottom: 10px;">Order Summary</h3>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
                 <thead>
-                  <tr style="background-color: #1a3a5c;">
-                    <th style="padding: 12px; text-align: left; color: #ffffff;">Product</th>
-                    <th style="padding: 12px; text-align: center; color: #ffffff;">Qty</th>
-                    <th style="padding: 12px; text-align: right; color: #ffffff;">Price</th>
-                    <th style="padding: 12px; text-align: right; color: #ffffff;">Total</th>
+                  <tr style="background-color: #1a2a3a;">
+                    <th style="padding: 12px; text-align: left; color: #00d4ff; font-weight: bold;">Product</th>
+                    <th style="padding: 12px; text-align: center; color: #00d4ff; font-weight: bold;">Qty</th>
+                    <th style="padding: 12px; text-align: right; color: #00d4ff; font-weight: bold;">Price</th>
+                    <th style="padding: 12px; text-align: right; color: #00d4ff; font-weight: bold;">Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -72,28 +71,28 @@ function generateOrderConfirmationHTML(data) {
                 </tbody>
               </table>
               
-              <table width="100%" style="margin-top: 20px; border-top: 2px solid #1a3a5c;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; border-top: 2px solid #1a3a5c; padding-top: 20px;">
                 <tr>
-                  <td style="padding: 8px 0; color: #8b9cb5; text-align: right;">Subtotal:</td>
-                  <td style="padding: 8px 0; color: #e0e6ed; text-align: right; width: 100px;">$${subtotal.toFixed(2)}</td>
+                  <td style="padding: 8px 0; color: #8b9cb5; text-align: right; width: 70%;">Subtotal:</td>
+                  <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${parseFloat(subtotal).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #8b9cb5; text-align: right;">Shipping:</td>
-                  <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${shippingCost.toFixed(2)}</td>
+                  <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${parseFloat(shippingCost).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">Total:</td>
-                  <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">$${total.toFixed(2)}</td>
+                  <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">$${parseFloat(total).toFixed(2)}</td>
                 </tr>
               </table>
               
               <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin-top: 30px;">
                 <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Address</h4>
                 <p style="color: #e0e6ed; margin: 0; line-height: 1.6;">
-                  ${shippingAddress.name}<br>
-                  ${shippingAddress.address}<br>
-                  ${shippingAddress.city}, ${shippingAddress.postcode}<br>
-                  ${shippingAddress.country || 'New Zealand'}
+                  ${shippingAddress?.name || 'N/A'}<br>
+                  ${shippingAddress?.address || 'N/A'}<br>
+                  ${shippingAddress?.city || 'N/A'}, ${shippingAddress?.postcode || 'N/A'}<br>
+                  ${shippingAddress?.country || 'New Zealand'}
                 </p>
               </div>
               
@@ -119,7 +118,30 @@ function generateOrderConfirmationHTML(data) {
 </html>`;
 }
 
+// Helper function to make HTTPS request
+function makeRequest(options, postData) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          resolve({ statusCode: res.statusCode, data: parsed });
+        } catch (e) {
+          resolve({ statusCode: res.statusCode, data: data });
+        }
+      });
+    });
+    req.on('error', reject);
+    if (postData) req.write(postData);
+    req.end();
+  });
+}
+
 module.exports = async function handler(req, res) {
+  console.log('send-email API called:', req.method);
+  
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -136,66 +158,73 @@ module.exports = async function handler(req, res) {
   }
 
   if (!RESEND_API_KEY) {
+    console.error('RESEND_API_KEY not configured');
     return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
   }
 
   try {
-    // FIX: Support both data formats:
-    // 1. { orderData: { ... } } - original expected format
-    // 2. { orderNumber, customerEmail, ... } - flat format from frontend
     const body = req.body;
+    console.log('Request body keys:', Object.keys(body));
     
-    // Check if data is wrapped in orderData or flat
+    // Support both data formats
     let orderData;
     if (body.orderData && body.orderData.customerEmail) {
       orderData = body.orderData;
     } else if (body.customerEmail && body.orderNumber) {
       orderData = body;
     } else {
+      console.error('Invalid request body:', body);
       return res.status(400).json({ 
-        error: 'Missing required fields: orderData.customerEmail and orderData.orderNumber are required',
+        error: 'Missing required fields: customerEmail and orderNumber are required',
         received: Object.keys(body)
       });
     }
 
+    console.log('Sending email to:', orderData.customerEmail);
     const htmlContent = generateOrderConfirmationHTML(orderData);
 
-    // Send email using Resend API
-    const response = await fetch('https://api.resend.com/emails', {
+    const postData = JSON.stringify({
+      from: FROM_EMAIL,
+      to: [orderData.customerEmail],
+      subject: `Order Confirmation - ${orderData.orderNumber}`,
+      html: htmlContent,
+    });
+
+    const options = {
+      hostname: 'api.resend.com',
+      port: 443,
+      path: '/emails',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [orderData.customerEmail], // Must be an array
-        subject: `Order Confirmation - ${orderData.orderNumber}`,
-        html: htmlContent,
-      }),
-    });
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
 
-    const data = await response.json();
+    const result = await makeRequest(options, postData);
+    console.log('Resend API response:', result.statusCode, result.data);
 
-    if (!response.ok) {
-      console.error('Resend API error:', data);
-      return res.status(response.status).json({ 
+    if (result.statusCode >= 200 && result.statusCode < 300) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Order confirmation email sent successfully',
+        emailId: result.data.id 
+      });
+    } else {
+      console.error('Resend API error:', result.data);
+      return res.status(result.statusCode || 500).json({ 
         error: 'Failed to send email', 
-        details: data 
+        details: result.data 
       });
     }
-
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Order confirmation email sent successfully',
-      emailId: data.id 
-    });
 
   } catch (error) {
     console.error('Error sending email:', error);
     return res.status(500).json({ 
       error: 'Internal server error', 
-      message: error.message 
+      message: error.message,
+      stack: error.stack
     });
   }
-}
+};

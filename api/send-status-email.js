@@ -1,8 +1,10 @@
 // API endpoint for sending status update emails
 // Uses Resend API - requires RESEND_API_KEY environment variable
 
+const https = require('https');
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = 'support@xtremepeptides.nz';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@xtremepeptides.nz';
 
 function generateCustomMessageHTML(data) {
   return `<!DOCTYPE html>
@@ -20,7 +22,7 @@ function generateCustomMessageHTML(data) {
           
           <tr>
             <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <img src="https://xtremepeptides.nz/logo.png" alt="XTREME PEPTIDES NZ" style="max-width: 200px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
+              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; letter-spacing: 2px;">XTREME PEPTIDES NZ</h1>
               <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
             </td>
           </tr>
@@ -108,7 +110,7 @@ function generateStatusUpdateHTML(data) {
           
           <tr>
             <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <img src="https://xtremepeptides.nz/logo.png" alt="XTREME PEPTIDES NZ" style="max-width: 200px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
+              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; letter-spacing: 2px;">XTREME PEPTIDES NZ</h1>
               <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
             </td>
           </tr>
@@ -166,7 +168,30 @@ function generateStatusUpdateHTML(data) {
 </html>`;
 }
 
+// Helper function to make HTTPS request
+function makeRequest(options, postData) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          resolve({ statusCode: res.statusCode, data: parsed });
+        } catch (e) {
+          resolve({ statusCode: res.statusCode, data: data });
+        }
+      });
+    });
+    req.on('error', reject);
+    if (postData) req.write(postData);
+    req.end();
+  });
+}
+
 module.exports = async function handler(req, res) {
+  console.log('send-status-email API called:', req.method);
+  
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -183,6 +208,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (!RESEND_API_KEY) {
+    console.error('RESEND_API_KEY not configured');
     return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
   }
 
@@ -197,11 +223,9 @@ module.exports = async function handler(req, res) {
     let subject;
 
     if (emailType === 'custom' || customMessage) {
-      // Custom message email
       htmlContent = generateCustomMessageHTML({ orderNumber, customMessage });
       subject = `Message Regarding Your Order - ${orderNumber}`;
     } else {
-      // Status update email
       htmlContent = generateStatusUpdateHTML({ 
         orderNumber, 
         status: status || 'updated', 
@@ -211,42 +235,48 @@ module.exports = async function handler(req, res) {
       subject = `Order Status Update - ${orderNumber}`;
     }
 
-    // Send email using Resend API
-    const response = await fetch('https://api.resend.com/emails', {
+    const postData = JSON.stringify({
+      from: FROM_EMAIL,
+      to: [email],
+      subject: subject,
+      html: htmlContent,
+    });
+
+    const options = {
+      hostname: 'api.resend.com',
+      port: 443,
+      path: '/emails',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [email], // Must be an array
-        subject: subject,
-        html: htmlContent,
-      }),
-    });
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
 
-    const data = await response.json();
+    const result = await makeRequest(options, postData);
+    console.log('Resend API response:', result.statusCode, result.data);
 
-    if (!response.ok) {
-      console.error('Resend API error:', data);
-      return res.status(response.status).json({ 
+    if (result.statusCode >= 200 && result.statusCode < 300) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Status update email sent successfully',
+        emailId: result.data.id 
+      });
+    } else {
+      console.error('Resend API error:', result.data);
+      return res.status(result.statusCode || 500).json({ 
         error: 'Failed to send email', 
-        details: data 
+        details: result.data 
       });
     }
-
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Status update email sent successfully',
-      emailId: data.id 
-    });
 
   } catch (error) {
     console.error('Error sending email:', error);
     return res.status(500).json({ 
       error: 'Internal server error', 
-      message: error.message 
+      message: error.message,
+      stack: error.stack
     });
   }
-}
+};
