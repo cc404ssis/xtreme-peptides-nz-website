@@ -720,7 +720,14 @@ function renderOrderModal(order) {
       </div>
       <div class="order-info-card">
         <div class="card-label">Payment</div>
-        <div class="card-value">${order.payment_method ? `${order.payment_method}` : '—'} <span style="color:var(--text-3); font-size:12px;">${order.payment_status || ''}</span></div>
+        <div class="card-value" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          ${order.payment_method || '—'}
+          ${order.payment_status ? `<span class="status-badge ${
+            order.payment_status === 'paid'     ? 'status-delivered' :
+            order.payment_status === 'refunded' ? 'status-refunded'  :
+            'status-pending'
+          }">${order.payment_status}</span>` : ''}
+        </div>
       </div>
       ${order.tracking_number ? `
       <div class="order-info-card full-width" style="border-color: rgba(0,212,255,0.3); background: rgba(0,212,255,0.06);">
@@ -1311,11 +1318,16 @@ async function handleSendEmail(e) {
     // Update order status if changed
     if (status && currentOrder && currentOrder.status !== status) {
       console.log('Updating order status to:', status);
+      const paymentStatusMap = {
+        payment_confirmed: 'paid',
+        order_refunded:    'refunded'
+      };
       const { error: updateError } = await supabaseClient
         .from('orders')
-        .update({ 
+        .update({
           status: status,
           tracking_number: trackingNumber || currentOrder.tracking_number,
+          payment_status: paymentStatusMap[emailType] || currentOrder.payment_status,
           updated_at: new Date().toISOString()
         })
         .eq('id', currentOrder.id);
@@ -1444,9 +1456,14 @@ async function handleUpdateStatus() {
   if (!supabaseClient) { alert('Database connection unavailable.'); return; }
 
   try {
+    const statusPaymentMap = { processing: 'paid', refunded: 'refunded' };
     const { error } = await supabaseClient
       .from('orders')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .update({
+        status: newStatus,
+        payment_status: statusPaymentMap[newStatus] || currentOrder.payment_status,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', currentOrder.id);
 
     if (error) throw error;
