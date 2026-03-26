@@ -6,7 +6,9 @@ const https = require('https');
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'XTREME PEPTIDES NZ <support@xtremepeptides.nz>';
 const SUPABASE_URL = 'https://paenulyipooobvavjdkh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
+// Service role key bypasses RLS for server-side writes — set SUPABASE_SERVICE_ROLE_KEY in Vercel env vars
+const SUPABASE_UPDATE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
 
 async function updateOrderInSupabase(orderNumber, updateData) {
   const postData = JSON.stringify(updateData);
@@ -18,8 +20,35 @@ async function updateOrderInSupabase(orderNumber, updateData) {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_UPDATE_KEY}`,
+      'apikey': SUPABASE_ANON_KEY,
+      'Prefer': 'return=minimal',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+  return makeRequest(options, postData);
+}
+
+async function insertEmailLog(orderNumber, recipientEmail, emailType, subject, resendEmailId) {
+  const postData = JSON.stringify({
+    order_number: orderNumber,
+    recipient_email: recipientEmail,
+    email_type: emailType,
+    subject: subject,
+    status: 'sent',
+    resend_email_id: resendEmailId || null,
+    sent_at: new Date().toISOString()
+  });
+  const url = new URL(`${SUPABASE_URL}/rest/v1/email_logs`);
+  const options = {
+    hostname: url.hostname,
+    port: 443,
+    path: url.pathname,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Prefer': 'return=minimal',
       'Content-Length': Buffer.byteLength(postData)
     }
@@ -28,7 +57,7 @@ async function updateOrderInSupabase(orderNumber, updateData) {
 }
 
 function generateOrderConfirmationHTML(data) {
-  const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod } = data;
+  const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod, shippingMethod } = data;
   
   const itemsHTML = items.map(item => {
     const price = parseFloat(item.price) || 0;
@@ -110,13 +139,15 @@ function generateOrderConfirmationHTML(data) {
               </table>
               
               <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin-top: 30px;">
-                <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Address</h4>
-                <p style="color: #e0e6ed; margin: 0; line-height: 1.6;">
+                <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Details</h4>
+                <p style="color: #8b9cb5; margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Delivery Address</p>
+                <p style="color: #e0e6ed; margin: 0 0 15px 0; line-height: 1.6;">
                   ${shippingAddr.name || 'N/A'}<br>
                   ${shippingAddr.address || 'N/A'}<br>
-                  ${shippingAddr.city || 'N/A'}, ${shippingAddr.postcode || 'N/A'}<br>
-                  ${shippingAddr.country || 'New Zealand'}
+                  ${shippingAddr.city || 'N/A'}, ${shippingAddr.postalCode || shippingAddr.postcode || 'N/A'}<br>
+                  ${shippingAddr.region ? shippingAddr.region + '<br>' : ''}New Zealand
                 </p>
+                ${shippingMethod ? `<p style="color: #8b9cb5; margin: 0 0 4px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Shipping Method</p><p style="color: #e0e6ed; margin: 0; font-size: 15px; text-transform: capitalize;">${shippingMethod}</p>` : ''}
               </div>
               
               <p style="color: #8b9cb5; margin-top: 30px; font-size: 14px; text-align: center;">
@@ -272,7 +303,8 @@ module.exports = async function handler(req, res) {
       shippingCost: shippingCost,
       total: total,
       shippingAddress: shippingAddress,
-      paymentMethod: orderData.paymentMethod || 'bank_transfer'
+      paymentMethod: orderData.paymentMethod || 'bank_transfer',
+      shippingMethod: orderData.shippingMethod || shippingAddress?.shippingMethod || inferredShippingMethod
     });
 
     const postData = JSON.stringify({
@@ -298,10 +330,22 @@ module.exports = async function handler(req, res) {
     console.log('Resend API response:', result.statusCode, result.data);
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
-      return res.status(200).json({ 
-        success: true, 
+      // Log to email_logs table
+      try {
+        await insertEmailLog(
+          orderData.orderNumber,
+          orderData.customerEmail,
+          'order_confirmation',
+          `Order Confirmation - ${orderData.orderNumber}`,
+          result.data.id
+        );
+      } catch (e) {
+        console.error('Email log insert error:', e);
+      }
+      return res.status(200).json({
+        success: true,
         message: 'Order confirmation email sent successfully',
-        emailId: result.data.id 
+        emailId: result.data.id
       });
     } else {
       console.error('Resend API error:', result.data);
