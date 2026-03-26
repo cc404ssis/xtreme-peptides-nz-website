@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS email_logs (
   subject VARCHAR(500) NOT NULL,
   status VARCHAR(50) NOT NULL, -- 'sent', 'failed'
   resend_email_id VARCHAR(255),
+  tracking_number VARCHAR(255),
   error_message TEXT,
   sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

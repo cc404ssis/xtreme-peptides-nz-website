@@ -917,9 +917,8 @@ function viewOrderEmailHistory(orderNumber) {
       <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
         <span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span>
       </td>
-      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; display:flex; gap:6px;">
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
         <button class="btn btn-sm btn-secondary" onclick="viewEmailDetail('${log.id}')">👁 View</button>
-        <button class="btn btn-sm" style="background:#dc3545; color:#fff;" onclick="deleteEmailLog('${log.id}', '${orderNumber}')">Delete</button>
       </td>
     </tr>
   `).join('');
@@ -959,10 +958,10 @@ function viewEmailDetail(logId) {
         <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Subject</div>
         <div style="color:#e0e6ed; font-size:14px;">${log.subject || '-'}</div>
       </div>
-      ${log.resend_email_id ? `
+      ${log.email_type === 'order_shipped' ? `
       <div style="background:#1a2a3a; padding:14px; border-radius:8px; grid-column:1/-1;">
-        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Resend ID</div>
-        <div style="color:#8b9cb5; font-family:monospace; font-size:12px;">${log.resend_email_id}</div>
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Tracking Number</div>
+        <div style="color:#00d4ff; font-family:monospace; font-size:15px;">${log.tracking_number || '—'}</div>
       </div>` : ''}
     </div>
     <div>
@@ -1313,6 +1312,7 @@ async function handleSendEmail(e) {
       subject: template.subject.replace('{orderNumber}', orderNumber),
       status: 'sent',
       resend_email_id: result.emailId,
+      tracking_number: emailType === 'order_shipped' ? trackingNumber : null,
       sent_at: new Date().toISOString()
     });
 
