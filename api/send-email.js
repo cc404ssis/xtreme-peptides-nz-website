@@ -10,19 +10,19 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Service role key bypasses RLS for server-side writes — set SUPABASE_SERVICE_ROLE_KEY in Vercel env vars
 const SUPABASE_UPDATE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
 
-async function updateOrderInSupabase(orderNumber, updateData) {
-  const postData = JSON.stringify(updateData);
-  const url = new URL(`${SUPABASE_URL}/rest/v1/orders?order_number=eq.${encodeURIComponent(orderNumber)}`);
+async function upsertOrderInSupabase(upsertData) {
+  const postData = JSON.stringify(upsertData);
+  const url = new URL(`${SUPABASE_URL}/rest/v1/orders`);
   const options = {
     hostname: url.hostname,
     port: 443,
-    path: url.pathname + url.search,
-    method: 'PATCH',
+    path: url.pathname,
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${SUPABASE_UPDATE_KEY}`,
       'apikey': SUPABASE_ANON_KEY,
-      'Prefer': 'return=minimal',
+      'Prefer': 'resolution=merge-duplicates,return=minimal',
       'Content-Length': Buffer.byteLength(postData)
     }
   };
@@ -271,9 +271,12 @@ module.exports = async function handler(req, res) {
     // Infer shipping method from cost (frontend doesn't pass shippingMethod to this API)
     const inferredShippingMethod = shippingCost >= 22 ? 'rural' : shippingCost >= 16 ? 'express' : 'standard';
 
-    // Update Supabase order with full data (items, address, costs) — AWAITED before response
+    // Upsert full order data — handles race condition where frontend INSERT may not have completed yet
     if (orderData.orderNumber) {
-      const supabaseUpdate = {
+      const supabaseUpsert = {
+        order_number: orderData.orderNumber,
+        customer_email: orderData.customerEmail,
+        customer_name: customerName,
         items: items.map(i => ({ id: i.id, name: i.name, size: i.size, price: i.price, quantity: i.quantity })),
         shipping_address: {
           name: shippingAddress.name || customerName,
@@ -288,10 +291,10 @@ module.exports = async function handler(req, res) {
         total: total
       };
       try {
-        const updateResult = await updateOrderInSupabase(orderData.orderNumber, supabaseUpdate);
-        console.log('Supabase order update:', updateResult.statusCode, JSON.stringify(updateResult.data));
+        const upsertResult = await upsertOrderInSupabase(supabaseUpsert);
+        console.log('Supabase order upsert:', upsertResult.statusCode, JSON.stringify(upsertResult.data));
       } catch (e) {
-        console.error('Supabase update error:', e);
+        console.error('Supabase upsert error:', e);
       }
     }
     
