@@ -338,7 +338,9 @@
           <h2 id="email-history-title">Email History</h2>
           <button class="close-btn" onclick="document.getElementById('email-history-modal').classList.add('hidden')">&times;</button>
         </div>
-        <div class="modal-body" style="padding: 0;">
+
+        <!-- History list view -->
+        <div id="email-history-list" class="modal-body" style="padding: 0;">
           <table style="width:100%; border-collapse: collapse;">
             <thead>
               <tr>
@@ -352,6 +354,13 @@
             <tbody id="email-history-tbody"></tbody>
           </table>
         </div>
+
+        <!-- Email detail view -->
+        <div id="email-detail-view" class="modal-body hidden" style="padding: 20px;">
+          <button class="btn btn-secondary btn-sm" onclick="closeEmailDetail()" style="margin-bottom:20px;">← Back to History</button>
+          <div id="email-detail-content"></div>
+        </div>
+
         <div class="modal-footer" style="justify-content: flex-end;">
           <button class="btn btn-secondary" onclick="document.getElementById('email-history-modal').classList.add('hidden')">Close</button>
         </div>
@@ -362,6 +371,6 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="/admin/admin.js?v=15"></script>
+  <script src="/admin/admin.js?v=16"></script>
 </body>
 </html>

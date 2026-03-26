@@ -902,6 +902,8 @@ function viewOrderEmailHistory(orderNumber) {
   const tbody = document.getElementById('email-history-tbody');
   if (!modal || !tbody) return;
 
+  closeEmailDetail();
+
   const logs = allEmailLogs.filter(l => l.order_number === orderNumber)
     .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
 
@@ -915,13 +917,70 @@ function viewOrderEmailHistory(orderNumber) {
       <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
         <span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span>
       </td>
-      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; display:flex; gap:6px;">
+        <button class="btn btn-sm btn-secondary" onclick="viewEmailDetail('${log.id}')">👁 View</button>
         <button class="btn btn-sm" style="background:#dc3545; color:#fff;" onclick="deleteEmailLog('${log.id}', '${orderNumber}')">Delete</button>
       </td>
     </tr>
   `).join('');
 
   modal.classList.remove('hidden');
+}
+
+function viewEmailDetail(logId) {
+  const log = allEmailLogs.find(l => l.id === logId);
+  if (!log) return;
+
+  const template = EMAIL_TEMPLATES[log.email_type];
+  const typeLabel = template ? log.email_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : log.email_type;
+  const previewHTML = template
+    ? template.preview({ orderNumber: log.order_number })
+    : `<em style="color:#8b9cb5;">No preview available for this email type.</em>`;
+
+  document.getElementById('email-detail-content').innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Order</div>
+        <div style="color:#00d4ff; font-family:monospace; font-size:15px;">${log.order_number || '-'}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Recipient</div>
+        <div style="color:#e0e6ed; font-size:14px;">${log.recipient_email || '-'}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Email Type</div>
+        <div style="color:#e0e6ed; font-size:14px;">${typeLabel}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Sent At</div>
+        <div style="color:#e0e6ed; font-size:14px;">${log.sent_at ? new Date(log.sent_at).toLocaleString() : '-'}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px; grid-column:1/-1;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Subject</div>
+        <div style="color:#e0e6ed; font-size:14px;">${log.subject || '-'}</div>
+      </div>
+      ${log.resend_email_id ? `
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px; grid-column:1/-1;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Resend ID</div>
+        <div style="color:#8b9cb5; font-family:monospace; font-size:12px;">${log.resend_email_id}</div>
+      </div>` : ''}
+    </div>
+    <div>
+      <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Email Preview</div>
+      <div style="background:#1a2a3a; border-left:3px solid #00d4ff; padding:16px; border-radius:8px; color:#e0e6ed; font-size:14px; line-height:1.7;">
+        ${previewHTML}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('email-history-list').classList.add('hidden');
+  document.getElementById('email-detail-view').classList.remove('hidden');
+  document.getElementById('email-history-title').textContent = `Email — ${typeLabel}`;
+}
+
+function closeEmailDetail() {
+  document.getElementById('email-history-list')?.classList.remove('hidden');
+  document.getElementById('email-detail-view')?.classList.add('hidden');
 }
 
 // Delete Email Log (soft delete - moves to deleted_emails)
