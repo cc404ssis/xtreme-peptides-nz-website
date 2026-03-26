@@ -413,17 +413,24 @@ function renderOrders(ordersToRender) {
     heading.textContent = `${label} (${ordersToRender.length})`;
   }
   
+  if (ordersToRender.length === 0) {
+    ordersTb.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-2); padding:40px;">No orders found</td></tr>';
+    return;
+  }
+
   ordersTb.innerHTML = ordersToRender.map(order => `
     <tr>
-      <td>${order.order_number || ''}</td>
-      <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
-      <td>${order.customer_name || ''}</td>
-      <td>${order.customer_email || ''}</td>
-      <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+      <td style="font-family:monospace; color:var(--cyan); font-weight:700; font-size:13px;">${order.order_number || ''}</td>
+      <td style="color:var(--text-2); font-size:12px;">${order.created_at ? new Date(order.created_at).toLocaleDateString('en-NZ', {day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
+      <td style="font-weight:500;">${order.customer_name || '<span style="color:var(--text-3)">—</span>'}</td>
+      <td style="color:var(--text-2); font-size:13px;">${order.customer_email || ''}</td>
+      <td style="font-weight:700; color:var(--text-1);">$${parseFloat(order.total || order.order_total || 0).toFixed(2)}</td>
       <td><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background: #dc3545; margin-left: 5px;">Delete</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
+          <button class="btn btn-sm" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3);">Delete</button>
+        </div>
       </td>
     </tr>
   `).join('');
@@ -681,66 +688,102 @@ function renderOrderModal(order) {
   const modalBody = document.getElementById('order-modal-body');
   if (!modalBody) return;
 
+  const statusClass = `status-${order.status || 'pending'}`;
+  const dateStr = order.created_at ? new Date(order.created_at).toLocaleString('en-NZ', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
+  const total = parseFloat(order.total || order.order_total || 0).toFixed(2);
+  const subtotal = parseFloat(order.subtotal || 0).toFixed(2);
+  const shipping = parseFloat(order.shipping_cost || 0).toFixed(2);
+
   modalBody.innerHTML = `
-    <div class="order-info">
-      <p><strong>Order Number:</strong> ${order.order_number || ''}</p>
-      <p><strong>Date:</strong> ${order.created_at ? new Date(order.created_at).toLocaleString() : ''}</p>
-      <p><strong>Status:</strong> <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></p>
-      <p><strong>Payment Status:</strong> ${order.payment_status || ''}</p>
-      ${order.tracking_number ? `<p><strong>Tracking Number:</strong> ${order.tracking_number}</p>` : ''}
+    <!-- Order summary cards -->
+    <div class="order-detail-grid">
+      <div class="order-info-card">
+        <div class="card-label">Order Number</div>
+        <div class="card-value mono">${order.order_number || '—'}</div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Status</div>
+        <div class="card-value"><span class="status-badge ${statusClass}">${order.status || 'pending'}</span></div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Date Placed</div>
+        <div class="card-value">${dateStr}</div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Payment</div>
+        <div class="card-value">${order.payment_method ? `${order.payment_method}` : '—'} <span style="color:var(--text-3); font-size:12px;">${order.payment_status || ''}</span></div>
+      </div>
+      ${order.tracking_number ? `
+      <div class="order-info-card full-width" style="border-color: rgba(0,212,255,0.3); background: rgba(0,212,255,0.06);">
+        <div class="card-label" style="color:var(--cyan);">Tracking Number</div>
+        <div class="card-value mono">${order.tracking_number}</div>
+      </div>` : ''}
     </div>
-    
-    <div class="customer-info">
-      <h3>Customer Information</h3>
-      <p><strong>Name:</strong> ${order.customer_name || ''}</p>
-      <p><strong>Email:</strong> ${order.customer_email || ''}</p>
-      ${order.customer_phone ? `<p><strong>Phone:</strong> ${order.customer_phone}</p>` : ''}
+
+    <!-- Customer -->
+    <div class="order-section-title">Customer Information</div>
+    <div class="order-detail-grid">
+      <div class="order-info-card">
+        <div class="card-label">Name</div>
+        <div class="card-value">${order.customer_name || '—'}</div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Email</div>
+        <div class="card-value" style="color:var(--cyan); font-size:13px;">${order.customer_email || '—'}</div>
+      </div>
+      ${order.customer_phone ? `
+      <div class="order-info-card full-width">
+        <div class="card-label">Phone</div>
+        <div class="card-value">${order.customer_phone}</div>
+      </div>` : ''}
     </div>
-    
-    <div class="shipping-info">
-      <h3>Shipping Address</h3>
-      <p>${address.name || order.customer_name || ''}</p>
-      <p>${address.address || ''}</p>
-      <p>${address.city || ''}, ${address.postcode || ''}</p>
-      <p>${address.country || 'New Zealand'}</p>
+
+    <!-- Shipping -->
+    <div class="order-section-title">Shipping Address</div>
+    <div class="order-detail-grid">
+      <div class="order-info-card full-width">
+        <div class="card-label">Address</div>
+        <div class="card-value" style="line-height:1.8;">
+          ${[address.name || order.customer_name, address.address, [address.city, address.postcode].filter(Boolean).join(' '), address.country || 'New Zealand'].filter(Boolean).join('<br>')}
+        </div>
+      </div>
     </div>
-    
-    <div class="order-items">
-      <h3>Order Items</h3>
+
+    <!-- Items -->
+    <div class="order-section-title">Order Items</div>
+    <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:4px;">
       <table class="items-table">
         <thead>
           <tr>
             <th>Product</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Total</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Line Total</th>
           </tr>
         </thead>
         <tbody>
-          ${items.map(item => `
+          ${items.length ? items.map(item => `
             <tr>
-              <td>${item.name || ''}</td>
-              <td>${item.quantity || 0}</td>
-              <td>$${parseFloat(item.price || 0).toFixed(2)}</td>
-              <td>$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}</td>
+              <td style="font-weight:500;">${item.name || '—'}</td>
+              <td style="text-align:center; color:var(--text-2);">${item.quantity || 0}</td>
+              <td style="text-align:right; color:var(--text-2);">$${parseFloat(item.price || 0).toFixed(2)}</td>
+              <td style="text-align:right; font-weight:600;">$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}</td>
             </tr>
-          `).join('')}
+          `).join('') : '<tr><td colspan="4" style="text-align:center; color:var(--text-3); padding:20px;">No items recorded</td></tr>'}
         </tbody>
       </table>
-      
-      <div class="order-totals">
-        <p><strong>Subtotal:</strong> $${parseFloat(order.subtotal || 0).toFixed(2)}</p>
-        <p><strong>Shipping:</strong> $${parseFloat(order.shipping_cost || 0).toFixed(2)}</p>
-        <p class="total"><strong>Total:</strong> $${parseFloat(order.total || 0).toFixed(2)}</p>
+      <div class="order-totals-row">
+        <div class="tot-item"><div class="tot-label">Subtotal</div><div class="tot-value">$${subtotal}</div></div>
+        <div class="tot-item"><div class="tot-label">Shipping</div><div class="tot-value">$${shipping}</div></div>
+        <div class="tot-item tot-total"><div class="tot-label">Total</div><div class="tot-value">$${total}</div></div>
       </div>
     </div>
-    
+
     ${order.notes ? `
-    <div class="order-notes">
-      <h3>Notes</h3>
-      <p>${order.notes}</p>
-    </div>
-    ` : ''}
+    <div class="order-section-title">Notes</div>
+    <div class="order-info-card full-width" style="border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.05);">
+      <div class="card-value" style="color:var(--text-2); white-space:pre-wrap;">${order.notes}</div>
+    </div>` : ''}
   `;
 }
 
