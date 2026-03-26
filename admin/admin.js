@@ -338,9 +338,8 @@ async function loadOrders() {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
-  
-  const ordersTb = document.getElementById('orders-tbody');
-  
+
+
   try {
     const { data, error } = await supabaseClient
       .from('orders')
@@ -460,9 +459,7 @@ async function loadDeletedOrders() {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
-  
-  const deletedOrdersTb = document.getElementById('deleted-orders-tbody');
-  
+
   try {
     const { data, error } = await supabaseClient
       .from('deleted_orders')
@@ -788,9 +785,7 @@ async function loadEmailLogs() {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
-  
-  const emailLogsTb = document.getElementById('email-logs-tbody');
-  
+
   try {
     console.log('Querying email_logs table...');
     const { data, error } = await supabaseClient
@@ -812,27 +807,75 @@ async function loadEmailLogs() {
   }
 }
 
+let allEmailLogs = [];
+
 function renderEmailLogs(logs) {
+  allEmailLogs = logs;
   const emailLogsTb = document.getElementById('email-logs-tbody');
   if (!emailLogsTb) return;
-  
-  emailLogsTb.innerHTML = logs.map(log => `
+
+  // Group by order_number
+  const grouped = {};
+  logs.forEach(log => {
+    const key = log.order_number || 'unknown';
+    if (!grouped[key]) {
+      grouped[key] = { order_number: key, recipient: log.recipient_email, logs: [], lastSent: null };
+    }
+    grouped[key].logs.push(log);
+    if (!grouped[key].lastSent || new Date(log.sent_at) > new Date(grouped[key].lastSent)) {
+      grouped[key].lastSent = log.sent_at;
+      grouped[key].recipient = log.recipient_email;
+    }
+  });
+
+  const orders = Object.values(grouped).sort((a, b) => new Date(b.lastSent) - new Date(a.lastSent));
+
+  if (orders.length === 0) {
+    emailLogsTb.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8b9cb5; padding:30px;">No email logs found</td></tr>';
+    return;
+  }
+
+  emailLogsTb.innerHTML = orders.map(order => `
     <tr>
-      <td>${log.sent_at ? new Date(log.sent_at).toLocaleString() : ''}</td>
-      <td>${log.order_number || '-'}</td>
-      <td>${log.recipient_email || ''}</td>
-      <td>${log.email_type || ''}</td>
-      <td>${log.subject || ''}</td>
-      <td><span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span></td>
-      <td>
-        <button class="btn btn-sm btn-danger" onclick="deleteEmailLog('${log.id}')" style="background: #dc3545;">Delete</button>
-      </td>
+      <td style="color:#00d4ff; font-family:monospace;">${order.order_number}</td>
+      <td>${order.recipient || '-'}</td>
+      <td><span class="status-badge status-processing">${order.logs.length} email${order.logs.length !== 1 ? 's' : ''}</span></td>
+      <td>${order.lastSent ? new Date(order.lastSent).toLocaleString() : '-'}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="viewOrderEmailHistory('${order.order_number}')">📧 View History</button></td>
     </tr>
   `).join('');
 }
 
+function viewOrderEmailHistory(orderNumber) {
+  const modal = document.getElementById('email-history-modal');
+  const title = document.getElementById('email-history-title');
+  const tbody = document.getElementById('email-history-tbody');
+  if (!modal || !tbody) return;
+
+  const logs = allEmailLogs.filter(l => l.order_number === orderNumber)
+    .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
+
+  title.textContent = `Email History — Order ${orderNumber}`;
+
+  tbody.innerHTML = logs.map(log => `
+    <tr>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; color:#e0e6ed; font-size:13px;">${log.sent_at ? new Date(log.sent_at).toLocaleString() : '-'}</td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; color:#e0e6ed; font-size:13px;">${log.email_type || '-'}</td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; color:#e0e6ed; font-size:13px;">${log.subject || '-'}</td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
+        <span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span>
+      </td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
+        <button class="btn btn-sm" style="background:#dc3545; color:#fff;" onclick="deleteEmailLog('${log.id}', '${orderNumber}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+
+  modal.classList.remove('hidden');
+}
+
 // Delete Email Log (soft delete - moves to deleted_emails)
-async function deleteEmailLog(logId) {
+async function deleteEmailLog(logId, orderNumber) {
   if (!confirm('Are you sure you want to delete this email log?')) return;
   if (!supabaseClient) { alert('Database connection unavailable.'); return; }
 
@@ -867,7 +910,8 @@ async function deleteEmailLog(logId) {
     if (error) throw error;
 
     console.log('Email log deleted successfully');
-    loadEmailLogs(); // Refresh the email logs list
+    await loadEmailLogs();
+    if (orderNumber) viewOrderEmailHistory(orderNumber);
   } catch (error) {
     console.error('Error deleting email log:', error);
     alert('Failed to delete email log: ' + error.message);
@@ -964,7 +1008,6 @@ function handleEmailTypeChange(e) {
   const reasonSelect = document.getElementById('email-reason');
   const customMessageGroup = document.getElementById('custom-message-group');
   const statusSelect = document.getElementById('email-status');
-  const previewBox = document.getElementById('email-preview');
 
   // Show/hide fields based on email type
   if (trackingGroup) trackingGroup.classList.toggle('hidden', !template.requiresTracking);

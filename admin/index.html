@@ -195,12 +195,10 @@
               <table id="email-logs-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
                     <th>Order #</th>
                     <th>Recipient</th>
-                    <th>Type</th>
-                    <th>Subject</th>
-                    <th>Status</th>
+                    <th>Emails Sent</th>
+                    <th>Last Sent</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -323,11 +321,38 @@
         </div>
       </div>
     </div>
+
+    <!-- Email History Modal -->
+    <div id="email-history-modal" class="modal hidden">
+      <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+          <h2 id="email-history-title">Email History</h2>
+          <button class="close-btn" onclick="document.getElementById('email-history-modal').classList.add('hidden')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+          <table style="width:100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="background:#1a2a3a; color:#8b9cb5; padding:12px 15px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Date</th>
+                <th style="background:#1a2a3a; color:#8b9cb5; padding:12px 15px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Type</th>
+                <th style="background:#1a2a3a; color:#8b9cb5; padding:12px 15px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Subject</th>
+                <th style="background:#1a2a3a; color:#8b9cb5; padding:12px 15px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Status</th>
+                <th style="background:#1a2a3a; color:#8b9cb5; padding:12px 15px; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; text-align:left;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="email-history-tbody"></tbody>
+          </table>
+        </div>
+        <div class="modal-footer" style="justify-content: flex-end;">
+          <button class="btn btn-secondary" onclick="document.getElementById('email-history-modal').classList.add('hidden')">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <script src="/admin/admin.js?v=12"></script>
+  <script src="/admin/admin.js?v=13"></script>
 </body>
 </html>
