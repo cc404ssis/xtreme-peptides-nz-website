@@ -98,10 +98,18 @@ async function init() {
     logoutBtn.addEventListener('click', handleLogout);
   }
   if (refreshBtn) {
-    refreshBtn.addEventListener('click', loadOrders);
+    refreshBtn.addEventListener('click', () => {
+      const s = document.getElementById('search-input');
+      if (s) s.value = '';
+      loadOrders();
+    });
   }
   if (refreshLogsBtn) {
-    refreshLogsBtn.addEventListener('click', loadEmailLogs);
+    refreshLogsBtn.addEventListener('click', () => {
+      const s = document.getElementById('email-logs-search');
+      if (s) s.value = '';
+      loadEmailLogs();
+    });
   }
   if (statusFilter) {
     statusFilter.addEventListener('change', filterOrders);
@@ -172,10 +180,18 @@ async function init() {
 
   // Refresh buttons
   const refreshDeletedBtn = document.getElementById('refresh-deleted-btn');
-  if (refreshDeletedBtn) refreshDeletedBtn.addEventListener('click', loadDeletedOrders);
+  if (refreshDeletedBtn) refreshDeletedBtn.addEventListener('click', () => {
+    const s = document.getElementById('deleted-orders-search');
+    if (s) s.value = '';
+    loadDeletedOrders();
+  });
 
   const refreshDeletedEmailsBtn = document.getElementById('refresh-deleted-emails-btn');
-  if (refreshDeletedEmailsBtn) refreshDeletedEmailsBtn.addEventListener('click', loadDeletedEmails);
+  if (refreshDeletedEmailsBtn) refreshDeletedEmailsBtn.addEventListener('click', () => {
+    const s = document.getElementById('deleted-emails-search');
+    if (s) s.value = '';
+    loadDeletedEmails();
+  });
 
   const deletedOrdersSearch = document.getElementById('deleted-orders-search');
   if (deletedOrdersSearch) deletedOrdersSearch.addEventListener('input', filterDeletedOrders);
