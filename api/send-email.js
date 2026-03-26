@@ -5,6 +5,27 @@ const https = require('https');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@xtremepeptides.nz';
+const SUPABASE_URL = 'https://paenulyipooobvavjdkh.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
+
+async function updateOrderInSupabase(orderNumber, updateData) {
+  const postData = JSON.stringify(updateData);
+  const url = new URL(`${SUPABASE_URL}/rest/v1/orders?order_number=eq.${encodeURIComponent(orderNumber)}`);
+  const options = {
+    hostname: url.hostname,
+    port: 443,
+    path: url.pathname + url.search,
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apikey': SUPABASE_KEY,
+      'Prefer': 'return=minimal',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+  return makeRequest(options, postData);
+}
 
 function generateOrderConfirmationHTML(data) {
   const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod } = data;
@@ -207,7 +228,7 @@ module.exports = async function handler(req, res) {
     }
 
     console.log('Sending email to:', orderData.customerEmail);
-    
+
     // Validate and sanitize data - support both orderTotal and total
     const items = Array.isArray(orderData.items) ? orderData.items : [];
     const shippingCost = parseFloat(orderData.shippingCost) || 0;
@@ -215,6 +236,27 @@ module.exports = async function handler(req, res) {
     const subtotal = parseFloat(orderData.subtotal) || (total - shippingCost) || 0;
     const shippingAddress = orderData.shippingAddress || {};
     const customerName = orderData.customerName || shippingAddress?.name || orderData.customerEmail;
+
+    // Update Supabase order with full data (items, address, costs)
+    if (orderData.orderNumber) {
+      const supabaseUpdate = {
+        items: items.map(i => ({ id: i.id, name: i.name, size: i.size, price: i.price, quantity: i.quantity })),
+        shipping_address: {
+          name: shippingAddress.name || customerName,
+          address: shippingAddress.address || '',
+          city: shippingAddress.city || '',
+          region: shippingAddress.region || '',
+          postalCode: shippingAddress.postalCode || '',
+          shippingMethod: orderData.shippingMethod || shippingAddress.shippingMethod || null
+        },
+        subtotal: subtotal,
+        shipping_cost: shippingCost,
+        total: total
+      };
+      updateOrderInSupabase(orderData.orderNumber, supabaseUpdate)
+        .then(r => console.log('Supabase order update:', r.statusCode))
+        .catch(e => console.error('Supabase update error:', e));
+    }
     
     const htmlContent = generateOrderConfirmationHTML({
       orderNumber: orderData.orderNumber,
