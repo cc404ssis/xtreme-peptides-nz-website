@@ -177,6 +177,15 @@ async function init() {
   const refreshDeletedEmailsBtn = document.getElementById('refresh-deleted-emails-btn');
   if (refreshDeletedEmailsBtn) refreshDeletedEmailsBtn.addEventListener('click', loadDeletedEmails);
 
+  const deletedOrdersSearch = document.getElementById('deleted-orders-search');
+  if (deletedOrdersSearch) deletedOrdersSearch.addEventListener('input', filterDeletedOrders);
+
+  const deletedEmailsSearch = document.getElementById('deleted-emails-search');
+  if (deletedEmailsSearch) deletedEmailsSearch.addEventListener('input', filterDeletedEmails);
+
+  const emailLogsSearch = document.getElementById('email-logs-search');
+  if (emailLogsSearch) emailLogsSearch.addEventListener('input', filterEmailLogs);
+
   // Modal close buttons - use event delegation for dynamically added content
   document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-btn') || e.target.closest('.close-modal')) {
@@ -476,10 +485,24 @@ async function loadDeletedOrders() {
   }
 }
 
-function renderDeletedOrders(ordersToRender) {
+let allDeletedOrders = [];
+
+function filterDeletedOrders() {
+  const q = (document.getElementById('deleted-orders-search')?.value || '').toLowerCase();
+  const filtered = q ? allDeletedOrders.filter(o =>
+    (o.order_number || '').toLowerCase().includes(q) ||
+    (o.customer_name || '').toLowerCase().includes(q) ||
+    (o.customer_email || '').toLowerCase().includes(q) ||
+    (o.status || '').toLowerCase().includes(q)
+  ) : allDeletedOrders;
+  renderDeletedOrders(filtered, false);
+}
+
+function renderDeletedOrders(ordersToRender, cache = true) {
+  if (cache) allDeletedOrders = ordersToRender;
   const deletedOrdersTb = document.getElementById('deleted-orders-tbody');
   if (!deletedOrdersTb) return;
-  
+
   deletedOrdersTb.innerHTML = ordersToRender.map(order => `
     <tr>
       <td>${order.order_number || ''}</td>
@@ -539,7 +562,22 @@ async function loadDeletedEmails() {
   }
 }
 
-function renderDeletedEmails(emails) {
+let allDeletedEmails = [];
+
+function filterDeletedEmails() {
+  const q = (document.getElementById('deleted-emails-search')?.value || '').toLowerCase();
+  const filtered = q ? allDeletedEmails.filter(e =>
+    (e.order_number || '').toLowerCase().includes(q) ||
+    (e.recipient_email || '').toLowerCase().includes(q) ||
+    (e.email_type || '').toLowerCase().includes(q) ||
+    (e.subject || '').toLowerCase().includes(q) ||
+    (e.status || '').toLowerCase().includes(q)
+  ) : allDeletedEmails;
+  renderDeletedEmails(filtered, false);
+}
+
+function renderDeletedEmails(emails, cache = true) {
+  if (cache) allDeletedEmails = emails;
   const tbody = document.getElementById('deleted-emails-tbody');
   if (!tbody) return;
   tbody.innerHTML = emails.map(email => `
@@ -809,8 +847,20 @@ async function loadEmailLogs() {
 
 let allEmailLogs = [];
 
-function renderEmailLogs(logs) {
-  allEmailLogs = logs;
+function filterEmailLogs() {
+  const q = (document.getElementById('email-logs-search')?.value || '').toLowerCase();
+  const filtered = q ? allEmailLogs.filter(l =>
+    (l.order_number || '').toLowerCase().includes(q) ||
+    (l.recipient_email || '').toLowerCase().includes(q) ||
+    (l.email_type || '').toLowerCase().includes(q) ||
+    (l.subject || '').toLowerCase().includes(q) ||
+    (l.status || '').toLowerCase().includes(q)
+  ) : allEmailLogs;
+  renderEmailLogs(filtered, false);
+}
+
+function renderEmailLogs(logs, cache = true) {
+  if (cache) allEmailLogs = logs;
   const emailLogsTb = document.getElementById('email-logs-tbody');
   if (!emailLogsTb) return;
 
