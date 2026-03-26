@@ -756,18 +756,24 @@ function renderOrderModal(order) {
 
     <!-- Shipping -->
     <div class="order-section-title">Shipping</div>
-    <div class="order-detail-grid">
-      <div class="order-info-card ${shippingMethod ? '' : 'full-width'}">
-        <div class="card-label">Address</div>
-        <div class="card-value" style="line-height:1.8;">
-          ${[address.name || order.customer_name, address.address, [address.city, address.postcode].filter(Boolean).join(' '), address.country || 'New Zealand'].filter(Boolean).join('<br>')}
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:20px;">
+      <div class="order-info-card">
+        <div class="card-label">Delivery Address</div>
+        <div class="card-value" style="line-height:2;">
+          ${[
+            address.name || order.customer_name,
+            address.address,
+            [address.city, address.region].filter(Boolean).join(', '),
+            address.postalCode || address.postcode || '',
+            'New Zealand'
+          ].filter(Boolean).join('<br>')}
         </div>
       </div>
-      ${shippingMethod ? `
-      <div class="order-info-card">
+      <div class="order-info-card" style="display:flex; flex-direction:column; justify-content:center;">
         <div class="card-label">Shipping Method</div>
-        <div class="card-value" style="font-weight:600;">${shippingMethod}</div>
-      </div>` : ''}
+        <div class="card-value" style="font-weight:600; margin-top:4px;">${shippingMethod || '—'}</div>
+        ${order.shipping_cost ? `<div style="color:var(--text-2); font-size:12px; margin-top:6px;">$${parseFloat(order.shipping_cost).toFixed(2)}</div>` : ''}
+      </div>
     </div>
 
     <!-- Items -->
