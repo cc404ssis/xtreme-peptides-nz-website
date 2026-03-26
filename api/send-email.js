@@ -289,7 +289,7 @@ module.exports = async function handler(req, res) {
       };
       try {
         const updateResult = await updateOrderInSupabase(orderData.orderNumber, supabaseUpdate);
-        console.log('Supabase order update:', updateResult.statusCode);
+        console.log('Supabase order update:', updateResult.statusCode, JSON.stringify(updateResult.data));
       } catch (e) {
         console.error('Supabase update error:', e);
       }
