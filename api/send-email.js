@@ -4,7 +4,7 @@
 const https = require('https');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@xtremepeptides.nz';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'XTREME PEPTIDES NZ <support@xtremepeptides.nz>';
 const SUPABASE_URL = 'https://paenulyipooobvavjdkh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
 
@@ -237,7 +237,10 @@ module.exports = async function handler(req, res) {
     const shippingAddress = orderData.shippingAddress || {};
     const customerName = orderData.customerName || shippingAddress?.name || orderData.customerEmail;
 
-    // Update Supabase order with full data (items, address, costs)
+    // Infer shipping method from cost (frontend doesn't pass shippingMethod to this API)
+    const inferredShippingMethod = shippingCost >= 22 ? 'rural' : shippingCost >= 16 ? 'express' : 'standard';
+
+    // Update Supabase order with full data (items, address, costs) — AWAITED before response
     if (orderData.orderNumber) {
       const supabaseUpdate = {
         items: items.map(i => ({ id: i.id, name: i.name, size: i.size, price: i.price, quantity: i.quantity })),
@@ -247,15 +250,18 @@ module.exports = async function handler(req, res) {
           city: shippingAddress.city || '',
           region: shippingAddress.region || '',
           postalCode: shippingAddress.postalCode || '',
-          shippingMethod: orderData.shippingMethod || shippingAddress.shippingMethod || null
+          shippingMethod: orderData.shippingMethod || shippingAddress.shippingMethod || inferredShippingMethod
         },
         subtotal: subtotal,
         shipping_cost: shippingCost,
         total: total
       };
-      updateOrderInSupabase(orderData.orderNumber, supabaseUpdate)
-        .then(r => console.log('Supabase order update:', r.statusCode))
-        .catch(e => console.error('Supabase update error:', e));
+      try {
+        const updateResult = await updateOrderInSupabase(orderData.orderNumber, supabaseUpdate);
+        console.log('Supabase order update:', updateResult.statusCode);
+      } catch (e) {
+        console.error('Supabase update error:', e);
+      }
     }
     
     const htmlContent = generateOrderConfirmationHTML({
