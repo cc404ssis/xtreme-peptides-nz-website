@@ -129,6 +129,16 @@ CREATE POLICY "Allow insert on email_logs for anon"
   TO anon
   WITH CHECK (true);
 
+CREATE POLICY "Allow select on email_logs for anon"
+  ON email_logs FOR SELECT
+  TO anon
+  USING (true);
+
+CREATE POLICY "Allow delete on email_logs for anon"
+  ON email_logs FOR DELETE
+  TO anon
+  USING (true);
+
 -- Policies for admin_users table (restrictive)
 CREATE POLICY "Allow select on admin_users"
   ON admin_users FOR SELECT
