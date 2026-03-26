@@ -95,11 +95,11 @@ function generateEmailHTML(data) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <title>${config.title} - XTREME PEPTIDES NZ</title>
   <style>
-    :root { color-scheme: light only; }
+    :root { color-scheme: dark; }
     body {
       margin: 0 !important;
       padding: 0 !important;
@@ -120,6 +120,8 @@ function generateEmailHTML(data) {
     .custom-box    { background-color: #1a2a3a !important; }
     /* Outlook dark mode */
     [data-ogsc] body, [data-ogsb] body { background-color: #0a1628 !important; }
+    [data-ogsc] .email-card, [data-ogsb] .email-card { background-color: #0f1f33 !important; }
+    [data-ogsc] .email-body, [data-ogsb] .email-body { background-color: #0f1f33 !important; }
   </style>
 </head>
 <body class="email-wrapper" style="margin: 0; padding: 0; background-color: #0a1628 !important; font-family: Arial, Helvetica, sans-serif; -webkit-text-size-adjust: 100%;">
