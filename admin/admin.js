@@ -694,6 +694,15 @@ function renderOrderModal(order) {
   const subtotal = parseFloat(order.subtotal || 0).toFixed(2);
   const shipping = parseFloat(order.shipping_cost || 0).toFixed(2);
 
+  const shippingMethodMap = {
+    standard: 'Standard Shipping',
+    express:  'Express Shipping — Business day overnight',
+    rural:    'Rural Delivery'
+  };
+  const shippingMethod = address.shippingMethod
+    ? (shippingMethodMap[address.shippingMethod] || address.shippingMethod)
+    : null;
+
   modalBody.innerHTML = `
     <!-- Order summary cards -->
     <div class="order-detail-grid">
@@ -739,14 +748,19 @@ function renderOrderModal(order) {
     </div>
 
     <!-- Shipping -->
-    <div class="order-section-title">Shipping Address</div>
+    <div class="order-section-title">Shipping</div>
     <div class="order-detail-grid">
-      <div class="order-info-card full-width">
+      <div class="order-info-card ${shippingMethod ? '' : 'full-width'}">
         <div class="card-label">Address</div>
         <div class="card-value" style="line-height:1.8;">
           ${[address.name || order.customer_name, address.address, [address.city, address.postcode].filter(Boolean).join(' '), address.country || 'New Zealand'].filter(Boolean).join('<br>')}
         </div>
       </div>
+      ${shippingMethod ? `
+      <div class="order-info-card">
+        <div class="card-label">Shipping Method</div>
+        <div class="card-value" style="font-weight:600;">${shippingMethod}</div>
+      </div>` : ''}
     </div>
 
     <!-- Items -->
@@ -756,6 +770,7 @@ function renderOrderModal(order) {
         <thead>
           <tr>
             <th>Product</th>
+            <th>Size</th>
             <th style="text-align:center;">Qty</th>
             <th style="text-align:right;">Unit Price</th>
             <th style="text-align:right;">Line Total</th>
@@ -765,11 +780,12 @@ function renderOrderModal(order) {
           ${items.length ? items.map(item => `
             <tr>
               <td style="font-weight:500;">${item.name || '—'}</td>
+              <td style="color:var(--text-2);">${item.size || '—'}</td>
               <td style="text-align:center; color:var(--text-2);">${item.quantity || 0}</td>
               <td style="text-align:right; color:var(--text-2);">$${parseFloat(item.price || 0).toFixed(2)}</td>
               <td style="text-align:right; font-weight:600;">$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}</td>
             </tr>
-          `).join('') : '<tr><td colspan="4" style="text-align:center; color:var(--text-3); padding:20px;">No items recorded</td></tr>'}
+          `).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--text-3); padding:20px;">No items recorded</td></tr>'}
         </tbody>
       </table>
       <div class="order-totals-row">
