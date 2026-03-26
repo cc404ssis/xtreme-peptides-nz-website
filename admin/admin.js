@@ -1223,6 +1223,7 @@ async function handleSendEmail(e) {
     setTimeout(() => {
       closeModals();
       loadOrders();
+      loadEmailLogs();
     }, 1500);
 
   } catch (error) {
