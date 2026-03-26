@@ -191,18 +191,15 @@ body {
 
 .header-center {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   flex: 1;
-  position: relative;
 }
 
 .header-logo {
   height: 130px;
   width: auto;
   display: block;
-  position: relative;
-  top: 30px;
   filter: drop-shadow(0 4px 12px rgba(0, 212, 255, 0.2));
 }
 
@@ -221,7 +218,7 @@ body {
 .main-content {
   display: flex;
   flex: 1;
-  padding-top: 42px;
+  padding-top: 0;
 }
 
 .sidebar {
