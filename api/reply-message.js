@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { orderId, orderNumber, recipientEmail, subject, body, type, trackingNumber } = req.body;
+  const { messageId, recipientEmail, subject, body } = req.body;
 
   if (!recipientEmail || !subject || !body) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -69,33 +69,46 @@ export default async function handler(req, res) {
 
   try {
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-    const htmlContent = wrapEmailContent(subject, body);
+    const now = new Date().toISOString();
+    const htmlContent = wrapEmailContent(
+      `Reply: ${subject}`,
+      `<p style="color: #e0e6ed; font-size: 16px; line-height: 1.6;">${body.replace(/\n/g, '<br>')}</p>
+       <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #1a3a5c; color: #8b9cb5; font-size: 12px;">
+         This is a reply to your message regarding: ${subject}
+       </div>`
+    );
 
     const { data, error } = await resend.emails.send({
       from: `XTREME PEPTIDES NZ <${fromEmail}>`,
       to: recipientEmail,
-      subject,
+      subject: `Re: ${subject}`,
       html: htmlContent,
     });
 
     if (error) throw error;
 
+    // Update message status in Supabase
+    if (messageId) {
+      await supabase
+        .from('messages')
+        .update({ status: 'replied', reply_body: body, replied_at: now })
+        .eq('id', messageId);
+    }
+
+    // Log the reply
     await supabase.from('email_logs').insert({
-      order_id: orderId || null,
-      order_number: orderNumber || null,
       recipient_email: recipientEmail,
-      subject,
+      subject: `Re: ${subject}`,
       body,
-      type: type || 'status_update',
-      tracking_number: trackingNumber || null,
-      sent_at: new Date().toISOString(),
+      type: 'admin_reply',
+      sent_at: now,
       status: 'sent',
       resend_id: data?.id || null,
     });
 
-    return res.json({ success: true });
+    return res.json({ success: true, emailId: data?.id });
   } catch (err) {
-    console.error('Status email error:', err);
-    return res.status(500).json({ error: 'Failed to send status email.' });
+    console.error('Reply error:', err);
+    return res.status(500).json({ error: 'Failed to send reply.' });
   }
 }

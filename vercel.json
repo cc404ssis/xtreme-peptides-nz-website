@@ -1,12 +1,11 @@
 {
   "functions": {
-    "api/*.js": {
-      "maxDuration": 10
-    }
+    "api/*.js": { "maxDuration": 10 }
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/admin/(.*)", "destination": "/admin/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/admin", "destination": "/website/admin/index.html" },
+    { "source": "/admin/(.*)", "destination": "/website/admin/index.html" },
+    { "source": "/(.*)", "destination": "/website/$1" }
   ]
 }

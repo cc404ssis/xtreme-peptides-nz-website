@@ -55,10 +55,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { orderId, orderNumber, recipientEmail, subject, body, type, trackingNumber } = req.body;
+  const { name, email, subject, message } = req.body;
 
-  if (!recipientEmail || !subject || !body) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  if (!email || !message) {
+    return res.status(400).json({ error: 'Email and message are required' });
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
@@ -68,34 +68,72 @@ export default async function handler(req, res) {
   );
 
   try {
+    const now = new Date().toISOString();
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-    const htmlContent = wrapEmailContent(subject, body);
 
-    const { data, error } = await resend.emails.send({
-      from: `XTREME PEPTIDES NZ <${fromEmail}>`,
-      to: recipientEmail,
-      subject,
-      html: htmlContent,
+    // Save to messages table
+    await supabase.from('messages').insert({
+      customer_name: name || null,
+      customer_email: email,
+      subject: subject || 'Contact Form Submission',
+      message,
+      status: 'unread',
+      source: 'contact_form',
+      created_at: now,
     });
 
-    if (error) throw error;
+    // Send notification to support
+    await resend.emails.send({
+      from: `XTREME PEPTIDES NZ <${fromEmail}>`,
+      to: 'support@xtremepeptides.nz',
+      subject: `New Contact Form Message: ${subject || 'No Subject'}`,
+      html: `
+        <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
+          <h2>New Message from ${name || email}</h2>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${subject || 'No Subject'}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message.replace(/\n/g, '<br>')}</p>
+        </div>
+      `,
+    });
+
+    // Send confirmation to customer
+    const thankYouContent = `
+      <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Message Received</h2>
+      </div>
+      <p style="margin-bottom: 20px;">
+        Hi ${name || 'there'},<br><br>
+        Thank you for reaching out to XTREME PEPTIDES NZ. We have received your message regarding "<strong>${subject || 'Contact Form Submission'}</strong>" and our team will get back to you as soon as possible.
+      </p>
+      <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Your Message:</p>
+        <p style="color: #e0e6ed; margin: 0; font-style: italic;">"${message}"</p>
+      </div>
+      <p>Best regards,<br>The XTREME PEPTIDES NZ Team</p>
+    `;
+
+    const { data: confirmData } = await resend.emails.send({
+      from: `XTREME PEPTIDES NZ <${fromEmail}>`,
+      to: email,
+      subject: `Thank you for your message - XTREME PEPTIDES NZ`,
+      html: wrapEmailContent('Thank you for your message', thankYouContent),
+    });
 
     await supabase.from('email_logs').insert({
-      order_id: orderId || null,
-      order_number: orderNumber || null,
-      recipient_email: recipientEmail,
-      subject,
-      body,
-      type: type || 'status_update',
-      tracking_number: trackingNumber || null,
-      sent_at: new Date().toISOString(),
+      recipient_email: email,
+      subject: `Thank you for your message - XTREME PEPTIDES NZ`,
+      body: `Thank you for reaching out regarding: ${subject || 'Contact Form Submission'}`,
+      type: 'contact_confirmation',
+      sent_at: now,
       status: 'sent',
-      resend_id: data?.id || null,
+      resend_id: confirmData?.id || null,
     });
 
     return res.json({ success: true });
   } catch (err) {
-    console.error('Status email error:', err);
-    return res.status(500).json({ error: 'Failed to send status email.' });
+    console.error('Contact form error:', err);
+    return res.status(500).json({ error: 'Failed to process contact form.' });
   }
 }

@@ -1,169 +1,47 @@
-// API endpoint for sending order confirmation emails
-// Uses Resend API - requires RESEND_API_KEY environment variable
+import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 
-const https = require('https');
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'XTREME PEPTIDES NZ <support@xtremepeptides.nz>';
-const SUPABASE_URL = 'https://paenulyipooobvavjdkh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
-// Service role key bypasses RLS for server-side writes — set SUPABASE_SERVICE_ROLE_KEY in Vercel env vars
-const SUPABASE_UPDATE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
-
-async function upsertOrderInSupabase(upsertData) {
-  const postData = JSON.stringify(upsertData);
-  const url = new URL(`${SUPABASE_URL}/rest/v1/orders`);
-  const options = {
-    hostname: url.hostname,
-    port: 443,
-    path: url.pathname,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_UPDATE_KEY}`,
-      'apikey': SUPABASE_ANON_KEY,
-      'Prefer': 'resolution=merge-duplicates,return=minimal',
-      'Content-Length': Buffer.byteLength(postData)
-    }
-  };
-  return makeRequest(options, postData);
-}
-
-async function insertEmailLog(orderNumber, recipientEmail, emailType, subject, resendEmailId) {
-  const postData = JSON.stringify({
-    order_number: orderNumber,
-    recipient_email: recipientEmail,
-    email_type: emailType,
-    subject: subject,
-    status: 'sent',
-    resend_email_id: resendEmailId || null,
-    sent_at: new Date().toISOString()
-  });
-  const url = new URL(`${SUPABASE_URL}/rest/v1/email_logs`);
-  const options = {
-    hostname: url.hostname,
-    port: 443,
-    path: url.pathname,
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'apikey': SUPABASE_ANON_KEY,
-      'Prefer': 'return=minimal',
-      'Content-Length': Buffer.byteLength(postData)
-    }
-  };
-  return makeRequest(options, postData);
-}
-
-function generateOrderConfirmationHTML(data) {
-  const { orderNumber, customerEmail, items, subtotal, shippingCost, total, shippingAddress, paymentMethod, shippingMethod } = data;
-  
-  const itemsHTML = items.map(item => {
-    const price = parseFloat(item.price) || 0;
-    const quantity = parseInt(item.quantity) || 0;
-    return `
-    <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed;">${item.name || 'Product'}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed; text-align: center;">${quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${price.toFixed(2)}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${(price * quantity).toFixed(2)}</td>
-    </tr>
-  `}).join('');
-
-  const shippingAddr = shippingAddress || {};
-
+function wrapEmailContent(title, content) {
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Confirmation - XTREME PEPTIDES NZ</title>
+  <title>${title}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a1628; font-family: Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a1628;">
+<body style="margin: 0; padding: 0; background-color: #050b14; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #050b14;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #0f1f33; border-radius: 16px; overflow: hidden; border: 1px solid #1a3a5c;">
-          
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #0a1628; border-radius: 24px; overflow: hidden; border: 1px solid #1a3a5c; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
           <tr>
-            <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; letter-spacing: 2px;">XTREME PEPTIDES NZ</h1>
-              <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
+            <td style="padding: 60px 40px 40px 40px; text-align: center;">
+              <h1 style="color: #00d4ff; margin: 0; font-size: 32px; letter-spacing: 4px; font-weight: bold; text-transform: uppercase;">XTREME PEPTIDES NZ</h1>
+              <p style="color: #8b9cb5; margin: 15px 0 0 0; font-size: 14px; letter-spacing: 4px; font-weight: 500; text-transform: uppercase;">LABORATORY SUPPLY</p>
             </td>
           </tr>
-          
           <tr>
-            <td style="padding: 40px;">
-              <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-                <h2 style="color: #ffffff; margin: 0; font-size: 24px;">✅ Order Confirmed!</h2>
-              </div>
-              <p style="color: #e0e6ed; font-size: 16px; line-height: 1.6;">
-                Thank you for your order. We've received your payment and are processing your items.
-              </p>
-              
-              <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Order Number</p>
-                <p style="color: #00d4ff; margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">${orderNumber}</p>
-              </div>
-              
-              <h3 style="color: #00d4ff; margin: 30px 0 15px 0; border-bottom: 1px solid #1a3a5c; padding-bottom: 10px;">Order Summary</h3>
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
-                <thead>
-                  <tr style="background-color: #1a2a3a;">
-                    <th style="padding: 12px; text-align: left; color: #00d4ff; font-weight: bold;">Product</th>
-                    <th style="padding: 12px; text-align: center; color: #00d4ff; font-weight: bold;">Qty</th>
-                    <th style="padding: 12px; text-align: right; color: #00d4ff; font-weight: bold;">Price</th>
-                    <th style="padding: 12px; text-align: right; color: #00d4ff; font-weight: bold;">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHTML}
-                </tbody>
-              </table>
-              
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; border-top: 2px solid #1a3a5c; padding-top: 20px;">
-                <tr>
-                  <td style="padding: 8px 0; color: #8b9cb5; text-align: right; width: 70%;">Subtotal:</td>
-                  <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${parseFloat(subtotal).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #8b9cb5; text-align: right;">Shipping:</td>
-                  <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${parseFloat(shippingCost).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">Total:</td>
-                  <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">$${parseFloat(total).toFixed(2)}</td>
-                </tr>
-              </table>
-              
-              <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin-top: 30px;">
-                <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Details</h4>
-                <p style="color: #8b9cb5; margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Delivery Address</p>
-                <p style="color: #e0e6ed; margin: 0 0 15px 0; line-height: 1.6;">
-                  ${shippingAddr.name || 'N/A'}<br>
-                  ${shippingAddr.address || 'N/A'}<br>
-                  ${shippingAddr.city || 'N/A'}, ${shippingAddr.postalCode || shippingAddr.postcode || 'N/A'}<br>
-                  ${shippingAddr.region ? shippingAddr.region + '<br>' : ''}New Zealand
+            <td style="padding: 0 40px;">
+              <div style="height: 1px; background: linear-gradient(to right, transparent, #00d4ff, transparent); opacity: 0.5;"></div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 60px 60px 40px 60px; color: #a0aec0; font-size: 16px; line-height: 1.8;">
+              ${content}
+              <div style="margin-top: 60px; text-align: center;">
+                <p style="color: #8b9cb5; margin: 0; font-size: 16px;">
+                  Questions? Contact us at <a href="mailto:support@xtremepeptides.nz" style="color: #00d4ff; text-decoration: underline;">support@xtremepeptides.nz</a>
                 </p>
-                ${shippingMethod ? `<p style="color: #8b9cb5; margin: 0 0 4px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Shipping Method</p><p style="color: #e0e6ed; margin: 0; font-size: 15px; text-transform: capitalize;">${shippingMethod}</p>` : ''}
               </div>
-              
-              <p style="color: #8b9cb5; margin-top: 30px; font-size: 14px; text-align: center;">
-                Questions? Contact us at <a href="mailto:support@xtremepeptides.nz" style="color: #00d4ff;">support@xtremepeptides.nz</a>
-              </p>
             </td>
           </tr>
-          
           <tr>
-            <td style="background-color: #0a1628; padding: 30px 40px; text-align: center; border-top: 1px solid #1a3a5c;">
-              <p style="color: #5a6a7d; margin: 0 0 10px 0; font-size: 12px;">
+            <td style="padding: 40px 60px; text-align: center; border-top: 1px solid rgba(26, 58, 92, 0.5);">
+              <p style="color: #5a6a7d; margin: 0; font-size: 13px; line-height: 1.6;">
                 Products sold for research purposes only. Not for human consumption.
               </p>
             </td>
           </tr>
-          
         </table>
       </td>
     </tr>
@@ -172,198 +50,146 @@ function generateOrderConfirmationHTML(data) {
 </html>`;
 }
 
-// Helper function to make HTTPS request
-function makeRequest(options, postData) {
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          resolve({ statusCode: res.statusCode, data: parsed });
-        } catch (e) {
-          resolve({ statusCode: res.statusCode, data: data });
-        }
-      });
-    });
-    req.on('error', reject);
-    if (postData) req.write(postData);
-    req.end();
-  });
+function generateOrderConfirmationHTML(orderData) {
+  const items = orderData.items || [];
+  const itemsHTML = items.map(item => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed;">${item.name || 'Product'}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #e0e6ed; text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${(parseFloat(item.price) || 0).toFixed(2)}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #1a3a5c; color: #00d4ff; text-align: right;">$${((parseFloat(item.price) || 0) * item.quantity).toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  const shippingAddr = orderData.shippingAddress || {};
+  const total = parseFloat(orderData.total || orderData.orderTotal) || 0;
+  const shippingCost = parseFloat(orderData.shippingCost) || 0;
+  const subtotal = parseFloat(orderData.subtotal) || (total - shippingCost) || 0;
+
+  const content = `
+    <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+      <h2 style="color: #ffffff; margin: 0; font-size: 24px;">✅ Order Confirmed!</h2>
+    </div>
+    <p style="margin-bottom: 20px;">
+      Thank you for your order. We've received your order and will confirm your payment before shipping.
+    </p>
+    <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Order Number</p>
+      <p style="color: #00d4ff; margin: 0; font-size: 20px; font-weight: bold; letter-spacing: 1px;">${orderData.orderNumber}</p>
+    </div>
+    <h3 style="color: #00d4ff; margin: 30px 0 15px 0; border-bottom: 1px solid #1a3a5c; padding-bottom: 10px;">Order Summary</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+      <thead>
+        <tr style="background-color: #1a2a3a;">
+          <th style="padding: 12px; text-align: left; color: #00d4ff; font-weight: bold;">Product</th>
+          <th style="padding: 12px; text-align: center; color: #00d4ff; font-weight: bold;">Qty</th>
+          <th style="padding: 12px; text-align: right; color: #00d4ff; font-weight: bold;">Price</th>
+          <th style="padding: 12px; text-align: right; color: #00d4ff; font-weight: bold;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsHTML}
+      </tbody>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; border-top: 2px solid #1a3a5c; padding-top: 20px;">
+      <tr>
+        <td style="padding: 8px 0; color: #8b9cb5; text-align: right; width: 70%;">Subtotal:</td>
+        <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${subtotal.toFixed(2)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0; color: #8b9cb5; text-align: right;">Shipping:</td>
+        <td style="padding: 8px 0; color: #e0e6ed; text-align: right;">$${shippingCost.toFixed(2)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">Total:</td>
+        <td style="padding: 12px 0; color: #00d4ff; font-weight: bold; text-align: right; border-top: 1px solid #1a3a5c;">$${total.toFixed(2)}</td>
+      </tr>
+    </table>
+    <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin-top: 30px;">
+      <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Details</h4>
+      <p style="color: #e0e6ed; margin: 0; line-height: 1.6;">
+        ${shippingAddr.name || orderData.customerName || 'N/A'}<br>
+        ${shippingAddr.address || 'N/A'}<br>
+        ${shippingAddr.city || 'N/A'}, ${shippingAddr.postalCode || 'N/A'}<br>
+        ${shippingAddr.region ? shippingAddr.region + '<br>' : ''}New Zealand
+      </p>
+    </div>
+  `;
+  return wrapEmailContent(`Order Confirmation - ${orderData.orderNumber}`, content);
 }
 
-// Helper to parse request body
-function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    // If body is already parsed by Vercel
-    if (req.body && typeof req.body === 'object') {
-      return resolve(req.body);
-    }
-    
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(body || '{}'));
-      } catch (e) {
-        resolve({});
-      }
-    });
-    req.on('error', reject);
-  });
-}
-
-module.exports = async function handler(req, res) {
-  console.log('send-email API called:', req.method, req.url);
-  
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!RESEND_API_KEY) {
-    console.error('RESEND_API_KEY not configured');
-    return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  const body = req.body;
+  let orderData = body.orderData || body;
+
+  if (!orderData.customerEmail || !orderData.orderNumber) {
+    return res.status(400).json({ error: 'Invalid request payload.' });
   }
 
   try {
-    const body = await parseBody(req);
-    console.log('Request body keys:', Object.keys(body));
-    console.log('Request body:', JSON.stringify(body).substring(0, 500));
-    
-    // Support both data formats
-    let orderData;
-    if (body.orderData && body.orderData.customerEmail) {
-      orderData = body.orderData;
-    } else if (body.customerEmail && body.orderNumber) {
-      orderData = body;
-    } else {
-      console.error('Invalid request body - missing customerEmail or orderNumber');
-      return res.status(400).json({ 
-        error: 'Missing required fields: customerEmail and orderNumber are required',
-        received: Object.keys(body),
-        bodyType: typeof body,
-        bodyPreview: JSON.stringify(body).substring(0, 200)
-      });
-    }
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const now = new Date().toISOString();
 
-    console.log('Sending email to:', orderData.customerEmail);
-
-    // Validate and sanitize data - support both orderTotal and total
-    const items = Array.isArray(orderData.items) ? orderData.items : [];
-    const shippingCost = parseFloat(orderData.shippingCost) || 0;
-    const total = parseFloat(orderData.total) || parseFloat(orderData.orderTotal) || 0;
-    const subtotal = parseFloat(orderData.subtotal) || (total - shippingCost) || 0;
-    const shippingAddress = orderData.shippingAddress || {};
-    const customerName = orderData.customerName || shippingAddress?.name || orderData.customerEmail;
-
-    // Infer shipping method from cost (frontend doesn't pass shippingMethod to this API)
-    const inferredShippingMethod = shippingCost >= 22 ? 'rural' : shippingCost >= 16 ? 'express' : 'standard';
-
-    // Upsert full order data — handles race condition where frontend INSERT may not have completed yet
-    if (orderData.orderNumber) {
-      const supabaseUpsert = {
+    // Upsert order to Supabase
+    const { data: orderRow, error: upsertError } = await supabase
+      .from('orders')
+      .upsert({
         order_number: orderData.orderNumber,
+        customer_name: orderData.customerName || orderData.shippingAddress?.name || orderData.customerEmail,
         customer_email: orderData.customerEmail,
-        customer_name: customerName,
-        items: items.map(i => ({ id: i.id, name: i.name, size: i.size, price: i.price, quantity: i.quantity })),
-        shipping_address: {
-          name: shippingAddress.name || customerName,
-          address: shippingAddress.address || '',
-          city: shippingAddress.city || '',
-          region: shippingAddress.region || '',
-          postalCode: shippingAddress.postalCode || '',
-          shippingMethod: orderData.shippingMethod || shippingAddress.shippingMethod || inferredShippingMethod
-        },
-        subtotal: subtotal,
-        shipping_cost: shippingCost,
-        total: total
-      };
-      try {
-        const upsertResult = await upsertOrderInSupabase(supabaseUpsert);
-        console.log('Supabase order upsert:', upsertResult.statusCode, JSON.stringify(upsertResult.data));
-      } catch (e) {
-        console.error('Supabase upsert error:', e);
-      }
-    }
-    
-    const htmlContent = generateOrderConfirmationHTML({
-      orderNumber: orderData.orderNumber,
-      customerEmail: orderData.customerEmail,
-      items: items,
-      subtotal: subtotal,
-      shippingCost: shippingCost,
-      total: total,
-      shippingAddress: shippingAddress,
-      paymentMethod: orderData.paymentMethod || 'bank_transfer',
-      shippingMethod: orderData.shippingMethod || shippingAddress?.shippingMethod || inferredShippingMethod
-    });
+        customer_phone: orderData.customerPhone || null,
+        items: orderData.items || [],
+        order_total: parseFloat(orderData.total || orderData.orderTotal) || 0,
+        subtotal: parseFloat(orderData.subtotal) || 0,
+        shipping_cost: parseFloat(orderData.shippingCost) || 0,
+        shipping_address: orderData.shippingAddress || {},
+        payment_method: orderData.paymentMethod || null,
+        status: 'pending',
+        created_at: now,
+        updated_at: now,
+      }, { onConflict: 'order_number' })
+      .select()
+      .single();
 
-    const postData = JSON.stringify({
-      from: `XTREME PEPTIDES NZ <${FROM_EMAIL}>`,
-      to: [orderData.customerEmail],
+    if (upsertError) throw upsertError;
+
+    // Send confirmation email
+    const htmlContent = generateOrderConfirmationHTML(orderData);
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: `XTREME PEPTIDES NZ <${fromEmail}>`,
+      to: orderData.customerEmail,
       subject: `Order Confirmation - ${orderData.orderNumber}`,
       html: htmlContent,
     });
 
-    const options = {
-      hostname: 'api.resend.com',
-      port: 443,
-      path: '/emails',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    };
+    if (emailError) throw emailError;
 
-    const result = await makeRequest(options, postData);
-    console.log('Resend API response:', result.statusCode, result.data);
-
-    if (result.statusCode >= 200 && result.statusCode < 300) {
-      // Log to email_logs table
-      try {
-        await insertEmailLog(
-          orderData.orderNumber,
-          orderData.customerEmail,
-          'order_confirmation',
-          `Order Confirmation - ${orderData.orderNumber}`,
-          result.data.id
-        );
-      } catch (e) {
-        console.error('Email log insert error:', e);
-      }
-      return res.status(200).json({
-        success: true,
-        message: 'Order confirmation email sent successfully',
-        emailId: result.data.id
-      });
-    } else {
-      console.error('Resend API error:', result.data);
-      return res.status(result.statusCode || 500).json({ 
-        error: 'Failed to send email', 
-        details: result.data 
-      });
-    }
-
-  } catch (error) {
-    console.error('Error sending email:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error', 
-      message: error.message,
-      stack: error.stack
+    // Log email
+    await supabase.from('email_logs').insert({
+      order_id: orderRow?.id || null,
+      order_number: orderData.orderNumber,
+      recipient_email: orderData.customerEmail,
+      subject: `Order Confirmation - ${orderData.orderNumber}`,
+      body: `Order confirmation for #${orderData.orderNumber}`,
+      type: 'order_confirmation',
+      sent_at: now,
+      status: 'sent',
+      resend_id: emailData?.id || null,
     });
+
+    return res.json({ success: true, orderId: orderRow?.id });
+  } catch (err) {
+    console.error('Order Processing Error:', err);
+    return res.status(500).json({ error: 'Failed to process order confirmation.' });
   }
-};
+}
