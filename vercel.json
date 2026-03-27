@@ -2,10 +2,11 @@
   "functions": {
     "api/*.js": { "maxDuration": 10 }
   },
+  "outputDirectory": "website",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/admin", "destination": "/website/admin/index.html" },
-    { "source": "/admin/(.*)", "destination": "/website/admin/index.html" },
-    { "source": "/(.*)", "destination": "/website/$1" }
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/(.*)", "destination": "/admin/index.html" },
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }
