@@ -117,10 +117,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
       subject: `Refund processed for Order #${order.orderNumber}`,
       body: (o) => `Hi ${o.customerName},<br><br>A refund has been processed for your order #${o.orderNumber}. It may take a few business days to appear in your account.<br><br>Thank you.`
     },
-    paid: {
-      subject: `Payment Received for Order #${order.orderNumber}`,
-      body: (o) => `Hi ${o.customerName},<br><br>We have received payment for your order #${o.orderNumber}. We will now begin preparing your order and notify you once it has been shipped.<br><br>Thank you for shopping with XTREME PEPTIDES NZ.`
-    },
     custom: {
       subject: '',
       body: () => ''
@@ -443,7 +439,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
                   <option value="cancelled">Cancelled</option>
                   <option value="refunded">Refunded</option>
                   <option value="delayed">Delayed</option>
-                  <option value="paid">Paid</option>
                 </select>
               </div>
 
@@ -491,7 +486,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
                     console.log(`Email template changed to: ${newTemplate}`);
                     setSelectedTemplate(newTemplate);
                     // If it's a standard status template, update the order status as well
-                    if (newTemplate !== 'custom' && ['pending', 'shipped', 'delivered', 'cancelled', 'delayed', 'refunded', 'paid'].includes(newTemplate)) {
+                    if (newTemplate !== 'custom' && ['pending', 'shipped', 'delivered', 'cancelled', 'delayed', 'refunded'].includes(newTemplate)) {
                       console.log(`Updating order status to match template: ${newTemplate}`);
                       setStatus(newTemplate as any);
                     }
@@ -505,7 +500,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
                   <option value="cancelled">Order Cancelled</option>
                   <option value="delayed">Order Delayed</option>
                   <option value="refunded">Order Refunded</option>
-                  <option value="paid">Payment Received</option>
                   <option value="custom">Custom Message</option>
                 </select>
               </div>

@@ -115,7 +115,6 @@ const AdminDashboard: React.FC = () => {
     pending: orders.filter(o => o.status === 'pending').length,
     shipped: orders.filter(o => o.status === 'shipped').length,
     delayed: orders.filter(o => o.status === 'delayed').length,
-    paid: orders.filter(o => o.status === 'paid').length,
     revenue: orders.reduce((acc, o) => acc + (o.orderTotal || 0), 0)
   };
 
@@ -274,7 +273,6 @@ const AdminDashboard: React.FC = () => {
           <div className="pb-2 px-4 text-[10px] font-bold text-text-3 uppercase tracking-widest">Orders</div>
           <NavButton active={activeTab === 'orders' && statusFilter === 'all'} onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} icon={<Package className="w-4 h-4" />} label="All Orders" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'pending'} onClick={() => { setActiveTab('orders'); setStatusFilter('pending'); }} icon={<Clock className="w-4 h-4" />} label="Pending" />
-          <NavButton active={activeTab === 'orders' && statusFilter === 'paid'} onClick={() => { setActiveTab('orders'); setStatusFilter('paid'); }} icon={<CheckCircle2 className="w-4 h-4" />} label="Paid" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'shipped'} onClick={() => { setActiveTab('orders'); setStatusFilter('shipped'); }} icon={<Truck className="w-4 h-4" />} label="Shipped" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'delivered'} onClick={() => { setActiveTab('orders'); setStatusFilter('delivered'); }} icon={<CheckCircle2 className="w-4 h-4" />} label="Delivered" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'cancelled'} onClick={() => { setActiveTab('orders'); setStatusFilter('cancelled'); }} icon={<XCircle className="w-4 h-4" />} label="Cancelled" />
@@ -335,7 +333,6 @@ const AdminDashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-8">
             <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} />
             <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-400" />
-            <StatCard label="Paid" value={stats.paid} icon={<CheckCircle2 className="w-4 h-4" />} color="text-emerald-400" />
             <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-400" />
             <StatCard label="Delayed" value={stats.delayed} icon={<AlertTriangle className="w-4 h-4" />} color="text-orange-400" />
             <StatCard label="Unread Msgs" value={messages.filter(m => m.status === 'unread').length} icon={<Mail className="w-4 h-4" />} color="text-cyan" />
@@ -890,7 +887,6 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     cancelled: { bg: 'bg-red-400/10',     text: 'text-red-400',     icon: <XCircle className="w-3 h-3" /> },
     refunded:  { bg: 'bg-purple-400/10',  text: 'text-purple-400',  icon: <AlertCircle className="w-3 h-3" /> },
     delayed:   { bg: 'bg-orange-400/10',  text: 'text-orange-400',  icon: <Clock className="w-3 h-3" /> },
-    paid:      { bg: 'bg-emerald-400/10', text: 'text-emerald-400', icon: <CheckCircle2 className="w-3 h-3" /> },
   };
   const style = styles[status] || styles.pending;
   return (

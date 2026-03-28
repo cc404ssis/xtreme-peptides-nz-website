@@ -72,7 +72,7 @@ function generateOrderConfirmationHTML(orderData) {
       <h2 style="color: #ffffff; margin: 0; font-size: 24px;">✅ Order Confirmed!</h2>
     </div>
     <p style="margin-bottom: 20px;">
-      Thank you for your order. We've received your order and will confirm your payment before shipping.
+      Thank you for your order. Once we verify payment we will send you your tracking number.
     </p>
     <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Order Number</p>
