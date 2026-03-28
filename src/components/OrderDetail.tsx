@@ -497,6 +497,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
                   <option value="pending">Pending Payment</option>
                   <option value="shipped">Order Shipped</option>
                   <option value="delivered">Order Delivered</option>
+                  <option disabled>─────────────────</option>
                   <option value="cancelled">Order Cancelled</option>
                   <option value="delayed">Order Delayed</option>
                   <option value="refunded">Order Refunded</option>
