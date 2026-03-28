@@ -114,6 +114,7 @@ const AdminDashboard: React.FC = () => {
     total: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
     shipped: orders.filter(o => o.status === 'shipped').length,
+    delivered: orders.filter(o => o.status === 'delivered').length,
     delayed: orders.filter(o => o.status === 'delayed').length,
     revenue: orders.reduce((acc, o) => acc + (o.orderTotal || 0), 0)
   };
@@ -334,6 +335,7 @@ const AdminDashboard: React.FC = () => {
             <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} />
             <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-400" />
             <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-400" />
+            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-400" />
             <StatCard label="Delayed" value={stats.delayed} icon={<AlertTriangle className="w-4 h-4" />} color="text-orange-400" />
             <StatCard label="Unread Msgs" value={messages.filter(m => m.status === 'unread').length} icon={<Mail className="w-4 h-4" />} color="text-cyan" />
             <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" />
