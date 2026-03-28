@@ -6,3 +6,8 @@ node_modules/
 **/._*
 dist/
 website/admin/
+
+# Ruflo / Claude Code agent tooling (local dev only, not part of the site)
+.claude/
+.claude-flow/
+.mcp.json
