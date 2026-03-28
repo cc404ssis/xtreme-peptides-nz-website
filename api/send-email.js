@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { escapeHtml } from './_auth.js';
 
 function wrapEmailContent(title, content) {
   return `<!DOCTYPE html>
@@ -108,10 +109,10 @@ function generateOrderConfirmationHTML(orderData) {
     <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin-top: 30px;">
       <h4 style="color: #00d4ff; margin: 0 0 15px 0;">Shipping Details</h4>
       <p style="color: #e0e6ed; margin: 0; line-height: 1.6;">
-        ${shippingAddr.name || orderData.customerName || 'N/A'}<br>
-        ${shippingAddr.address || 'N/A'}<br>
-        ${shippingAddr.city || 'N/A'}, ${shippingAddr.postalCode || 'N/A'}<br>
-        ${shippingAddr.region ? shippingAddr.region + '<br>' : ''}New Zealand
+        ${escapeHtml(shippingAddr.name || orderData.customerName) || 'N/A'}<br>
+        ${escapeHtml(shippingAddr.address) || 'N/A'}<br>
+        ${escapeHtml(shippingAddr.city) || 'N/A'}, ${escapeHtml(shippingAddr.postalCode) || 'N/A'}<br>
+        ${shippingAddr.region ? escapeHtml(shippingAddr.region) + '<br>' : ''}New Zealand
       </p>
     </div>
   `;

@@ -172,7 +172,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
 
       const response = await fetch('/api/send-status-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`
+        },
         body: JSON.stringify({
           orderId: order.id,
           orderNumber: order.orderNumber,

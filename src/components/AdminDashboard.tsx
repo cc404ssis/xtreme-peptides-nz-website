@@ -811,7 +811,10 @@ const AdminDashboard: React.FC = () => {
                           try {
                             const response = await fetch('/api/reply-message', {
                               method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`
+                              },
                               body: JSON.stringify({
                                 messageId: selectedMessage.id,
                                 recipientEmail: selectedMessage.customerEmail,

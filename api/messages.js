@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdmin } from './_auth.js';
 
 export default async function handler(req, res) {
+  if (!verifyAdmin(req, res)) return;
+
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY

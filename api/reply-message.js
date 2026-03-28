@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { verifyAdmin, escapeHtml } from './_auth.js';
 
 function wrapEmailContent(title, content) {
   return `<!DOCTYPE html>
@@ -55,6 +56,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!verifyAdmin(req, res)) return;
+
   const { messageId, recipientEmail, subject, body } = req.body;
 
   if (!recipientEmail || !subject || !body) {
@@ -71,10 +74,10 @@ export default async function handler(req, res) {
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
     const now = new Date().toISOString();
     const htmlContent = wrapEmailContent(
-      `Reply: ${subject}`,
-      `<p style="color: #e0e6ed; font-size: 16px; line-height: 1.6;">${body.replace(/\n/g, '<br>')}</p>
+      `Reply: ${escapeHtml(subject)}`,
+      `<p style="color: #e0e6ed; font-size: 16px; line-height: 1.6;">${escapeHtml(body).replace(/\n/g, '<br>')}</p>
        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #1a3a5c; color: #8b9cb5; font-size: 12px;">
-         This is a reply to your message regarding: ${subject}
+         This is a reply to your message regarding: ${escapeHtml(subject)}
        </div>`
     );
 

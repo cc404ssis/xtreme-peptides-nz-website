@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { escapeHtml } from './_auth.js';
 
 function wrapEmailContent(title, content) {
   return `<!DOCTYPE html>
@@ -61,6 +62,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Email and message are required' });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+  if (message.length > 5000) {
+    return res.status(400).json({ error: 'Message too long' });
+  }
+  if (name && name.length > 200) {
+    return res.status(400).json({ error: 'Name too long' });
+  }
+  if (subject && subject.length > 300) {
+    return res.status(400).json({ error: 'Subject too long' });
+  }
+
   const resend = new Resend(process.env.RESEND_API_KEY);
   const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -89,11 +104,11 @@ export default async function handler(req, res) {
       subject: `New Contact Form Message: ${subject || 'No Subject'}`,
       html: `
         <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-          <h2>New Message from ${name || email}</h2>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Subject:</strong> ${subject || 'No Subject'}</p>
+          <h2>New Message from ${escapeHtml(name) || escapeHtml(email)}</h2>
+          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+          <p><strong>Subject:</strong> ${escapeHtml(subject) || 'No Subject'}</p>
           <p><strong>Message:</strong></p>
-          <p>${message.replace(/\n/g, '<br>')}</p>
+          <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
         </div>
       `,
     });
@@ -104,12 +119,12 @@ export default async function handler(req, res) {
         <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Message Received</h2>
       </div>
       <p style="margin-bottom: 20px;">
-        Hi ${name || 'there'},<br><br>
-        Thank you for reaching out to XTREME PEPTIDES NZ. We have received your message regarding "<strong>${subject || 'Contact Form Submission'}</strong>" and our team will get back to you as soon as possible.
+        Hi ${escapeHtml(name) || 'there'},<br><br>
+        Thank you for reaching out to XTREME PEPTIDES NZ. We have received your message regarding "<strong>${escapeHtml(subject) || 'Contact Form Submission'}</strong>" and our team will get back to you as soon as possible.
       </p>
       <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Your Message:</p>
-        <p style="color: #e0e6ed; margin: 0; font-style: italic;">"${message}"</p>
+        <p style="color: #e0e6ed; margin: 0; font-style: italic;">"${escapeHtml(message)}"</p>
       </div>
       <p>Best regards,<br>The XTREME PEPTIDES NZ Team</p>
     `;
