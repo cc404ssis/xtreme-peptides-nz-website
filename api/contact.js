@@ -97,22 +97,6 @@ export default async function handler(req, res) {
       created_at: now,
     });
 
-    // Send notification to support
-    await resend.emails.send({
-      from: `XTREME PEPTIDES NZ <${fromEmail}>`,
-      to: 'support@xtremepeptides.nz',
-      subject: `New Contact Form Message: ${subject || 'No Subject'}`,
-      html: `
-        <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-          <h2>New Message from ${escapeHtml(name) || escapeHtml(email)}</h2>
-          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-          <p><strong>Subject:</strong> ${escapeHtml(subject) || 'No Subject'}</p>
-          <p><strong>Message:</strong></p>
-          <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
-        </div>
-      `,
-    });
-
     // Send confirmation to customer
     const thankYouContent = `
       <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
