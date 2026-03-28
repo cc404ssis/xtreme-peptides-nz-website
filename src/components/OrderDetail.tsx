@@ -99,7 +99,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
     },
     shipped: {
       subject: `Your Order #${order.orderNumber} has been shipped!`,
-      body: (o, t) => `Hi ${o.customerName},<br><br>Great news! Your order #${o.orderNumber} has been shipped.<br><br><b>Tracking Number:</b> ${t || 'Available soon'}<br><br>You can track your package on the carrier's website.<br><br>Thank you for shopping with XTREME PEPTIDES NZ.`
+      body: (o, t) => `Hi ${o.customerName},<br><br>Great news! Your order #${o.orderNumber} has been shipped.<br><br><b>Tracking Number:</b> ${t || 'Available soon'}<br><br>You can track your package on the NZ Post website: <a href="https://www.nzpost.co.nz/tools/tracking?track=${t || ''}" style="color:#00d4ff;">Track on NZ Post</a><br><br>Thank you for shopping with XTREME PEPTIDES NZ.`
     },
     delivered: {
       subject: `Your Order #${order.orderNumber} has been delivered`,
