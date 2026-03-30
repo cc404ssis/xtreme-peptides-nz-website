@@ -4,7 +4,7 @@
 const https = require('https');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@xtremepeptides.nz';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'XTREME PEPTIDES NZ <support@xtremepeptides.nz>';
 
 function generateEmailHTML(data) {
   const emailType = data.emailType || 'status';
@@ -38,19 +38,22 @@ function generateEmailHTML(data) {
       title: 'Order Cancelled',
       emoji: '❌',
       color: '#ef4444',
-      content: `Your order has been cancelled. If you have any questions, please contact us at support@xtremepeptides.nz`
+      content: `Your order has been cancelled. If you have any questions, please contact us at support@xtremepeptides.nz`,
+      closing: `We'd love to have you back — browse our full range at <a href="https://xtremepeptides.nz" style="color: #00d4ff;">xtremepeptides.nz</a> and place a new order any time.`
     },
     order_refunded: {
       title: 'Refund Processed',
       emoji: '💰',
       color: '#06b6d4',
-      content: `A refund has been processed for your order. Please allow 3-5 business days for the funds to appear in your account.`
+      content: `A refund has been processed for your order. Please allow 3-5 business days for the funds to appear in your account.`,
+      closing: `We hope to see you again soon — our full range is available at <a href="https://xtremepeptides.nz" style="color: #00d4ff;">xtremepeptides.nz</a> whenever you're ready.`
     },
     order_delayed: {
       title: 'Order Delay',
       emoji: '⏳',
       color: '#f59e0b',
-      content: message || `We're sorry, but your order has been delayed. We appreciate your patience and will keep you updated.`
+      content: message || `We're sorry, but your order has been delayed. We appreciate your patience and will keep you updated.`,
+      closing: `We will update you with your order status as soon as we can. Thank you for your patience.`
     },
     custom: {
       title: 'Message from XTREME PEPTIDES NZ',
@@ -65,78 +68,117 @@ function generateEmailHTML(data) {
   let trackingHTML = '';
   if (trackingNumber && emailType === 'order_shipped') {
     trackingHTML = `
-      <div style="background-color: #1a2a3a; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Tracking Number</p>
-        <p style="color: #00d4ff; margin: 0; font-size: 18px; font-family: monospace; font-weight: bold;">${trackingNumber}</p>
+      <div style="background-color: #1a2a3a !important; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #8b9cb5 !important; margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Tracking Number</p>
+        <p style="color: #00d4ff !important; margin: 0; font-size: 18px; font-family: 'Courier New', Courier, monospace; font-weight: bold;">${trackingNumber}</p>
       </div>
     `;
   }
 
   let customMessageHTML = '';
-  if (emailType === 'custom' && customMessage) {
+  if (customMessage) {
     customMessageHTML = `
-      <div style="background-color: #1a2a3a; border-left: 4px solid #06b6d4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="color: #e0e6ed; margin: 0; line-height: 1.8; font-size: 15px;">${customMessage.replace(/\n/g, '<br>')}</p>
+      <div style="background-color: #1a2a3a !important; border-left: 4px solid #06b6d4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #e0e6ed !important; margin: 0; line-height: 1.8; font-size: 15px;">${customMessage.replace(/\n/g, '<br>')}</p>
       </div>
     `;
   }
 
+  const closingHTML = config.closing ? `
+    <p style="color: #e0e6ed !important; font-size: 15px; line-height: 1.6; margin-top: 25px; padding-top: 20px; border-top: 1px solid #1a3a5c;">
+      ${config.closing}
+    </p>
+  ` : '';
+
   return `<!DOCTYPE html>
-<html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
   <title>${config.title} - XTREME PEPTIDES NZ</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #0a1628 !important;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    /* Force dark background on all clients */
+    .email-wrapper { background-color: #0a1628 !important; }
+    .email-card    { background-color: #0f1f33 !important; }
+    .email-header  { background-color: #0a1628 !important; }
+    .email-body    { background-color: #0f1f33 !important; }
+    .email-footer  { background-color: #0a1628 !important; }
+    .email-text    { color: #e0e6ed !important; }
+    .email-muted   { color: #8b9cb5 !important; }
+    .email-cyan    { color: #00d4ff !important; }
+    .order-box     { background-color: #1a2a3a !important; }
+    .custom-box    { background-color: #1a2a3a !important; }
+    /* Outlook dark mode */
+    [data-ogsc] body, [data-ogsb] body { background-color: #0a1628 !important; }
+    [data-ogsc] .email-card, [data-ogsb] .email-card { background-color: #0f1f33 !important; }
+    [data-ogsc] .email-body, [data-ogsb] .email-body { background-color: #0f1f33 !important; }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0a1628; font-family: Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a1628;">
+<body class="email-wrapper" style="margin: 0; padding: 0; background-color: #0a1628 !important; font-family: Arial, Helvetica, sans-serif; -webkit-text-size-adjust: 100%;">
+  <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0a1628 !important;">
     <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #0f1f33; border-radius: 16px; overflow: hidden; border: 1px solid #1a3a5c;">
-          
+      <td align="center" style="padding: 40px 20px; background-color: #0a1628 !important;">
+        <table class="email-card" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #0f1f33 !important; border-radius: 16px; border: 1px solid #1a3a5c; max-width: 600px; width: 100%;">
+
+          <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #0a1628 0%, #0f1f33 100%); padding: 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
-              <h1 style="color: #00d4ff; margin: 0; font-size: 28px; letter-spacing: 2px;">XTREME PEPTIDES NZ</h1>
-              <p style="color: #8b9cb5; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px;">LABORATORY SUPPLY</p>
+            <td class="email-header" style="background-color: #0a1628 !important; padding: 30px 40px; text-align: center; border-bottom: 2px solid #00d4ff;">
+              <img src="https://xtremepeptides.nz/logo.png" alt="XTREME PEPTIDES NZ" width="200" style="display: block; margin: 0 auto; max-width: 200px; border: 0;">
             </td>
           </tr>
-          
+
+          <!-- Body -->
           <tr>
-            <td style="padding: 40px;">
-              <div style="background: linear-gradient(135deg, ${config.color} 0%, ${config.color}dd 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-                <h2 style="color: #ffffff; margin: 0; font-size: 24px;">${config.emoji} ${config.title}</h2>
+            <td class="email-body" style="padding: 40px; background-color: #0f1f33 !important;">
+
+              <!-- Status banner -->
+              <div style="background-color: ${config.color} !important; padding: 20px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
+                <h2 style="color: #ffffff !important; margin: 0; font-size: 22px; font-weight: bold;">${config.emoji} ${config.title}</h2>
               </div>
-              
-              <p style="color: #e0e6ed; font-size: 16px; line-height: 1.6;">
-                Regarding your order <strong style="color: #00d4ff;">${orderNumber}</strong>:
+
+              <p class="email-text" style="color: #e0e6ed !important; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+                Regarding your order <strong class="email-cyan" style="color: #00d4ff !important;">${orderNumber}</strong>:
               </p>
-              
-              <p style="color: #e0e6ed; font-size: 16px; line-height: 1.6; margin-top: 20px;">
+
+              <p class="email-text" style="color: #e0e6ed !important; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                 ${config.content}
               </p>
-              
+
               ${customMessageHTML}
               ${trackingHTML}
-              
-              <div style="background-color: #1a2a3a; border-left: 4px solid #00d4ff; padding: 20px; border-radius: 8px; margin-top: 20px;">
-                <p style="color: #8b9cb5; margin: 0 0 5px 0; font-size: 14px;">Order Number</p>
-                <p style="color: #00d4ff; margin: 0; font-size: 20px; font-family: monospace; font-weight: bold;">${orderNumber}</p>
+              ${closingHTML}
+
+              <!-- Order number box -->
+              <div class="order-box" style="background-color: #1a2a3a !important; border-left: 4px solid #00d4ff; padding: 20px; border-radius: 8px; margin-top: 24px;">
+                <p class="email-muted" style="color: #8b9cb5 !important; margin: 0 0 6px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Order Number</p>
+                <p class="email-cyan" style="color: #00d4ff !important; margin: 0; font-size: 20px; font-family: 'Courier New', Courier, monospace; font-weight: bold;">${orderNumber}</p>
               </div>
-              
-              <p style="color: #8b9cb5; margin-top: 30px; font-size: 14px; text-align: center;">
-                Questions? Contact us at <a href="mailto:support@xtremepeptides.nz" style="color: #00d4ff;">support@xtremepeptides.nz</a>
+
+              <p class="email-muted" style="color: #8b9cb5 !important; margin-top: 30px; font-size: 14px; text-align: center;">
+                Questions? Contact us at <a href="mailto:support@xtremepeptides.nz" style="color: #00d4ff !important; text-decoration: underline;">support@xtremepeptides.nz</a>
               </p>
             </td>
           </tr>
-          
+
+          <!-- Footer -->
           <tr>
-            <td style="background-color: #0a1628; padding: 30px 40px; text-align: center; border-top: 1px solid #1a3a5c;">
-              <p style="color: #5a6a7d; margin: 0 0 10px 0; font-size: 12px;">
+            <td class="email-footer" style="background-color: #0a1628 !important; padding: 24px 40px; text-align: center; border-top: 1px solid #1a3a5c;">
+              <p style="color: #4a6080 !important; margin: 0; font-size: 12px;">
                 Products sold for research purposes only. Not for human consumption.
               </p>
             </td>
           </tr>
-          
+
         </table>
       </td>
     </tr>

@@ -13,8 +13,8 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 
 // Configuration - Production Supabase credentials
-const SUPABASE_URL = 'https://bnqnssfqfimobqkfwziz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucW5zc2ZxZmltb2Jxa2Z3eml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNTcyMzQsImV4cCI6MjA4OTgzMzIzNH0.cdoC6bPSTq_-VshuPxkMhLOr2F6Dh8q9MWbVhim8MwQ';
+const SUPABASE_URL = 'https://paenulyipooobvavjdkh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZW51bHlpcG9vb2J2YXZqZGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTMwMzMsImV4cCI6MjA5MDAyOTAzM30.ok1lADzOTk_kjI8dU2TKphPdyZa1vEBEzMUz0NHakjg';
 
 // Initialize Supabase client with error handling
 let supabaseClient = null;
@@ -41,6 +41,7 @@ function initSupabase() {
 let currentUser = null;
 let currentOrder = null;
 let orders = [];
+let currentStatusFilter = '';
 
 // DOM Elements - initialized lazily
 let loginScreen, dashboardScreen, loginForm, loginError, logoutBtn;
@@ -89,20 +90,7 @@ async function init() {
     }, 500);
   }
 
-  // Check if user is already logged in (session storage)
-  const session = sessionStorage.getItem('adminSession');
-  if (session) {
-    try {
-      currentUser = JSON.parse(session);
-      showDashboard();
-      return;
-    } catch (e) {
-      console.error('Failed to parse session:', e);
-      sessionStorage.removeItem('adminSession');
-    }
-  }
-
-  // Event Listeners
+  // Event Listeners — always set up regardless of session state
   if (loginForm) {
     loginForm.addEventListener('submit', handleLogin);
   }
@@ -110,10 +98,18 @@ async function init() {
     logoutBtn.addEventListener('click', handleLogout);
   }
   if (refreshBtn) {
-    refreshBtn.addEventListener('click', loadOrders);
+    refreshBtn.addEventListener('click', () => {
+      const s = document.getElementById('search-input');
+      if (s) s.value = '';
+      loadOrders();
+    });
   }
   if (refreshLogsBtn) {
-    refreshLogsBtn.addEventListener('click', loadEmailLogs);
+    refreshLogsBtn.addEventListener('click', () => {
+      const s = document.getElementById('email-logs-search');
+      if (s) s.value = '';
+      loadEmailLogs();
+    });
   }
   if (statusFilter) {
     statusFilter.addEventListener('change', filterOrders);
@@ -135,7 +131,7 @@ async function init() {
   const trackingInput = document.getElementById('email-tracking');
   const delayReasonSelect = document.getElementById('email-reason');
   const messageInput = document.getElementById('email-message');
-  
+
   if (trackingInput) {
     trackingInput.addEventListener('input', updateEmailPreview);
   }
@@ -152,49 +148,59 @@ async function init() {
       btn.addEventListener('click', () => {
         navButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         const section = btn.dataset.section;
+        const status = btn.dataset.status !== undefined ? btn.dataset.status : null;
+        const label = btn.dataset.label || '';
+
         document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
         const sectionEl = document.getElementById(`${section}-section`);
-        if (sectionEl) {
-          sectionEl.classList.remove('hidden');
-        }
-        
-        // Load appropriate data based on section
-        if (section === 'email-logs') {
+        if (sectionEl) sectionEl.classList.remove('hidden');
+
+        if (section === 'orders') {
+          currentStatusFilter = status || '';
+          const heading = sectionEl?.querySelector('h2');
+          if (heading) heading.textContent = label || 'All Orders';
+          const searchInpt = document.getElementById('search-input');
+          if (searchInpt) {
+            searchInpt.placeholder = label ? `Search ${label}...` : 'Search orders...';
+            searchInpt.value = '';
+          }
+          renderOrders(currentStatusFilter ? orders.filter(o => o.status === currentStatusFilter) : orders);
+        } else if (section === 'email-logs') {
           loadEmailLogs();
         } else if (section === 'deleted-orders') {
           loadDeletedOrders();
         } else if (section === 'deleted-emails') {
           loadDeletedEmails();
-        } else if (section.startsWith('orders-') && section !== 'orders-section') {
-          const status = section.replace('orders-', '');
-          loadOrdersByStatus(status);
         }
       });
     });
   }
 
-  // Refresh buttons for all sections
+  // Refresh buttons
   const refreshDeletedBtn = document.getElementById('refresh-deleted-btn');
-  if (refreshDeletedBtn) {
-    refreshDeletedBtn.addEventListener('click', loadDeletedOrders);
-  }
+  if (refreshDeletedBtn) refreshDeletedBtn.addEventListener('click', () => {
+    const s = document.getElementById('deleted-orders-search');
+    if (s) s.value = '';
+    loadDeletedOrders();
+  });
 
   const refreshDeletedEmailsBtn = document.getElementById('refresh-deleted-emails-btn');
-  if (refreshDeletedEmailsBtn) {
-    refreshDeletedEmailsBtn.addEventListener('click', loadDeletedEmails);
-  }
-
-  // Status refresh buttons
-  document.querySelectorAll('.refresh-status-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const status = e.target.dataset.status;
-      if (status) {
-        loadOrdersByStatus(status);
-      }
-    });
+  if (refreshDeletedEmailsBtn) refreshDeletedEmailsBtn.addEventListener('click', () => {
+    const s = document.getElementById('deleted-emails-search');
+    if (s) s.value = '';
+    loadDeletedEmails();
   });
+
+  const deletedOrdersSearch = document.getElementById('deleted-orders-search');
+  if (deletedOrdersSearch) deletedOrdersSearch.addEventListener('input', filterDeletedOrders);
+
+  const deletedEmailsSearch = document.getElementById('deleted-emails-search');
+  if (deletedEmailsSearch) deletedEmailsSearch.addEventListener('input', filterDeletedEmails);
+
+  const emailLogsSearch = document.getElementById('email-logs-search');
+  if (emailLogsSearch) emailLogsSearch.addEventListener('input', filterEmailLogs);
 
   // Modal close buttons - use event delegation for dynamically added content
   document.body.addEventListener('click', (e) => {
@@ -211,8 +217,26 @@ async function init() {
       openEmailModal();
     }
   });
-  
+
+  document.body.addEventListener('click', (e) => {
+    if (e.target.closest('#update-status-btn')) {
+      handleUpdateStatus();
+    }
+  });
+
   console.log('Admin dashboard initialized successfully');
+
+  // Check if user is already logged in (session storage) — after listeners are set up
+  const session = sessionStorage.getItem('adminSession');
+  if (session) {
+    try {
+      currentUser = JSON.parse(session);
+      showDashboard();
+    } catch (e) {
+      console.error('Failed to parse session:', e);
+      sessionStorage.removeItem('adminSession');
+    }
+  }
 }
 
 // Authentication
@@ -339,9 +363,8 @@ async function loadOrders() {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
-  
-  const ordersTb = document.getElementById('orders-tbody');
-  
+
+
   try {
     const { data, error } = await supabaseClient
       .from('orders')
@@ -351,28 +374,63 @@ async function loadOrders() {
     if (error) throw error;
 
     orders = data || [];
-    renderOrders(orders);
+    updateNavCounts();
+    renderOrders(currentStatusFilter ? orders.filter(o => o.status === currentStatusFilter) : orders);
   } catch (error) {
     console.error('Error loading orders:', error);
     alert('Failed to load orders: ' + error.message);
   }
 }
 
+function updateNavCounts() {
+  const counts = {
+    all: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    processing: orders.filter(o => o.status === 'processing').length,
+    shipped: orders.filter(o => o.status === 'shipped').length,
+    delayed: orders.filter(o => o.status === 'delayed').length
+  };
+  const set = (id, n) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = n > 0 ? `(${n})` : '';
+  };
+  set('count-all', counts.all);
+  set('count-pending', counts.pending);
+  set('count-processing', counts.processing);
+  set('count-shipped', counts.shipped);
+  set('count-delayed', counts.delayed);
+}
+
 function renderOrders(ordersToRender) {
   const ordersTb = document.getElementById('orders-tbody');
   if (!ordersTb) return;
+
+  // Update section heading with count
+  const heading = document.querySelector('#orders-section h2');
+  if (heading) {
+    const activeBtn = document.querySelector('.nav-btn.active');
+    const label = activeBtn?.dataset.label || 'All Orders';
+    heading.textContent = `${label} (${ordersToRender.length})`;
+  }
   
+  if (ordersToRender.length === 0) {
+    ordersTb.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-2); padding:40px;">No orders found</td></tr>';
+    return;
+  }
+
   ordersTb.innerHTML = ordersToRender.map(order => `
     <tr>
-      <td>${order.order_number || ''}</td>
-      <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
-      <td>${order.customer_name || ''}</td>
-      <td>${order.customer_email || ''}</td>
-      <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
+      <td style="font-family:monospace; color:var(--cyan); font-weight:700; font-size:13px;">${order.order_number || ''}</td>
+      <td style="color:var(--text-2); font-size:12px;">${order.created_at ? new Date(order.created_at).toLocaleDateString('en-NZ', {day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
+      <td style="font-weight:500;">${order.customer_name || '<span style="color:var(--text-3)">—</span>'}</td>
+      <td style="color:var(--text-2); font-size:13px;">${order.customer_email || ''}</td>
+      <td style="font-weight:700; color:var(--text-1);">$${parseFloat(order.total || order.order_total || 0).toFixed(2)}</td>
       <td><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background: #dc3545; margin-left: 5px;">Delete</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
+          <button class="btn btn-sm" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3);">Delete</button>
+        </div>
       </td>
     </tr>
   `).join('');
@@ -433,9 +491,7 @@ async function loadDeletedOrders() {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
-  
-  const deletedOrdersTb = document.getElementById('deleted-orders-tbody');
-  
+
   try {
     const { data, error } = await supabaseClient
       .from('deleted_orders')
@@ -452,10 +508,24 @@ async function loadDeletedOrders() {
   }
 }
 
-function renderDeletedOrders(ordersToRender) {
+let allDeletedOrders = [];
+
+function filterDeletedOrders() {
+  const q = (document.getElementById('deleted-orders-search')?.value || '').toLowerCase();
+  const filtered = q ? allDeletedOrders.filter(o =>
+    (o.order_number || '').toLowerCase().includes(q) ||
+    (o.customer_name || '').toLowerCase().includes(q) ||
+    (o.customer_email || '').toLowerCase().includes(q) ||
+    (o.status || '').toLowerCase().includes(q)
+  ) : allDeletedOrders;
+  renderDeletedOrders(filtered, false);
+}
+
+function renderDeletedOrders(ordersToRender, cache = true) {
+  if (cache) allDeletedOrders = ordersToRender;
   const deletedOrdersTb = document.getElementById('deleted-orders-tbody');
   if (!deletedOrdersTb) return;
-  
+
   deletedOrdersTb.innerHTML = ordersToRender.map(order => `
     <tr>
       <td>${order.order_number || ''}</td>
@@ -498,81 +568,16 @@ async function permanentlyDeleteOrder(deletedOrderId, orderNumber) {
   }
 }
 
-// Load orders filtered by status for status tabs
-async function loadOrdersByStatus(status) {
-  console.log(`Loading ${status} orders...`);
-  if (!supabaseClient) {
-    alert('Database connection unavailable. Please refresh the page.');
-    return;
-  }
-  
-  const tbody = document.getElementById(`orders-${status}-tbody`);
-  if (!tbody) return;
-  
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Loading...</td></tr>';
-  
-  try {
-    const { data, error } = await supabaseClient
-      .from('orders')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    renderOrdersByStatus(status, data || []);
-  } catch (error) {
-    console.error(`Error loading ${status} orders:`, error);
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#dc3545;">Error: ${error.message}</td></tr>`;
-    }
-  }
-}
-
-// Render orders to a status-specific table
-function renderOrdersByStatus(status, ordersToRender) {
-  const tbody = document.getElementById(`orders-${status}-tbody`);
-  if (!tbody) return;
-  
-  if (ordersToRender.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#8b9cb5;">No ${status} orders found</td></tr>`;
-    return;
-  }
-  
-  tbody.innerHTML = ordersToRender.map(order => `
-    <tr>
-      <td>${order.order_number || ''}</td>
-      <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
-      <td>${order.customer_name || ''}</td>
-      <td>${order.customer_email || ''}</td>
-      <td>$${parseFloat(order.total || 0).toFixed(2)}</td>
-      <td>
-        <button class="btn btn-sm btn-primary" onclick="viewOrder('${order.id}')">View</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order.id}', '${order.order_number}')" style="background: #dc3545; margin-left: 5px;">Delete</button>
-      </td>
-    </tr>
-  `).join('');
-}
-
 // Deleted Emails
 async function loadDeletedEmails() {
-  console.log('Loading deleted emails...');
-  if (!supabaseClient) {
-    alert('Database connection unavailable. Please refresh the page.');
-    return;
-  }
-  
-  const tbody = document.getElementById('deleted-emails-tbody');
-  
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
   try {
     const { data, error } = await supabaseClient
       .from('deleted_emails')
       .select('*')
       .order('deleted_at', { ascending: false })
       .limit(100);
-
     if (error) throw error;
-
     renderDeletedEmails(data || []);
   } catch (error) {
     console.error('Error loading deleted emails:', error);
@@ -580,125 +585,69 @@ async function loadDeletedEmails() {
   }
 }
 
-function renderDeletedEmails(logs) {
+let allDeletedEmails = [];
+
+function filterDeletedEmails() {
+  const q = (document.getElementById('deleted-emails-search')?.value || '').toLowerCase();
+  const filtered = q ? allDeletedEmails.filter(e =>
+    (e.order_number || '').toLowerCase().includes(q) ||
+    (e.recipient_email || '').toLowerCase().includes(q) ||
+    (e.email_type || '').toLowerCase().includes(q) ||
+    (e.subject || '').toLowerCase().includes(q) ||
+    (e.status || '').toLowerCase().includes(q)
+  ) : allDeletedEmails;
+  renderDeletedEmails(filtered, false);
+}
+
+function renderDeletedEmails(emails, cache = true) {
+  if (cache) allDeletedEmails = emails;
   const tbody = document.getElementById('deleted-emails-tbody');
   if (!tbody) return;
-  
-  if (logs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#8b9cb5;">No deleted emails found</td></tr>';
-    return;
-  }
-  
-  tbody.innerHTML = logs.map(log => `
+  tbody.innerHTML = emails.map(email => `
     <tr>
-      <td>${log.deleted_at ? new Date(log.deleted_at).toLocaleString() : ''}</td>
-      <td>${log.order_number || '-'}</td>
-      <td>${log.recipient_email || ''}</td>
-      <td>${log.email_type || ''}</td>
-      <td>${log.subject || ''}</td>
+      <td>${email.deleted_at ? new Date(email.deleted_at).toLocaleString() : ''}</td>
+      <td>${email.order_number || '-'}</td>
+      <td>${email.recipient_email || ''}</td>
+      <td>${email.email_type || ''}</td>
+      <td>${email.subject || ''}</td>
+      <td><span class="status-badge ${email.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${email.status || 'failed'}</span></td>
       <td>
-        <button class="btn btn-sm btn-danger" onclick="permanentlyDeleteEmail('${log.id}')" style="background: #dc3545;">Permanently Delete</button>
+        <button class="btn btn-sm" onclick="permanentlyDeleteEmail('${email.id}')" style="background: #dc3545; color: white;">Permanently Delete</button>
       </td>
     </tr>
   `).join('');
 }
 
-// Permanently delete from deleted_emails table
-async function permanentlyDeleteEmail(deletedEmailId) {
-  if (!confirm('Are you sure you want to PERMANENTLY delete this email record? This action cannot be undone.')) {
-    return;
-  }
-
-  if (!supabaseClient) {
-    alert('Database connection unavailable. Please refresh the page.');
-    return;
-  }
-
+async function permanentlyDeleteEmail(emailId) {
+  if (!confirm('Permanently delete this email record? This cannot be undone.')) return;
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
   try {
-    const { error } = await supabaseClient
-      .from('deleted_emails')
-      .delete()
-      .eq('id', deletedEmailId);
-
+    const { error } = await supabaseClient.from('deleted_emails').delete().eq('id', emailId);
     if (error) throw error;
-
-    console.log('Email permanently deleted');
     loadDeletedEmails();
   } catch (error) {
-    console.error('Error permanently deleting email:', error);
-    alert('Failed to delete email: ' + error.message);
-  }
-}
-
-// Modified deleteEmailLog that moves to deleted_emails first
-async function deleteEmailLog(logId) {
-  if (!confirm('Are you sure you want to delete this email log?')) {
-    return;
-  }
-
-  if (!supabaseClient) {
-    alert('Database connection unavailable. Please refresh the page.');
-    return;
-  }
-
-  try {
-    // First, get the email log data
-    const { data: logData, error: fetchError } = await supabaseClient
-      .from('email_logs')
-      .select('*')
-      .eq('id', logId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    if (logData) {
-      // Move to deleted_emails
-      await supabaseClient.from('deleted_emails').insert({
-        original_log_id: logId,
-        order_id: logData.order_id,
-        order_number: logData.order_number,
-        recipient_email: logData.recipient_email,
-        email_type: logData.email_type,
-        subject: logData.subject,
-        status: logData.status,
-        sent_at: logData.sent_at,
-        resend_email_id: logData.resend_email_id,
-        deleted_at: new Date().toISOString(),
-        deleted_by: currentUser?.username || 'unknown'
-      });
-    }
-
-    // Delete from email_logs
-    const { error } = await supabaseClient
-      .from('email_logs')
-      .delete()
-      .eq('id', logId);
-
-    if (error) throw error;
-
-    console.log('Email log moved to deleted emails');
-    loadEmailLogs();
-  } catch (error) {
-    console.error('Error deleting email log:', error);
-    alert('Failed to delete email log: ' + error.message);
+    alert('Failed to delete: ' + error.message);
   }
 }
 
 function filterOrders() {
   const statusFltr = document.getElementById('status-filter');
   const searchInpt = document.getElementById('search-input');
-  
-  const status = statusFltr ? statusFltr.value : '';
+
+  const dropdownStatus = statusFltr ? statusFltr.value : '';
   const search = searchInpt ? searchInpt.value.toLowerCase() : '';
 
-  let filtered = orders;
+  // Start from current tab's filtered set
+  let filtered = currentStatusFilter
+    ? orders.filter(o => o.status === currentStatusFilter)
+    : orders;
 
-  if (status) {
-    filtered = filtered.filter(o => o.status === status);
+  if (dropdownStatus) {
+    filtered = filtered.filter(o => o.status === dropdownStatus);
   }
 
   if (search) {
-    filtered = filtered.filter(o => 
+    filtered = filtered.filter(o =>
       (o.order_number || '').toLowerCase().includes(search) ||
       (o.customer_name || '').toLowerCase().includes(search) ||
       (o.customer_email || '').toLowerCase().includes(search)
@@ -739,66 +688,131 @@ function renderOrderModal(order) {
   const modalBody = document.getElementById('order-modal-body');
   if (!modalBody) return;
 
+  const statusClass = `status-${order.status || 'pending'}`;
+  const dateStr = order.created_at ? new Date(order.created_at).toLocaleString('en-NZ', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
+  const total = parseFloat(order.total || order.order_total || 0).toFixed(2);
+  const subtotal = parseFloat(order.subtotal || 0).toFixed(2);
+  const shipping = parseFloat(order.shipping_cost || 0).toFixed(2);
+
+  const shippingMethodMap = {
+    standard: 'Standard Shipping',
+    express:  'Express Shipping — Business day overnight',
+    rural:    'Rural Delivery'
+  };
+  const shippingMethod = address.shippingMethod
+    ? (shippingMethodMap[address.shippingMethod] || address.shippingMethod)
+    : null;
+
   modalBody.innerHTML = `
-    <div class="order-info">
-      <p><strong>Order Number:</strong> ${order.order_number || ''}</p>
-      <p><strong>Date:</strong> ${order.created_at ? new Date(order.created_at).toLocaleString() : ''}</p>
-      <p><strong>Status:</strong> <span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></p>
-      <p><strong>Payment Status:</strong> ${order.payment_status || ''}</p>
-      ${order.tracking_number ? `<p><strong>Tracking Number:</strong> ${order.tracking_number}</p>` : ''}
+    <!-- Order summary cards -->
+    <div class="order-detail-grid">
+      <div class="order-info-card">
+        <div class="card-label">Order Number</div>
+        <div class="card-value mono">${order.order_number || '—'}</div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Status</div>
+        <div class="card-value"><span class="status-badge ${statusClass}">${order.status || 'pending'}</span></div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Date Placed</div>
+        <div class="card-value">${dateStr}</div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Payment</div>
+        <div class="card-value" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          ${order.payment_method || '—'}
+          ${order.payment_status ? `<span class="status-badge ${
+            order.payment_status === 'paid'     ? 'status-delivered' :
+            order.payment_status === 'refunded' ? 'status-refunded'  :
+            'status-pending'
+          }">${order.payment_status}</span>` : ''}
+        </div>
+      </div>
+      ${order.tracking_number ? `
+      <div class="order-info-card full-width" style="border-color: rgba(0,212,255,0.3); background: rgba(0,212,255,0.06);">
+        <div class="card-label" style="color:var(--cyan);">Tracking Number</div>
+        <div class="card-value mono">${order.tracking_number}</div>
+      </div>` : ''}
     </div>
-    
-    <div class="customer-info">
-      <h3>Customer Information</h3>
-      <p><strong>Name:</strong> ${order.customer_name || ''}</p>
-      <p><strong>Email:</strong> ${order.customer_email || ''}</p>
-      ${order.customer_phone ? `<p><strong>Phone:</strong> ${order.customer_phone}</p>` : ''}
+
+    <!-- Customer -->
+    <div class="order-section-title">Customer Information</div>
+    <div class="order-detail-grid">
+      <div class="order-info-card">
+        <div class="card-label">Name</div>
+        <div class="card-value">${order.customer_name || '—'}</div>
+      </div>
+      <div class="order-info-card">
+        <div class="card-label">Email</div>
+        <div class="card-value" style="color:var(--cyan); font-size:13px;">${order.customer_email || '—'}</div>
+      </div>
+      ${order.customer_phone ? `
+      <div class="order-info-card full-width">
+        <div class="card-label">Phone</div>
+        <div class="card-value">${order.customer_phone}</div>
+      </div>` : ''}
     </div>
-    
-    <div class="shipping-info">
-      <h3>Shipping Address</h3>
-      <p>${address.name || order.customer_name || ''}</p>
-      <p>${address.address || ''}</p>
-      <p>${address.city || ''}, ${address.postcode || ''}</p>
-      <p>${address.country || 'New Zealand'}</p>
+
+    <!-- Shipping -->
+    <div class="order-section-title">Shipping</div>
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:20px;">
+      <div class="order-info-card">
+        <div class="card-label">Delivery Address</div>
+        <div class="card-value" style="line-height:2;">
+          ${[
+            address.name || order.customer_name,
+            address.address,
+            [address.city, address.region].filter(Boolean).join(', '),
+            address.postalCode || address.postcode || '',
+            'New Zealand'
+          ].filter(Boolean).join('<br>')}
+        </div>
+      </div>
+      <div class="order-info-card" style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="card-label">Shipping Method</div>
+        <div class="card-value" style="font-weight:600; margin-top:4px;">${shippingMethod || '—'}</div>
+        ${order.shipping_cost ? `<div style="color:var(--text-2); font-size:12px; margin-top:6px;">$${parseFloat(order.shipping_cost).toFixed(2)}</div>` : ''}
+      </div>
     </div>
-    
-    <div class="order-items">
-      <h3>Order Items</h3>
+
+    <!-- Items -->
+    <div class="order-section-title">Order Items</div>
+    <div style="background:var(--bg-input); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:4px;">
       <table class="items-table">
         <thead>
           <tr>
             <th>Product</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Total</th>
+            <th>Size</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Unit Price</th>
+            <th style="text-align:right;">Line Total</th>
           </tr>
         </thead>
         <tbody>
-          ${items.map(item => `
+          ${items.length ? items.map(item => `
             <tr>
-              <td>${item.name || ''}</td>
-              <td>${item.quantity || 0}</td>
-              <td>$${parseFloat(item.price || 0).toFixed(2)}</td>
-              <td>$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}</td>
+              <td style="font-weight:500;">${item.name || '—'}</td>
+              <td style="color:var(--text-2);">${item.size || '—'}</td>
+              <td style="text-align:center; color:var(--text-2);">${item.quantity || 0}</td>
+              <td style="text-align:right; color:var(--text-2);">$${parseFloat(item.price || 0).toFixed(2)}</td>
+              <td style="text-align:right; font-weight:600;">$${((item.quantity || 0) * parseFloat(item.price || 0)).toFixed(2)}</td>
             </tr>
-          `).join('')}
+          `).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--text-3); padding:20px;">No items recorded</td></tr>'}
         </tbody>
       </table>
-      
-      <div class="order-totals">
-        <p><strong>Subtotal:</strong> $${parseFloat(order.subtotal || 0).toFixed(2)}</p>
-        <p><strong>Shipping:</strong> $${parseFloat(order.shipping_cost || 0).toFixed(2)}</p>
-        <p class="total"><strong>Total:</strong> $${parseFloat(order.total || 0).toFixed(2)}</p>
+      <div class="order-totals-row">
+        <div class="tot-item"><div class="tot-label">Subtotal</div><div class="tot-value">$${subtotal}</div></div>
+        <div class="tot-item"><div class="tot-label">Shipping</div><div class="tot-value">$${shipping}</div></div>
+        <div class="tot-item tot-total"><div class="tot-label">Total</div><div class="tot-value">$${total}</div></div>
       </div>
     </div>
-    
+
     ${order.notes ? `
-    <div class="order-notes">
-      <h3>Notes</h3>
-      <p>${order.notes}</p>
-    </div>
-    ` : ''}
+    <div class="order-section-title">Notes</div>
+    <div class="order-info-card full-width" style="border-color:rgba(251,191,36,0.3); background:rgba(251,191,36,0.05);">
+      <div class="card-value" style="color:var(--text-2); white-space:pre-wrap;">${order.notes}</div>
+    </div>` : ''}
   `;
 }
 
@@ -832,28 +846,28 @@ const EMAIL_TEMPLATES = {
     subject: 'Order Cancelled - {orderNumber}',
     status: 'cancelled',
     requiresTracking: false,
-    showCustomMessage: false,
+    showCustomMessage: true,
     showReason: true,
     reasonType: 'cancellation',
-    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. Reason: ${data.reason || 'Not specified'}.`
+    preview: (data) => `Your order <strong>${data.orderNumber}</strong> has been cancelled. Reason: ${data.reason || 'Not specified'}.${data.customMessage ? ` ${data.customMessage}` : ''}<br><br><em>We'd love to have you back — browse our full range at xtremepeptides.nz and place a new order any time.</em>`
   },
   order_refunded: {
     subject: 'Refund Processed - Order {orderNumber}',
     status: 'refunded',
     requiresTracking: false,
-    showCustomMessage: false,
+    showCustomMessage: true,
     showReason: true,
     reasonType: 'refund',
-    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Reason: ${data.reason || 'Not specified'}. Please allow 3-5 business days for the funds to appear in your account.`
+    preview: (data) => `A refund has been processed for your order <strong>${data.orderNumber}</strong>. Reason: ${data.reason || 'Not specified'}. Please allow 3-5 business days for the funds to appear in your account.${data.customMessage ? ` ${data.customMessage}` : ''}<br><br><em>We hope to see you again soon — our full range is available at xtremepeptides.nz whenever you're ready.</em>`
   },
   order_delayed: {
     subject: 'Order Delay - {orderNumber}',
-    status: 'processing',
+    status: 'delayed',
     requiresTracking: false,
-    showCustomMessage: false,
+    showCustomMessage: true,
     showReason: true,
     reasonType: 'delay',
-    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.reason || 'unforeseen circumstances'}. We appreciate your patience.`
+    preview: (data) => `We're sorry, but your order <strong>${data.orderNumber}</strong> has been delayed due to ${data.reason || 'unforeseen circumstances'}. We appreciate your patience.${data.customMessage ? ` ${data.customMessage}` : ''}<br><br><em>We will update you with your order status as soon as we can. Thank you for your patience.</em>`
   },
   custom: {
     subject: 'Message Regarding Your Order - {orderNumber}',
@@ -897,9 +911,7 @@ async function loadEmailLogs() {
     alert('Database connection unavailable. Please refresh the page.');
     return;
   }
-  
-  const emailLogsTb = document.getElementById('email-logs-tbody');
-  
+
   try {
     console.log('Querying email_logs table...');
     const { data, error } = await supabaseClient
@@ -921,37 +933,171 @@ async function loadEmailLogs() {
   }
 }
 
-function renderEmailLogs(logs) {
+let allEmailLogs = [];
+
+function filterEmailLogs() {
+  const q = (document.getElementById('email-logs-search')?.value || '').toLowerCase();
+  const filtered = q ? allEmailLogs.filter(l =>
+    (l.order_number || '').toLowerCase().includes(q) ||
+    (l.recipient_email || '').toLowerCase().includes(q) ||
+    (l.email_type || '').toLowerCase().includes(q) ||
+    (l.subject || '').toLowerCase().includes(q) ||
+    (l.status || '').toLowerCase().includes(q)
+  ) : allEmailLogs;
+  renderEmailLogs(filtered, false);
+}
+
+function renderEmailLogs(logs, cache = true) {
+  if (cache) allEmailLogs = logs;
   const emailLogsTb = document.getElementById('email-logs-tbody');
   if (!emailLogsTb) return;
-  
-  emailLogsTb.innerHTML = logs.map(log => `
+
+  // Group by order_number
+  const grouped = {};
+  logs.forEach(log => {
+    const key = log.order_number || 'unknown';
+    if (!grouped[key]) {
+      grouped[key] = { order_number: key, recipient: log.recipient_email, logs: [], lastSent: null };
+    }
+    grouped[key].logs.push(log);
+    if (!grouped[key].lastSent || new Date(log.sent_at) > new Date(grouped[key].lastSent)) {
+      grouped[key].lastSent = log.sent_at;
+      grouped[key].recipient = log.recipient_email;
+    }
+  });
+
+  const orders = Object.values(grouped).sort((a, b) => new Date(b.lastSent) - new Date(a.lastSent));
+
+  if (orders.length === 0) {
+    emailLogsTb.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8b9cb5; padding:30px;">No email logs found</td></tr>';
+    return;
+  }
+
+  emailLogsTb.innerHTML = orders.map(order => `
     <tr>
-      <td>${log.sent_at ? new Date(log.sent_at).toLocaleString() : ''}</td>
-      <td>${log.order_number || '-'}</td>
-      <td>${log.recipient_email || ''}</td>
-      <td>${log.email_type || ''}</td>
-      <td>${log.subject || ''}</td>
-      <td><span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span></td>
-      <td>
-        <button class="btn btn-sm btn-danger" onclick="deleteEmailLog('${log.id}')" style="background: #dc3545;">Delete</button>
-      </td>
+      <td style="color:#00d4ff; font-family:monospace;">${order.order_number}</td>
+      <td>${order.recipient || '-'}</td>
+      <td><span class="status-badge status-processing">${order.logs.length} email${order.logs.length !== 1 ? 's' : ''}</span></td>
+      <td>${order.lastSent ? new Date(order.lastSent).toLocaleString() : '-'}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="viewOrderEmailHistory('${order.order_number}')">📧 View History</button></td>
     </tr>
   `).join('');
 }
 
-// Delete Email Log
-async function deleteEmailLog(logId) {
-  if (!confirm('Are you sure you want to delete this email log? This cannot be undone.')) {
-    return;
-  }
+function viewOrderEmailHistory(orderNumber) {
+  const modal = document.getElementById('email-history-modal');
+  const title = document.getElementById('email-history-title');
+  const tbody = document.getElementById('email-history-tbody');
+  if (!modal || !tbody) return;
 
-  if (!supabaseClient) {
-    alert('Database connection unavailable. Please refresh the page.');
-    return;
-  }
+  closeEmailDetail();
+
+  const logs = allEmailLogs.filter(l => l.order_number === orderNumber)
+    .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
+
+  title.textContent = `Email History — Order ${orderNumber}`;
+
+  tbody.innerHTML = logs.map(log => `
+    <tr>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; color:#e0e6ed; font-size:13px;">${log.sent_at ? new Date(log.sent_at).toLocaleString() : '-'}</td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; color:#e0e6ed; font-size:13px;">${log.email_type || '-'}</td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c; color:#e0e6ed; font-size:13px;">${log.subject || '-'}</td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
+        <span class="status-badge ${log.status === 'sent' ? 'status-completed' : 'status-cancelled'}">${log.status || 'failed'}</span>
+      </td>
+      <td style="padding:12px 15px; border-bottom:1px solid #1a3a5c;">
+        <button class="btn btn-sm btn-secondary" onclick="viewEmailDetail('${log.id}')">👁 View</button>
+      </td>
+    </tr>
+  `).join('');
+
+  modal.classList.remove('hidden');
+}
+
+function viewEmailDetail(logId) {
+  const log = allEmailLogs.find(l => l.id === logId);
+  if (!log) return;
+
+  const template = EMAIL_TEMPLATES[log.email_type];
+  const typeLabel = template ? log.email_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : log.email_type;
+  const previewHTML = template
+    ? template.preview({ orderNumber: log.order_number })
+    : `<em style="color:#8b9cb5;">No preview available for this email type.</em>`;
+
+  document.getElementById('email-detail-content').innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Order</div>
+        <div style="color:#00d4ff; font-family:monospace; font-size:15px;">${log.order_number || '-'}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Recipient</div>
+        <div style="color:#e0e6ed; font-size:14px;">${log.recipient_email || '-'}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Email Type</div>
+        <div style="color:#e0e6ed; font-size:14px;">${typeLabel}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Sent At</div>
+        <div style="color:#e0e6ed; font-size:14px;">${log.sent_at ? new Date(log.sent_at).toLocaleString() : '-'}</div>
+      </div>
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px; grid-column:1/-1;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Subject</div>
+        <div style="color:#e0e6ed; font-size:14px;">${log.subject || '-'}</div>
+      </div>
+      ${log.email_type === 'order_shipped' ? `
+      <div style="background:#1a2a3a; padding:14px; border-radius:8px; grid-column:1/-1;">
+        <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Tracking Number</div>
+        <div style="color:#00d4ff; font-family:monospace; font-size:15px;">${log.tracking_number || '—'}</div>
+      </div>` : ''}
+    </div>
+    <div>
+      <div style="color:#8b9cb5; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Email Preview</div>
+      <div style="background:#1a2a3a; border-left:3px solid #00d4ff; padding:16px; border-radius:8px; color:#e0e6ed; font-size:14px; line-height:1.7;">
+        ${previewHTML}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('email-history-list').classList.add('hidden');
+  document.getElementById('email-detail-view').classList.remove('hidden');
+  document.getElementById('email-history-title').textContent = `Email — ${typeLabel}`;
+}
+
+function closeEmailDetail() {
+  document.getElementById('email-history-list')?.classList.remove('hidden');
+  document.getElementById('email-detail-view')?.classList.add('hidden');
+}
+
+// Delete Email Log (soft delete - moves to deleted_emails)
+async function deleteEmailLog(logId, orderNumber) {
+  if (!confirm('Are you sure you want to delete this email log?')) return;
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
 
   try {
+    const { data: emailData } = await supabaseClient
+      .from('email_logs')
+      .select('*')
+      .eq('id', logId)
+      .single();
+
+    if (emailData) {
+      await supabaseClient.from('deleted_emails').insert({
+        original_email_id: logId,
+        order_number: emailData.order_number,
+        recipient_email: emailData.recipient_email,
+        email_type: emailData.email_type,
+        subject: emailData.subject,
+        status: emailData.status,
+        resend_email_id: emailData.resend_email_id,
+        error_message: emailData.error_message,
+        sent_at: emailData.sent_at,
+        deleted_at: new Date().toISOString(),
+        deleted_by: currentUser?.username || 'unknown'
+      });
+    }
+
     const { error } = await supabaseClient
       .from('email_logs')
       .delete()
@@ -960,7 +1106,8 @@ async function deleteEmailLog(logId) {
     if (error) throw error;
 
     console.log('Email log deleted successfully');
-    loadEmailLogs(); // Refresh the email logs list
+    await loadEmailLogs();
+    if (orderNumber) viewOrderEmailHistory(orderNumber);
   } catch (error) {
     console.error('Error deleting email log:', error);
     alert('Failed to delete email log: ' + error.message);
@@ -985,9 +1132,31 @@ function openEmailModal() {
   // Reset form
   if (orderNumInput) orderNumInput.value = currentOrder.order_number || '';
   if (recipientInput) recipientInput.value = currentOrder.customer_email || '';
-  if (emailTypeSelect) emailTypeSelect.value = '';
   if (errorEl) errorEl.style.display = 'none';
   if (successEl) successEl.style.display = 'none';
+
+  // Filter email types based on current order status
+  const emailTypesByStatus = {
+    pending:    ['payment_confirmed', 'order_cancelled', 'order_delayed', 'order_refunded', 'custom'],
+    processing: ['order_shipped', 'order_cancelled', 'order_delayed', 'order_refunded', 'custom'],
+    shipped:    ['order_delivered', 'order_cancelled', 'order_delayed', 'order_refunded', 'custom'],
+    delivered:  ['custom'],
+  };
+  const allOptions = {
+    payment_confirmed: '💳 Payment Confirmed',
+    order_shipped:     '🚚 Order Shipped',
+    order_delivered:   '✅ Order Delivered',
+    order_cancelled:   '❌ Order Cancelled',
+    order_refunded:    '💰 Order Refunded',
+    order_delayed:     '⏳ Order Delayed',
+    custom:            '✏️ Custom Message',
+  };
+  const allowed = emailTypesByStatus[currentOrder.status] || Object.keys(allOptions);
+  if (emailTypeSelect) {
+    emailTypeSelect.innerHTML = '<option value="">Select email type...</option>' +
+      allowed.map(k => `<option value="${k}">${allOptions[k]}</option>`).join('');
+    emailTypeSelect.value = '';
+  }
 
   // Reset all dynamic fields
   resetEmailFormFields();
@@ -1035,40 +1204,33 @@ function handleEmailTypeChange(e) {
   const reasonSelect = document.getElementById('email-reason');
   const customMessageGroup = document.getElementById('custom-message-group');
   const statusSelect = document.getElementById('email-status');
-  const previewBox = document.getElementById('email-preview');
 
   // Show/hide fields based on email type
-  if (trackingGroup) {
-    trackingGroup.classList.toggle('hidden', !template.requiresTracking);
+  if (trackingGroup) trackingGroup.classList.toggle('hidden', !template.requiresTracking);
+  if (reasonGroup) reasonGroup.classList.toggle('hidden', !template.showReason);
+  if (customMessageGroup) customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
+
+  // Update custom message label
+  const customMessageLabel = document.getElementById('custom-message-label');
+  if (customMessageLabel) {
+    customMessageLabel.textContent = emailType === 'custom' ? 'Custom Message *' : 'Custom Message (optional)';
   }
-  if (reasonGroup) {
-    reasonGroup.classList.toggle('hidden', !template.showReason);
-  }
-  if (customMessageGroup) {
-    customMessageGroup.classList.toggle('hidden', !template.showCustomMessage);
-  }
+
+  // Status dropdown: only show for custom emails (all others enforce their own status)
+  const statusGroup = document.getElementById('status-group');
+  if (statusGroup) statusGroup.classList.toggle('hidden', emailType !== 'custom');
+  if (statusSelect) statusSelect.value = template.status || '';
 
   // Populate reason dropdown if needed
   if (template.showReason && reasonSelect && template.reasonType) {
     const reasons = REASONS[template.reasonType] || {};
-    reasonSelect.innerHTML = Object.entries(reasons).map(([key, value]) => 
+    reasonSelect.innerHTML = Object.entries(reasons).map(([key, value]) =>
       `<option value="${key}">${value}</option>`
     ).join('');
-    
-    // Update label based on type
     if (reasonLabel) {
-      const labels = {
-        delay: 'Delay Reason',
-        cancellation: 'Cancellation Reason',
-        refund: 'Refund Reason'
-      };
+      const labels = { delay: 'Delay Reason', cancellation: 'Cancellation Reason', refund: 'Refund Reason' };
       reasonLabel.textContent = labels[template.reasonType] || 'Reason';
     }
-  }
-
-  // Auto-set status if defined
-  if (statusSelect && template.status) {
-    statusSelect.value = template.status;
   }
 
   // Update preview
@@ -1134,7 +1296,7 @@ async function handleSendEmail(e) {
     }
   }
 
-  if (template.showCustomMessage) {
+  if (emailType === 'custom') {
     const customMessage = document.getElementById('email-message')?.value?.trim();
     if (!customMessage) {
       const errorEl = document.getElementById('email-error');
@@ -1162,11 +1324,16 @@ async function handleSendEmail(e) {
     // Update order status if changed
     if (status && currentOrder && currentOrder.status !== status) {
       console.log('Updating order status to:', status);
+      const paymentStatusMap = {
+        payment_confirmed: 'paid',
+        order_refunded:    'refunded'
+      };
       const { error: updateError } = await supabaseClient
         .from('orders')
-        .update({ 
+        .update({
           status: status,
           tracking_number: trackingNumber || currentOrder.tracking_number,
+          payment_status: paymentStatusMap[emailType] || currentOrder.payment_status,
           updated_at: new Date().toISOString()
         })
         .eq('id', currentOrder.id);
@@ -1196,13 +1363,16 @@ async function handleSendEmail(e) {
     // Add custom message or reason-based message
     if (emailType === 'custom') {
       emailData.customMessage = message;
-    } else if (template.reasonType && reasonText) {
-      const reasonMessages = {
-        order_delayed: `We apologize for the delay. Your order is delayed due to ${reasonText}.`,
-        order_cancelled: `Your order has been cancelled. Reason: ${reasonText}.`,
-        order_refunded: `A refund has been processed for your order. Reason: ${reasonText}. Please allow 3-5 business days for the funds to appear in your account.`
-      };
-      emailData.message = reasonMessages[emailType] || '';
+    } else {
+      if (message) emailData.customMessage = message;
+      if (template.reasonType && reasonText) {
+        const reasonMessages = {
+          order_delayed: `We apologize for the delay. Your order is delayed due to ${reasonText}.`,
+          order_cancelled: `Your order has been cancelled. Reason: ${reasonText}.`,
+          order_refunded: `A refund has been processed for your order. Reason: ${reasonText}. Please allow 3-5 business days for the funds to appear in your account.`
+        };
+        emailData.message = reasonMessages[emailType] || '';
+      }
     }
 
     // Send email via API
@@ -1212,6 +1382,11 @@ async function handleSendEmail(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(emailData)
     });
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`API error (${response.status}): Function not available. Check Vercel function logs.`);
+    }
 
     const result = await response.json();
     console.log('API response:', result);
@@ -1230,6 +1405,7 @@ async function handleSendEmail(e) {
       subject: template.subject.replace('{orderNumber}', orderNumber),
       status: 'sent',
       resend_email_id: result.emailId,
+      tracking_number: emailType === 'order_shipped' ? trackingNumber : null,
       sent_at: new Date().toISOString()
     });
 
@@ -1249,6 +1425,7 @@ async function handleSendEmail(e) {
     setTimeout(() => {
       closeModals();
       loadOrders();
+      loadEmailLogs();
     }, 1500);
 
   } catch (error) {
@@ -1273,6 +1450,39 @@ async function handleSendEmail(e) {
   }
 }
 
+async function handleUpdateStatus() {
+  const select = document.getElementById('update-status-select');
+  const newStatus = select?.value;
+
+  if (!newStatus) {
+    alert('Please select a status to update to.');
+    return;
+  }
+  if (!currentOrder) return;
+  if (!supabaseClient) { alert('Database connection unavailable.'); return; }
+
+  try {
+    const statusPaymentMap = { processing: 'paid', refunded: 'refunded' };
+    const { error } = await supabaseClient
+      .from('orders')
+      .update({
+        status: newStatus,
+        payment_status: statusPaymentMap[newStatus] || currentOrder.payment_status,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentOrder.id);
+
+    if (error) throw error;
+
+    if (select) select.value = '';
+    closeModals();
+    loadOrders();
+  } catch (error) {
+    console.error('Error updating status:', error);
+    alert('Failed to update status: ' + error.message);
+  }
+}
+
 function closeModals() {
   const orderMdl = document.getElementById('order-modal');
   const emailMdl = document.getElementById('email-modal');
@@ -1293,6 +1503,4 @@ window.viewOrder = viewOrder;
 window.deleteOrder = deleteOrder;
 window.deleteEmailLog = deleteEmailLog;
 window.permanentlyDeleteOrder = permanentlyDeleteOrder;
-window.loadOrdersByStatus = loadOrdersByStatus;
-window.loadDeletedEmails = loadDeletedEmails;
 window.permanentlyDeleteEmail = permanentlyDeleteEmail;

@@ -8,14 +8,15 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_number VARCHAR(50) UNIQUE NOT NULL,
-  customer_email VARCHAR(255) NOT NULL,
-  customer_name VARCHAR(255) NOT NULL,
+  customer_email VARCHAR(255),
+  customer_name VARCHAR(255),
   customer_phone VARCHAR(50),
-  shipping_address JSONB NOT NULL,
-  items JSONB NOT NULL,
-  subtotal DECIMAL(10, 2) NOT NULL,
-  shipping_cost DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  total DECIMAL(10, 2) NOT NULL,
+  shipping_address JSONB,
+  items JSONB,
+  subtotal DECIMAL(10, 2),
+  shipping_cost DECIMAL(10, 2) DEFAULT 0,
+  total DECIMAL(10, 2),
+  order_total DECIMAL(10, 2),
   status VARCHAR(50) NOT NULL DEFAULT 'pending',
   payment_method VARCHAR(50),
   payment_status VARCHAR(50) DEFAULT 'pending',
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS email_logs (
   subject VARCHAR(500) NOT NULL,
   status VARCHAR(50) NOT NULL, -- 'sent', 'failed'
   resend_email_id VARCHAR(255),
+  tracking_number VARCHAR(255),
   error_message TEXT,
   sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -105,10 +107,16 @@ CREATE POLICY "Allow read access on orders"
   TO authenticated, anon
   USING (true);
 
--- Allow update only to authenticated users
+-- Allow update to authenticated and anon users (admin panel uses anon key)
 CREATE POLICY "Allow update on orders"
   ON orders FOR UPDATE
-  TO authenticated
+  TO authenticated, anon
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow delete on orders"
+  ON orders FOR DELETE
+  TO authenticated, anon
   USING (true);
 
 -- Policies for email_logs table
@@ -121,6 +129,16 @@ CREATE POLICY "Allow insert on email_logs for anon"
   ON email_logs FOR INSERT
   TO anon
   WITH CHECK (true);
+
+CREATE POLICY "Allow select on email_logs for anon"
+  ON email_logs FOR SELECT
+  TO anon
+  USING (true);
+
+CREATE POLICY "Allow delete on email_logs for anon"
+  ON email_logs FOR DELETE
+  TO anon
+  USING (true);
 
 -- Policies for admin_users table (restrictive)
 CREATE POLICY "Allow select on admin_users"
@@ -147,7 +165,68 @@ CREATE POLICY "Service role full access on admin_users"
   USING (true)
   WITH CHECK (true);
 
+-- Deleted orders table (soft delete archive)
+CREATE TABLE IF NOT EXISTS deleted_orders (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  original_order_id UUID,
+  order_number VARCHAR(50),
+  customer_name VARCHAR(255),
+  customer_email VARCHAR(255),
+  total DECIMAL(10, 2),
+  status VARCHAR(50),
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_by VARCHAR(100)
+);
+
+-- Deleted email logs table (soft delete archive)
+CREATE TABLE IF NOT EXISTS deleted_emails (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  original_email_id UUID,
+  order_number VARCHAR(50),
+  recipient_email VARCHAR(255),
+  email_type VARCHAR(50),
+  subject VARCHAR(500),
+  status VARCHAR(50),
+  resend_email_id VARCHAR(255),
+  error_message TEXT,
+  sent_at TIMESTAMP WITH TIME ZONE,
+  deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  deleted_by VARCHAR(100)
+);
+
+-- Enable RLS on deleted tables
+ALTER TABLE deleted_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deleted_emails ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for deleted_orders
+CREATE POLICY "Service role full access on deleted_orders"
+  ON deleted_orders FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow all access on deleted_orders for anon"
+  ON deleted_orders FOR ALL
+  TO anon
+  USING (true)
+  WITH CHECK (true);
+
+-- RLS policies for deleted_emails
+CREATE POLICY "Service role full access on deleted_emails"
+  ON deleted_emails FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Allow all access on deleted_emails for anon"
+  ON deleted_emails FOR ALL
+  TO anon
+  USING (true)
+  WITH CHECK (true);
+
 -- Comments for documentation
 COMMENT ON TABLE orders IS 'Stores all customer orders';
 COMMENT ON TABLE admin_users IS 'Admin users for dashboard authentication';
 COMMENT ON TABLE email_logs IS 'Logs of all emails sent through the system';
+COMMENT ON TABLE deleted_orders IS 'Archive of deleted orders';
+COMMENT ON TABLE deleted_emails IS 'Archive of deleted email logs';
