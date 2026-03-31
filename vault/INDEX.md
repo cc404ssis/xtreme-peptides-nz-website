@@ -45,24 +45,43 @@ Source: #media-staging Discord channel
 ---
 
 ## 📁 documents/
-**Unprocessed PDF**
+**Symbiotics Goat Milk Powder Product Brochure**
 - File: `bf8f2297-314a-40bd-908e-378b291503b0.pdf`
-- Type: PDF v1.5, 4 pages
-- Status: Content extraction pending
-- Tags: #pdf #pending
+- Type: PDF v1.5, 4 pages (Adobe Illustrator source)
+- Title: WMP_NEW_PRF03 (Whole Milk Powder)
+- Content: Product marketing brochure for Symbiotics NZ goat milk powder
+- Extracted images: `pdf-images/` folder with 4 PNG pages
+- Status: ✅ Processed and converted to images
+- Tags: #cpg #product-brochure #goat-milk #nutrition #symbiotics
+
+### Page Contents
+| Page | Description |
+|------|-------------|
+| 1 | Product pouch packaging design |
+| 2 | Benefits (A2 Protein, Prebiotics, Easier to Digest) |
+| 3 | Nutrition facts & serving suggestions |
+| 4 | Company info, barcode, manufacturing details |
 
 ---
 
-## Auto-Categorization Rules Applied
+## Vault Statistics
 
-| File Type | Categorization Logic |
-|-----------|---------------------|
-| Screenshots with AI/agent content | → ai-tools/ |
-| Screenshots with frontend/UI content | → frontend-dev/ |
-| Screenshots with video/media content | → video-production/ |
-| PDF documents | → documents/ |
-| Video files | → video-production/ |
+| Category | Files | Notes |
+|----------|-------|-------|
+| ai-tools | 1 | Paperclip AI org chart |
+| frontend-dev | 1 | 5 frontend tools collection |
+| video-production | 2 | Video toolkit + raw footage |
+| documents | 5 | PDF + 4 extracted PNG pages |
+| **Total** | **9** | All from #media-staging |
 
 ---
 
-*Next: Git commit to preserve vault state*
+## Git Commits
+- `b3c93ee7` - Initial auto-categorization (5 files)
+- *Pending* - PDF conversion to images
+
+---
+
+## Source
+All files processed from Discord #media-staging channel
+Processing completed: 2026-04-01 05:12 GMT+8
