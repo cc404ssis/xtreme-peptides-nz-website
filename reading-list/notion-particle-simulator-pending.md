@@ -1,71 +1,48 @@
-# Pending: AI Particle Simulator Guide + Prompt Pack
+# AI Particle Simulator Guide + Prompt Pack
 
 **Source:** https://www.notion.so/AI-Particle-Simulator-Full-Guide-Prompt-Pack-331543f5288680ea9e6cdacf45372d68  
-**Category:** AI Creative Tools / Prompt Engineering  
-**Status:** ⚠️ GATED — Requires Manual Extraction  
-**Added:** 2025-01-XX
+**Tool:** https://particles.casberry.in/  
+**Category:** 3D Visualization / Creative Coding / WebGL  
+**Status:** ✅ **Extracted** — Content saved to vault  
+**Added:** 2025-01-XX  
+**Extracted:** 2026-04-04
 
 ---
 
-## Access Information
+## Access Status
 
-**Platform:** Notion  
-**Format:** Document (Guide + Prompt Pack)  
-**Topic:** AI Particle Simulator  
-**Sharing:** Public link with copy permissions
+🔓 **Resolved** — Content extracted from PDF export and saved to vault.
 
 ---
 
-## Why This Is Pending
+## Full Content Available At
 
-The Notion page requires authentication to view content. Direct fetching returns minimal data due to Notion's access controls.
-
-**To extract this content:**
-
-### Option 1: Screenshot Method (Recommended)
-1. Open the Notion page in your browser
-2. Screenshot key sections
-3. Upload screenshots to this channel
-4. I'll OCR and analyze the content
-
-### Option 2: Copy-Paste Method
-1. Open the Notion page
-2. Select all content (Ctrl+A / Cmd+A)
-3. Copy (Ctrl+C / Cmd+C)
-4. Paste directly in this channel
-5. I'll format and categorize
-
-### Option 3: Export Method
-1. In Notion: "..." menu → Export
-2. Choose Markdown or PDF format
-3. Upload the exported file here
+📄 **`workflows-systems/ai-particle-simulator-guide.md`**
 
 ---
 
-## Expected Content (Based on Title)
+## Summary
 
-| Component | Likely Contents |
-|-----------|-----------------|
-| **Full Guide** | Tutorial on using AI Particle Simulator |
-| **Prompt Pack** | Pre-built prompts for particle effects |
-| **Use Cases** | Creative applications, video effects, etc. |
+**Free browser-based tool** for turning text prompts into complex 3D particle simulations (20,000+ particles). Export production-ready React or Three.js code.
 
----
+**Key Features:**
+- 100% free, no signup required
+- 20,000+ particle simulations at 60fps
+- Export to React or Three.js
+- Real-time UI controls for tweaking
+- Complete prompt template for LLMs (Claude, ChatGPT, etc.)
 
-## Category Assignment
+**Performance Rules:**
+- Zero garbage collection (function runs 20k times per frame)
+- Math over logic (avoid branching)
+- Reuse provided `target` and `color` objects
+- No `new THREE.Vector3()` or `new THREE.Color()` in loops
 
-Once extracted, this content will be filed under:
-```
-reading-list/ OR
-design-creative/ (if visual/creative focus)
-```
-
----
-
-## Action Required
-
-⏳ **Awaiting manual extraction** — Upload screenshots or paste content to complete analysis and categorization.
+**Security Constraints:**
+- Forbidden: `document`, `window`, `fetch`, `eval`, `import`, `setTimeout`, etc.
+- Must pass dry-run validation without errors
 
 ---
 
-*Placeholder created by Trinity Link-Drop Pipeline*
+*Placeholder updated by Trinity Link-Drop Pipeline*  
+*Full content extracted from PDF and committed to Git*
