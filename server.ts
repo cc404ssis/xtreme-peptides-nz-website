@@ -430,6 +430,49 @@ async function startServer() {
     }
   });
 
+  // Inbound email webhook (Resend)
+  app.post("/api/inbound-email", async (req, res) => {
+    try {
+      const supabase = getSupabase();
+      const payload = req.body?.data || req.body;
+      const { from, subject, text, html } = payload;
+
+      if (!from) {
+        return res.status(400).json({ error: "Missing sender" });
+      }
+
+      // Parse "Display Name <email@example.com>" format
+      const emailMatch = from.match(/<([^>]+)>/);
+      const senderEmail = emailMatch ? emailMatch[1] : from.trim();
+      const senderName = emailMatch
+        ? from.replace(/<[^>]+>/, "").trim().replace(/^"|"$/g, "")
+        : null;
+
+      // Use plain text body; strip quoted reply chains
+      const rawText =
+        text ||
+        (html ? html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "");
+      const cleanMessage =
+        rawText.split(/\n--\s*\n|\nOn .+ wrote:|\n_{3,}|\n-{3,}/)[0].trim() ||
+        "(no message body)";
+
+      await supabase.from("messages").insert({
+        customer_name: senderName || null,
+        customer_email: senderEmail,
+        subject: subject || "No Subject",
+        message: cleanMessage,
+        status: "unread",
+        source: "email",
+        created_at: new Date().toISOString(),
+      });
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      console.error("Inbound email webhook error:", err);
+      return res.status(500).json({ error: "Failed to process inbound email" });
+    }
+  });
+
   // Serve the React admin app
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
