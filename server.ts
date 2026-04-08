@@ -141,6 +141,12 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Block search engine indexing (defense-in-depth alongside meta tags and robots.txt)
+  app.use((req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
+
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", env: process.env.NODE_ENV });
@@ -427,6 +433,27 @@ async function startServer() {
     } catch (error) {
       console.error("Error deleting message:", error);
       res.status(500).json({ error: "Failed to delete message" });
+    }
+  });
+
+  // Hidden products (used by storefront to filter inactive products)
+  app.get("/api/hidden-products", async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase
+        .from('products')
+        .select('name')
+        .eq('is_active', false);
+
+      if (error) throw error;
+
+      const hiddenNames = (data || []).map((row: any) => row.name.toLowerCase());
+      return res.json({ hiddenNames });
+    } catch (err) {
+      console.error('Error fetching hidden products:', err);
+      return res.json({ hiddenNames: [] });
     }
   });
 

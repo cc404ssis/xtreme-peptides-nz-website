@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx tsx server.ts",
     "dev": "tsx server.ts",
-    "build": "vite build",
+    "build": "cd website-src && npm install && npm run build && cd .. && vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
