@@ -457,14 +457,21 @@ async function startServer() {
     }
   });
 
+  // Inbound email webhook health check
+  app.get("/api/inbound-email", (req, res) => {
+    res.json({ status: "ok", endpoint: "inbound-email", method: "POST required" });
+  });
+
   // Inbound email webhook (Resend)
   app.post("/api/inbound-email", async (req, res) => {
+    console.log("[inbound-email] Webhook received:", JSON.stringify(req.body).slice(0, 500));
     try {
       const supabase = getSupabase();
       const payload = req.body?.data || req.body;
       const { from, subject, text, html } = payload;
 
       if (!from) {
+        console.log("[inbound-email] Missing sender field. Full payload:", JSON.stringify(req.body).slice(0, 1000));
         return res.status(400).json({ error: "Missing sender" });
       }
 
@@ -493,9 +500,10 @@ async function startServer() {
         created_at: new Date().toISOString(),
       });
 
+      console.log(`[inbound-email] Saved message from ${senderEmail}: "${subject || 'No Subject'}"`);
       return res.status(200).json({ success: true });
     } catch (err) {
-      console.error("Inbound email webhook error:", err);
+      console.error("[inbound-email] Webhook error:", err);
       return res.status(500).json({ error: "Failed to process inbound email" });
     }
   });
