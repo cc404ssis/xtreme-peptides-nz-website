@@ -226,7 +226,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <InfoCard icon={<Hash className="w-4 h-4" />} label="Order Number" value={order.orderNumber} mono />
             <InfoCard icon={<Calendar className="w-4 h-4" />} label="Date Placed" value={new Date(order.createdAt).toLocaleString('en-NZ')} />
-            <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || '—'} />
+            <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || 'TBC'} />
             <InfoCard icon={<Truck className="w-4 h-4" />} label="Tracking" value={order.trackingNumber || 'Not provided'} mono={!!order.trackingNumber} />
           </div>
 

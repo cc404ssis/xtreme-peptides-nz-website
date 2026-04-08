@@ -1,0 +1,143 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Sora", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --color-navy-950: #0B1B2D;
+  --color-navy-900: #0F2440;
+  --color-navy-800: #132E52;
+  --color-navy-700: #1A3A66;
+
+  --color-cyan-400: #00D4FF;
+  --color-cyan-500: #00B8D9;
+  --color-cyan-600: #0097B2;
+
+  --color-red-500: #FF3B3B;
+  --color-red-600: #E02020;
+
+  --color-silver-200: #E2E8F0;
+  --color-silver-300: #CBD5E1;
+  --color-silver-400: #94A3B8;
+  --color-silver-500: #64748B;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-navy-950);
+    color: var(--color-silver-200);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  img {
+    content-visibility: auto;
+  }
+}
+
+@layer components {
+  .card-dark {
+    background: linear-gradient(135deg, rgba(15, 36, 64, 0.8), rgba(11, 27, 45, 0.9));
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 1rem;
+  }
+
+  .card-glow {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.05);
+  }
+
+  .card-glow:hover {
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.15);
+    border-color: rgba(0, 212, 255, 0.3);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-cyan-400), var(--color-cyan-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--color-cyan-400), var(--color-cyan-600));
+    color: var(--color-navy-950);
+    font-weight: 700;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+  }
+
+  .btn-outline {
+    border: 1px solid rgba(0, 212, 255, 0.5);
+    color: var(--color-cyan-400);
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-outline:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--color-cyan-400);
+  }
+
+  /* Lightweight fade-in-up animation (replaces heavy motion whileInView) */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out both;
+  }
+
+  /* Stagger children — apply to parent, children auto-delay */
+  .stagger-children > * { animation: fadeInUp 0.4s ease-out both; }
+  .stagger-children > *:nth-child(1) { animation-delay: 0s; }
+  .stagger-children > *:nth-child(2) { animation-delay: 0.06s; }
+  .stagger-children > *:nth-child(3) { animation-delay: 0.12s; }
+  .stagger-children > *:nth-child(4) { animation-delay: 0.18s; }
+  .stagger-children > *:nth-child(5) { animation-delay: 0.24s; }
+  .stagger-children > *:nth-child(6) { animation-delay: 0.30s; }
+
+  /* Product card hover lift — GPU-accelerated */
+  .product-card-lift {
+    transition: transform 0.2s ease;
+    will-change: transform;
+  }
+
+  .product-card-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Fixed nav GPU hint */
+  nav[class*="fixed"] {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+}

@@ -3,10 +3,18 @@
     "api/*.js": { "maxDuration": 10 }
   },
   "outputDirectory": "website",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/admin", "destination": "/admin/index.html" },
     { "source": "/admin/(.*)", "destination": "/admin/index.html" },
-    { "source": "/(.*)", "destination": "/$1" }
+    { "source": "/((?!api|admin|assets|robots\\.txt).*)", "destination": "/index.html" }
   ]
 }

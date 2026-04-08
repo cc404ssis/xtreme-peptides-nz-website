@@ -120,17 +120,41 @@ const AdminDashboard: React.FC = () => {
   };
 
   const seedProducts = async () => {
-    const { data: existing } = await supabase.from('products').select('id').limit(1);
-    if (existing && existing.length === 0) {
-      const now = new Date().toISOString();
-      const initialProducts = [
-        { name: 'BPC-157 5mg', description: 'Body Protection Compound-157 is a pentadecapeptide composed of 15 amino acids.', price: 85.00, image_url: null, is_active: true, created_at: now, updated_at: now },
-        { name: 'TB-500 10mg', description: 'Thymosin Beta-4 is a naturally occurring peptide present in almost all animal and human cells.', price: 75.00, image_url: null, is_active: true, created_at: now, updated_at: now },
-        { name: 'Ipamorelin 5mg', description: 'Ipamorelin is a selective GH secretagogue and ghrelin receptor agonist.', price: 65.00, image_url: null, is_active: true, created_at: now, updated_at: now },
-        { name: 'CJC-1295 5mg', description: 'Modified GRF 1-29 is a tetrasubstituted peptide analog of growth hormone-releasing hormone.', price: 70.00, image_url: null, is_active: true, created_at: now, updated_at: now },
-        { name: 'Melanotan II 10mg', description: 'MT-2 is a synthetic analog of the peptide hormone alpha-melanocyte-stimulating hormone.', price: 95.00, image_url: null, is_active: true, created_at: now, updated_at: now }
-      ];
-      await supabase.from('products').insert(initialProducts);
+    const { data: existing } = await supabase.from('products').select('name');
+    const existingNames = new Set((existing || []).map((p: any) => p.name?.toLowerCase()));
+    const now = new Date().toISOString();
+
+    // All storefront products — names must match "Name Size" format for visibility sync
+    const allStorefrontProducts = [
+      { name: 'BAC Water 3ml', description: 'Bacteriostatic water for reconstitution of lyophilized peptide compounds.', price: 19.00, image_url: '/product_bac_water_3ml.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'BAC Water 10ml', description: 'Bacteriostatic water for reconstitution of lyophilized peptide compounds.', price: 29.00, image_url: '/product_bac_water_10ml.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'BPC-157 10mg', description: 'Synthetic pentadecapeptide for tissue repair research.', price: 99.00, image_url: '/product_bpc157_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'TB-500 10mg', description: 'Synthetic peptide fragment of thymosin beta-4 protein.', price: 139.00, image_url: '/product_tb500_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'GHK-CU 50mg', description: 'Copper peptide complex for cellular communication research.', price: 149.00, image_url: '/product_ghkcu_50mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'GHK-CU 100mg', description: 'Copper peptide complex for cellular communication research.', price: 229.00, image_url: '/product_ghkcu_50mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'CJC-1295 w/ DAC 5mg', description: 'Synthetic analog of growth hormone-releasing hormone with DAC.', price: 179.00, image_url: '/product_cjc1295_5mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Ipamorelin 5mg', description: 'Synthetic pentapeptide growth hormone secretagogue.', price: 159.00, image_url: '/product_ipamorelin_5mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'GHRP-6 5mg', description: 'Growth Hormone Releasing Peptide-6.', price: 119.00, image_url: '/product_ghrp6_5mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Sermorelin 10mg', description: 'Synthetic peptide analog of GHRH 1-29.', price: 199.00, image_url: '/product_sermorelin_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Tesamorelin 10mg', description: 'Synthetic analog of growth hormone-releasing factor.', price: 219.00, image_url: '/product_tesamorelin_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'DSIP 15mg', description: 'Delta Sleep-Inducing Peptide for sleep cycle research.', price: 149.00, image_url: '/product_dsip_15mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Epitalon 50mg', description: 'Synthetic tetrapeptide for telomerase activity research.', price: 189.00, image_url: '/product_epitalon_50mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Retatrutide 10mg', description: 'Triple agonist peptide targeting GLP-1, GIP, and glucagon receptors.', price: 249.00, image_url: '/product_retatrutide_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'MOTS-c 40mg', description: 'Mitochondrial-derived peptide for metabolic regulation research.', price: 199.00, image_url: '/product_motsc_40mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Thymosin Alpha-1 10mg', description: 'Synthetic thymic peptide for immune modulation research.', price: 179.00, image_url: '/product_thymosin_a1_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'SS-31 10mg', description: 'Mitochondrial-targeted peptide (Elamipretide).', price: 199.00, image_url: '/product_ss31_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'NAD+ 100mg', description: 'Nicotinamide adenine dinucleotide for cellular energy research.', price: 169.00, image_url: '/product_nad_100mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'NAD+ 500mg', description: 'Nicotinamide adenine dinucleotide for cellular energy research.', price: 399.00, image_url: '/product_nad_500mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Melanotan II 10mg', description: 'Synthetic analog of alpha-melanocyte stimulating hormone.', price: 89.00, image_url: '/product_melanotan2_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'PT-141 10mg', description: 'Synthetic melanocortin receptor agonist (Bremelanotide).', price: 169.00, image_url: '/product_pt141_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'Kisspeptin-10 10mg', description: 'Synthetic fragment of the kisspeptin neuropeptide.', price: 189.00, image_url: '/product_kisspeptin_10mg.png', is_active: true, created_at: now, updated_at: now },
+      { name: 'SNAP-8 10mg', description: 'Synthetic octapeptide for SNARE complex research.', price: 159.00, image_url: '/product_snap8_10mg.png', is_active: true, created_at: now, updated_at: now },
+    ];
+
+    // Only insert products that don't already exist
+    const toInsert = allStorefrontProducts.filter(p => !existingNames.has(p.name.toLowerCase()));
+    if (toInsert.length > 0) {
+      await supabase.from('products').insert(toInsert);
       fetchData();
     }
   };
@@ -210,16 +234,6 @@ const AdminDashboard: React.FC = () => {
     );
   });
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    try {
-      await supabase.from('products').delete().eq('id', productId);
-      fetchData();
-    } catch (err) {
-      console.error('Error deleting product:', err);
-    }
-  };
-
   const handleDeleteOrder = async (order: Order) => {
     if (!confirm(`Are you sure you want to delete order #${order.orderNumber}?`)) return;
     try {
@@ -261,9 +275,7 @@ const AdminDashboard: React.FC = () => {
       {/* Sidebar */}
       <aside className="w-64 bg-bg-card border-r border-border flex flex-col sticky top-0 h-screen">
         <div className="p-6 border-b border-border flex items-center gap-3">
-          <div className="w-8 h-8 bg-cyan rounded-lg flex items-center justify-center shadow-lg shadow-cyan/20">
-            <LayoutDashboard className="text-bg-deep w-5 h-5" />
-          </div>
+          <img src="/logo.png" alt="Xtreme Peptides" className="h-10 drop-shadow-[0_2px_8px_rgba(0,212,255,0.25)]" />
           <div>
             <h1 className="text-sm font-bold tracking-tight">XTREME PEPTIDES</h1>
             <p className="text-[10px] text-text-3 font-bold uppercase tracking-widest">Admin Panel</p>
@@ -276,6 +288,7 @@ const AdminDashboard: React.FC = () => {
           <NavButton active={activeTab === 'orders' && statusFilter === 'pending'} onClick={() => { setActiveTab('orders'); setStatusFilter('pending'); }} icon={<Clock className="w-4 h-4" />} label="Pending" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'shipped'} onClick={() => { setActiveTab('orders'); setStatusFilter('shipped'); }} icon={<Truck className="w-4 h-4" />} label="Shipped" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'delivered'} onClick={() => { setActiveTab('orders'); setStatusFilter('delivered'); }} icon={<CheckCircle2 className="w-4 h-4" />} label="Delivered" />
+          <div className="my-2 mx-4 border-t border-border" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'cancelled'} onClick={() => { setActiveTab('orders'); setStatusFilter('cancelled'); }} icon={<XCircle className="w-4 h-4" />} label="Cancelled" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'delayed'} onClick={() => { setActiveTab('orders'); setStatusFilter('delayed'); }} icon={<AlertTriangle className="w-4 h-4" />} label="Delayed" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'refunded'} onClick={() => { setActiveTab('orders'); setStatusFilter('refunded'); }} icon={<Undo2 className="w-4 h-4" />} label="Refunded" />
@@ -372,7 +385,6 @@ const AdminDashboard: React.FC = () => {
                         <th className="px-6 py-4">Product</th>
                         <th className="px-6 py-4">Price</th>
                         <th className="px-6 py-4">Visibility</th>
-                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -421,17 +433,6 @@ const AdminDashboard: React.FC = () => {
                                 {product.isActive ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                                 {product.isActive ? 'Visible' : 'Hidden'}
                               </button>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => handleDeleteProduct(product.id)}
-                                  className="p-2 bg-bg-input border border-border rounded-lg text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
-                                  title="Delete Product"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
                             </td>
                           </tr>
                         ))

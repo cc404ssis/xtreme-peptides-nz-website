@@ -7,7 +7,11 @@ node_modules/
 dist/
 website/admin/
 
+# Vercel CLI project config (local only)
+.vercel/
+
 # Ruflo / Claude Code agent tooling (local dev only, not part of the site)
 .claude/
 .claude-flow/
 .mcp.json
+.vercel
