@@ -45,6 +45,7 @@
 
   html {
     -webkit-overflow-scrolling: touch;
+    font-size: 112.5%; /* 18px base — larger, more authoritative default */
   }
 
   body {
@@ -99,8 +100,8 @@
   p, li {
     font-family: var(--font-body);
     font-weight: 300;
-    font-size: 0.9375rem;
-    line-height: 1.65;
+    font-size: 1rem;
+    line-height: 1.7;
     color: var(--xp-grey-text);
   }
 
