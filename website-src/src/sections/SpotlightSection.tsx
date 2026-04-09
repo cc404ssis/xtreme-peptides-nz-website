@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useVisibleProducts } from "@/lib/useVisibleProducts";
 import ProductCard from "@/components/ProductCard";
 
@@ -18,9 +18,8 @@ export default function SpotlightSection() {
 
   const scroll = (dir: "left" | "right") => {
     if (!scrollRef.current) return;
-    const amount = 280;
     scrollRef.current.scrollBy({
-      left: dir === "left" ? -amount : amount,
+      left: dir === "left" ? -280 : 280,
       behavior: "smooth",
     });
   };
@@ -32,38 +31,51 @@ export default function SpotlightSection() {
   if (featuredProducts.length === 0) return null;
 
   return (
-    <section className="py-12 sm:py-20">
+    <section className="py-16 sm:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-6 sm:mb-10">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
-                <Sparkles size={12} className="text-red-500" />
-                <span className="text-xs font-mono text-red-500">New Arrivals</span>
-              </div>
-            </div>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-silver-200">Spotlight</h2>
-          </div>
-          <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={() => scroll("left")}
-              className="p-2 rounded-lg bg-navy-800 border border-cyan-400/20 text-silver-400 hover:text-cyan-400 hover:border-cyan-400/40 transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => scroll("right")}
-              className="p-2 rounded-lg bg-navy-800 border border-cyan-400/20 text-silver-400 hover:text-cyan-400 hover:border-cyan-400/40 transition-colors"
-            >
-              <ChevronRight size={20} />
-            </button>
+        {/* Section header */}
+        <div className="section-header">
+          <div className="section-label">— New Arrivals —</div>
+          <h2>
+            Product <span className="text-accent">Spotlight</span>
+          </h2>
+          <div className="section-rule" />
+          <div className="dot-divider">
+            <div className="dot-line" />
+            <div className="dot" />
+            <div className="dot" />
+            <div className="dot" />
+            <div className="dot-line" />
           </div>
         </div>
 
+        {/* Scroll controls (desktop) */}
+        <div className="hidden md:flex justify-end gap-2 mb-6">
+          <button
+            onClick={() => scroll("left")}
+            className="p-2 transition-colors"
+            style={{ border: "1px solid var(--xp-border-red)", color: "var(--xp-grey-text)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--xp-red)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--xp-grey-text)")}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="p-2 transition-colors"
+            style={{ border: "1px solid var(--xp-border-red)", color: "var(--xp-grey-text)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--xp-red)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--xp-grey-text)")}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+
+        {/* Product scroll */}
         <div
           ref={scrollRef}
-          className="flex gap-3 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory stagger-children"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory stagger-children"
+          style={{ scrollbarWidth: "none" }}
         >
           {featuredProducts.map((product) => (
             <div

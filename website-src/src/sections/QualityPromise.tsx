@@ -20,20 +20,16 @@ const features = [
 
 export default function QualityPromise() {
   return (
-    <section
-      className="py-16 sm:py-24"
-      style={{
-        backgroundImage: "linear-gradient(to bottom, rgba(11, 27, 45, 0.9), rgba(11, 27, 45, 0.75)), url('/quality_lab_bg.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
+    <section className="py-16 sm:py-24">
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-        <div className="text-center mb-10 sm:mb-14 animate-fade-in-up">
-          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-silver-200 mb-3 sm:mb-4">
-            Tested. Documented. Consistent.
+        {/* Section header */}
+        <div className="section-header animate-fade-in-up">
+          <div className="section-label">— Our Promise —</div>
+          <h2>
+            Tested. Documented. <span className="text-accent">Consistent.</span>
           </h2>
-          <p className="text-silver-400 max-w-2xl mx-auto text-sm sm:text-base">
+          <div className="section-rule" />
+          <p className="font-heading font-300 text-sm sm:text-base max-w-2xl mx-auto mt-4" style={{ color: "var(--xp-grey-text)" }}>
             Whether you're running cell assays or endocrine studies, consistency matters. Every batch is tracked, stored cold, and shipped with documentation.
           </p>
         </div>
@@ -42,13 +38,18 @@ export default function QualityPromise() {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="card-dark card-glow p-5 sm:p-6 text-center"
+              className="card-dark card-glow card-red-top p-6 sm:p-8 text-center"
             >
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-cyan-400/10 text-cyan-400 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <feature.icon size={22} />
+              <div
+                className="w-12 h-12 flex items-center justify-center mx-auto mb-4"
+                style={{ border: "1px solid var(--xp-border-red)" }}
+              >
+                <feature.icon size={22} style={{ color: "var(--xp-red)" }} />
               </div>
-              <h3 className="font-display font-semibold text-silver-200 text-base sm:text-lg mb-2">{feature.title}</h3>
-              <p className="text-silver-400 text-xs sm:text-sm">{feature.description}</p>
+              <h3 className="text-base sm:text-lg mb-3">{feature.title}</h3>
+              <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>

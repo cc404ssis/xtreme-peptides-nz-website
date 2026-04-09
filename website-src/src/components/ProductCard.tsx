@@ -23,8 +23,12 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <div className="product-card-lift">
-      <Link to={`/product/${product.id}`} className="block card-dark card-glow overflow-hidden group">
-        <div className="aspect-[4/3] bg-navy-800 overflow-hidden flex items-center justify-center">
+      <Link
+        to={`/product/${product.id}`}
+        className="block card-dark card-glow card-red-top overflow-hidden group"
+        style={{ textDecoration: "none" }}
+      >
+        <div className="aspect-[4/3] overflow-hidden flex items-center justify-center" style={{ background: "var(--xp-dark)" }}>
           <img
             src={product.image}
             alt={product.name}
@@ -33,16 +37,28 @@ export default function ProductCard({ product }: Props) {
           />
         </div>
         <div className="p-3 sm:p-4">
-          <h3 className="text-silver-200 font-display font-semibold text-sm sm:text-base leading-tight">
-            {product.name} <span className="text-silver-400 font-normal text-xs sm:text-sm">{product.size}</span>
+          {/* Category badge */}
+          <div className="font-mono text-[9px] sm:text-[10px] tracking-[0.3em] uppercase mb-2" style={{ color: "var(--xp-red)" }}>
+            Research Peptide
+          </div>
+          {/* Product name */}
+          <h3 className="font-display text-base sm:text-lg tracking-[0.04em] leading-tight mb-1" style={{ color: "var(--xp-white)" }}>
+            {product.name}
           </h3>
-          <div className="flex items-center justify-between mt-2 sm:mt-3">
-            <span className="text-cyan-400 font-bold text-sm sm:text-lg">${product.price.toFixed(2)}</span>
+          <span className="font-heading text-xs" style={{ color: "var(--xp-grey-text)" }}>{product.size}</span>
+
+          <div className="flex items-center justify-between mt-3">
+            <span className="font-display text-lg sm:text-xl" style={{ color: "var(--xp-white)" }}>
+              $<span className="text-accent">{product.price.toFixed(2)}</span>
+            </span>
             <button
               onClick={handleAdd}
-              className="p-1.5 sm:p-2 rounded-lg bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400/20 transition-colors"
+              className="p-2 transition-all"
+              style={{ background: "var(--xp-red-dim)", color: "var(--xp-red)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--xp-red)"; e.currentTarget.style.color = "var(--xp-white)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--xp-red-dim)"; e.currentTarget.style.color = "var(--xp-red)"; }}
             >
-              <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <ShoppingCart className="w-4 h-4" />
             </button>
           </div>
         </div>

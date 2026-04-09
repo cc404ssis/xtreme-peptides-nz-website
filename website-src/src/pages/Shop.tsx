@@ -22,31 +22,33 @@ export default function Shop() {
   return (
     <div className="min-h-screen pt-24 sm:pt-28 md:pt-36 pb-12 sm:pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6 sm:mb-10 animate-fade-in-up">
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-silver-200 mb-2">
-            Shop All Products
-          </h1>
-          <p className="text-silver-400 text-sm sm:text-base">
+        {/* Section header */}
+        <div className="section-header mb-8 sm:mb-12 animate-fade-in-up">
+          <div className="section-label">— Product Range —</div>
+          <h2>
+            Shop <span className="text-accent">All</span> Products
+          </h2>
+          <div className="section-rule" />
+          <p className="font-heading font-300 text-sm sm:text-base max-w-xl mx-auto mt-3" style={{ color: "var(--xp-grey-text)" }}>
             Browse our complete catalog of laboratory-grade research peptides and compounds.
           </p>
         </div>
 
         {/* Search */}
-        <div className="mb-6 sm:mb-8">
-          <div className="relative max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-silver-500" />
+        <div className="mb-8 sm:mb-10">
+          <div className="relative max-w-md mx-auto">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--xp-grey-text)" }} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-2.5 bg-navy-800/80 border border-cyan-400/20 rounded-lg text-sm text-silver-200 placeholder-silver-500 focus:outline-none focus:border-cyan-400/50"
+              placeholder="SEARCH PRODUCTS..."
+              className="xp-input !pl-10"
             />
           </div>
         </div>
 
-        {/* Product Grid — 2 cols on mobile, scales up */}
+        {/* Product Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 stagger-children">
           {filtered.map((product) => (
             <ProductCard key={product.id} product={product} />
@@ -55,7 +57,7 @@ export default function Shop() {
 
         {filtered.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-silver-400">No products found matching your search.</p>
+            <p className="font-heading text-sm" style={{ color: "var(--xp-grey-text)" }}>No products found matching your search.</p>
           </div>
         )}
       </div>

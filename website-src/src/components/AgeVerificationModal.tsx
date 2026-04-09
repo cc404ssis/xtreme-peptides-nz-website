@@ -19,6 +19,21 @@ type GatePhase =
 
 const SECRET = "xtp2079";
 
+function setHeadLink(rel: string, href: string) {
+  let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+  if (!href) {
+    if (link) link.remove();
+    return;
+  }
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = rel;
+    if (rel === "icon") link.type = "image/png";
+    document.head.appendChild(link);
+  }
+  link.href = href;
+}
+
 export default function AgeVerificationModal() {
   const [phase, setPhase] = useState<GatePhase>(() => {
     try {
@@ -33,6 +48,16 @@ export default function AgeVerificationModal() {
   const [agvAnimating, setAgvAnimating] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const infoBtnRef = useRef<HTMLButtonElement>(null);
+
+  // ── Dynamic browser branding (title, favicon, theme-color) ──
+  useEffect(() => {
+    const branded = phase !== "fake404" && phase !== "search";
+    document.title = branded ? "XTREME PEPTIDES NZ" : "404 \u2014 Page Not Found";
+    setHeadLink("icon", branded ? "/favicon.png" : "");
+    setHeadLink("apple-touch-icon", branded ? "/apple-touch-icon.png" : "");
+    const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (meta) meta.content = branded ? "#000000" : "#f5f5f5";
+  }, [phase]);
 
   // ── Phase transition timers ──
   useEffect(() => {
