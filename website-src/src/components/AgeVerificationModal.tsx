@@ -28,7 +28,7 @@ function setHeadLink(rel: string, href: string) {
   if (!link) {
     link = document.createElement("link");
     link.rel = rel;
-    if (rel === "icon") link.type = "image/png";
+    if (rel === "icon") link.type = href.endsWith(".svg") ? "image/svg+xml" : "image/png";
     document.head.appendChild(link);
   }
   link.href = href;
@@ -53,7 +53,7 @@ export default function AgeVerificationModal() {
   useEffect(() => {
     const branded = phase !== "fake404" && phase !== "search";
     document.title = branded ? "XTREME PEPTIDES NZ" : "404 \u2014 Page Not Found";
-    setHeadLink("icon", branded ? "/favicon.png" : "");
+    setHeadLink("icon", branded ? "/favicon.svg" : "");
     setHeadLink("apple-touch-icon", branded ? "/apple-touch-icon.png" : "");
     const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (meta) meta.content = branded ? "#000000" : "#f5f5f5";

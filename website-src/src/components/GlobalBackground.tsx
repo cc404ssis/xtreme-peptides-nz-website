@@ -12,7 +12,6 @@ export default function GlobalBackground() {
         <div className="gbg-grid" />
         <div className="gbg-stripes" />
         <div className="gbg-glow" />
-        <div className="gbg-scanline" />
         <div className="gbg-vline gbg-vline--left" />
         <div className="gbg-vline gbg-vline--right" />
         <div className="gbg-corner gbg-corner--tl" />
@@ -54,23 +53,9 @@ const bgStyles = `
   background: radial-gradient(ellipse, rgba(200,0,0,0.18) 0%, transparent 68%);
   animation: bgGlowPulse 5s ease-in-out infinite;
 }
-.gbg-scanline {
-  position: absolute;
-  top: 50%; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(204,0,0,0.5) 20%,
-    rgba(255,30,30,0.85) 50%,
-    rgba(204,0,0,0.5) 80%,
-    transparent 100%
-  );
-  transform: translateY(-50%);
-  animation: bgScanPulse 4s ease-in-out infinite;
-}
 .gbg-vline {
   position: absolute;
-  top: 80px; bottom: 80px;
+  top: 100px; bottom: 80px;
   width: 1px;
   background: linear-gradient(180deg,
     transparent 0%,
@@ -85,8 +70,8 @@ const bgStyles = `
   position: absolute;
   width: 44px; height: 44px;
 }
-.gbg-corner--tl { top: 40px;    left: 40px;  border-top: 1px solid rgba(204,0,0,0.6); border-left: 1px solid rgba(204,0,0,0.6); }
-.gbg-corner--tr { top: 40px;    right: 40px; border-top: 1px solid rgba(204,0,0,0.6); border-right: 1px solid rgba(204,0,0,0.6); }
+.gbg-corner--tl { top: 100px;   left: 40px;  border-top: 1px solid rgba(204,0,0,0.6); border-left: 1px solid rgba(204,0,0,0.6); }
+.gbg-corner--tr { top: 100px;   right: 40px; border-top: 1px solid rgba(204,0,0,0.6); border-right: 1px solid rgba(204,0,0,0.6); }
 .gbg-corner--bl { bottom: 40px; left: 40px;  border-bottom: 1px solid rgba(204,0,0,0.6); border-left: 1px solid rgba(204,0,0,0.6); }
 .gbg-corner--br { bottom: 40px; right: 40px; border-bottom: 1px solid rgba(204,0,0,0.6); border-right: 1px solid rgba(204,0,0,0.6); }
 `;
