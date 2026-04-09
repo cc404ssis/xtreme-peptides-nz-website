@@ -28,12 +28,12 @@ export default function ProductCard({ product }: Props) {
         className="block card-dark card-glow card-red-top overflow-hidden group"
         style={{ textDecoration: "none" }}
       >
-        <div className="aspect-[4/3] overflow-hidden flex items-center justify-center" style={{ background: "var(--xp-dark)" }}>
+        <div className="aspect-[4/3] overflow-hidden flex items-center justify-center p-4" style={{ background: "var(--xp-dark)" }}>
           <img
             src={product.image}
             alt={product.name}
             loading="lazy"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
           />
         </div>
         <div className="p-3 sm:p-4">

@@ -54,8 +54,8 @@ export default function ProductDetail() {
 
         <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12">
           {/* Image */}
-          <div className="card-dark card-red-top overflow-hidden aspect-square sm:aspect-[4/3] animate-fade-in-up">
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+          <div className="card-dark card-red-top overflow-hidden aspect-square sm:aspect-[4/3] animate-fade-in-up flex items-center justify-center p-6 sm:p-8" style={{ background: "var(--xp-dark)" }}>
+            <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain" />
           </div>
 
           {/* Info */}
