@@ -1,5 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400&family=Share+Tech+Mono&display=swap");
 @import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   Phase 1 Brand Token Baseline — Full Site Redesign
+   ═══════════════════════════════════════════════ */
+:root {
+  --xp-black:      #000000;
+  --xp-off-black:  #090909;
+  --xp-dark:       #111111;
+  --xp-red:        #cc0000;
+  --xp-red-bright: #ff1a1a;
+  --xp-white:      #ffffff;
+  --xp-grey:       rgba(255,255,255,0.08);
+  --xp-grey-text:  rgba(255,255,255,0.38);
+}
 
 @theme {
   --font-display: "Sora", sans-serif;
