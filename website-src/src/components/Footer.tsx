@@ -13,7 +13,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {/* Brand */}
           <div className="text-center md:text-left">
-            <div className="flex items-center gap-2.5 justify-center md:justify-start mb-5">
+            <Link to="/" className="inline-flex items-center gap-2.5 justify-center md:justify-start mb-5" style={{ textDecoration: "none" }}>
               <div className="w-[2px] h-6" style={{ background: "var(--xp-red)" }} />
               <div>
                 <span className="font-display text-lg tracking-[0.22em] text-[var(--xp-white)] leading-none block">
@@ -24,7 +24,7 @@ export default function Footer() {
                 </span>
               </div>
               <div className="w-[2px] h-6" style={{ background: "var(--xp-red)" }} />
-            </div>
+            </Link>
             <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>
               Premium research peptides and laboratory compounds. Verified purity, NZ-based supply, transparent testing documentation.
             </p>
