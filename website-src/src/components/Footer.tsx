@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="relative" style={{ background: "var(--xp-black)", borderTop: "1px solid var(--xp-red)" }}>
+    <footer className="relative" style={{ background: "var(--xp-black)", borderTop: "1px solid var(--xp-red)", zIndex: 3 }}>
       {/* Corner brackets */}
       <div className="absolute top-6 left-6 w-8 h-8" style={{ borderTop: "1px solid rgba(204,0,0,0.4)", borderLeft: "1px solid rgba(204,0,0,0.4)" }} />
       <div className="absolute top-6 right-6 w-8 h-8" style={{ borderTop: "1px solid rgba(204,0,0,0.4)", borderRight: "1px solid rgba(204,0,0,0.4)" }} />
