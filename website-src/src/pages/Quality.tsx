@@ -72,7 +72,7 @@ export default function Quality() {
                 <div className="space-y-3">
                   <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Every batch we supply comes with a comprehensive Certificate of Analysis. This document provides detailed information about the product's identity, purity, and testing methodology.</p>
                   <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>COAs include batch numbers, testing dates, analytical methods used, and the results of each test. This documentation is essential for research record-keeping and regulatory compliance.</p>
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Contact <a href="mailto:support@xtremepeptides.nz">support@xtremepeptides.nz</a> to request batch-specific COAs.</p>
+                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Batch-specific COAs are included with every shipment.</p>
                 </div>
               </div>
             </div>

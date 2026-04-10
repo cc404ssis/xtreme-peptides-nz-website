@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Order, EmailLog } from '../types';
-import { 
-  X, 
-  Mail, 
-  MapPin, 
-  CreditCard, 
-  Truck, 
-  Package, 
+import {
+  X,
+  Mail,
+  MapPin,
+  CreditCard,
+  Truck,
+  Package,
   Calendar,
   Hash,
   User,
@@ -18,9 +18,10 @@ import {
   Loader2,
   Copy,
   Check,
-  Search
+  Search,
+  DollarSign,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { supabase } from '../lib/supabase';
 
 interface OrderDetailProps {
@@ -29,7 +30,24 @@ interface OrderDetailProps {
   onUpdate: () => void;
 }
 
-const CopyButton: React.FC<{ text: string }> = ({ text }) => {
+type Template = 'bank_details' | 'shipping' | 'cancelled' | 'refunded';
+
+const TEMPLATE_LABELS: Record<Template, string> = {
+  bank_details: 'Bank Transfer Details',
+  shipping: 'Shipping Details (with tracking)',
+  cancelled: 'Order Cancelled',
+  refunded: 'Refund Processed',
+};
+
+// Map a template to the status the order should move to when sent
+const TEMPLATE_STATUS_MAP: Record<Template, Order['status']> = {
+  bank_details: 'awaiting_payment',
+  shipping: 'shipped',
+  cancelled: 'cancelled',
+  refunded: 'refunded',
+};
+
+const CopyButton = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -37,7 +55,7 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button 
+    <button
       onClick={handleCopy}
       className="p-1.5 bg-bg-card border border-border rounded-lg text-text-3 hover:text-cyan hover:border-cyan transition-all"
       title="Copy to clipboard"
@@ -47,20 +65,17 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) => {
-  const [status, setStatus] = useState(order.status);
+const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
+  const [status, setStatus] = useState<Order['status']>(order.status);
   const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || '');
   const [updating, setUpdating] = useState(false);
-  const [sendEmail, setSendEmail] = useState(true);
   const [emailSending, setEmailSending] = useState(false);
   const [itemSearch, setItemSearch] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<string>(order.status);
-  const [customSubject, setCustomSubject] = useState('');
-  const [customBody, setCustomBody] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<Template>('bank_details');
   const [emailHistory, setEmailHistory] = useState<EmailLog[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchEmailHistory = async () => {
       setLoadingHistory(true);
       try {
@@ -92,38 +107,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
     fetchEmailHistory();
   }, [order.orderNumber]);
 
-  const templates: Record<string, { subject: string, body: (order: Order, tracking?: string) => string }> = {
-    pending: {
-      subject: `Order #${order.orderNumber} is Pending Payment`,
-      body: (o) => `Hi ${o.customerName},<br><br>Your order #${o.orderNumber} is currently pending payment. Once payment is received, we will begin preparing your order.<br><br>Thank you for shopping with XTREME PEPTIDES NZ.`
-    },
-    shipped: {
-      subject: `Your Order #${order.orderNumber} has been shipped!`,
-      body: (o, t) => `Hi ${o.customerName},<br><br>Great news! Your order #${o.orderNumber} has been shipped.<br><br><b>Tracking Number:</b> ${t || 'Available soon'}<br><br>You can track your package using this number on the NZ Post website.<br><br>Thank you for shopping with XTREME PEPTIDES NZ.`
-    },
-    delivered: {
-      subject: `Your Order #${order.orderNumber} has been delivered`,
-      body: (o) => `Hi ${o.customerName},<br><br>Your order #${o.orderNumber} has been marked as delivered.<br><br>We hope you enjoy your purchase!<br><br>Thank you for shopping with XTREME PEPTIDES NZ.`
-    },
-    cancelled: {
-      subject: `Your Order #${order.orderNumber} has been cancelled`,
-      body: (o) => `Hi ${o.customerName},<br><br>Your order #${order.orderNumber} has been cancelled.<br><br>If you have any questions, please contact our support team.<br><br>Thank you.`
-    },
-    delayed: {
-      subject: `Update regarding your Order #${order.orderNumber}`,
-      body: (o) => `Hi ${o.customerName},<br><br>There has been a slight delay with your order #${o.orderNumber}. We are working hard to get it to you as soon as possible.<br><br>Thank you for your patience.`
-    },
-    refunded: {
-      subject: `Refund processed for Order #${order.orderNumber}`,
-      body: (o) => `Hi ${o.customerName},<br><br>A refund has been processed for your order #${o.orderNumber}. It may take a few business days to appear in your account.<br><br>Thank you.`
-    },
-    custom: {
-      subject: '',
-      body: () => ''
-    }
-  };
-
-  const filteredItems = order.items.filter(item => 
+  const filteredItems = order.items.filter(item =>
     item.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
     (item.size && item.size.toLowerCase().includes(itemSearch.toLowerCase()))
   );
@@ -136,11 +120,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
         .update({ status, tracking_number: trackingNumber, updated_at: new Date().toISOString() })
         .eq('id', order.id);
       if (error) throw error;
-
-      if (sendEmail) {
-        await handleSendStatusEmail();
-      }
-
       onUpdate();
       onClose();
     } catch (err) {
@@ -151,55 +130,56 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
     }
   };
 
-  const handleSendStatusEmail = async () => {
+  const handleSendEmail = async () => {
+    if (selectedTemplate === 'shipping' && !trackingNumber.trim()) {
+      alert('Tracking number is required to send the shipping email.');
+      return;
+    }
+
     setEmailSending(true);
     try {
-      let subject = '';
-      let body = '';
-
-      if (selectedTemplate === 'custom') {
-        subject = customSubject || `Update regarding your Order #${order.orderNumber}`;
-        body = customBody || `Hi ${order.customerName},<br><br>There has been an update to your order #${order.orderNumber}.`;
-      } else {
-        const template = templates[selectedTemplate] || templates.pending;
-        subject = template.subject;
-        body = template.body(order, trackingNumber);
-      }
-
       const response = await fetch('/api/send-status-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`
+          'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`,
         },
         body: JSON.stringify({
           orderId: order.id,
           orderNumber: order.orderNumber,
           recipientEmail: order.customerEmail,
-          subject,
-          body,
-          type: `status_${status}`,
-          trackingNumber
+          template: selectedTemplate,
+          trackingNumber: selectedTemplate === 'shipping' ? trackingNumber : undefined,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to send email');
+
+      // Auto-advance order status to match the template
+      const newStatus = TEMPLATE_STATUS_MAP[selectedTemplate];
+      const updatePayload: any = { status: newStatus, updated_at: new Date().toISOString() };
+      if (selectedTemplate === 'shipping') updatePayload.tracking_number = trackingNumber;
+
+      await supabase.from('orders').update(updatePayload).eq('id', order.id);
+
+      onUpdate();
+      onClose();
     } catch (err) {
-      console.error('Error sending status email:', err);
-      alert('Status updated, but failed to send email notification.');
+      console.error('Error sending email:', err);
+      alert('Failed to send email. Check console for details.');
     } finally {
       setEmailSending(false);
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     >
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -212,7 +192,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
             <h2 className="text-lg font-bold text-text-1">Order Details</h2>
             <span className="text-text-3 font-mono text-sm">#{order.orderNumber}</span>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 bg-bg-input border border-border rounded-lg text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
           >
@@ -226,7 +206,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <InfoCard icon={<Hash className="w-4 h-4" />} label="Order Number" value={order.orderNumber} mono />
             <InfoCard icon={<Calendar className="w-4 h-4" />} label="Date Placed" value={new Date(order.createdAt).toLocaleString('en-NZ')} />
-            <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || 'TBC'} />
+            <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || 'Bank Transfer'} />
             <InfoCard icon={<Truck className="w-4 h-4" />} label="Tracking" value={order.trackingNumber || 'Not provided'} mono={!!order.trackingNumber} />
           </div>
 
@@ -291,7 +271,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
                     </div>
                     <div className="flex flex-col gap-2">
                       <CopyButton text={`${order.shippingAddress.name || order.customerName}\n${order.shippingAddress.address}\n${order.shippingAddress.city}, ${order.shippingAddress.region}\n${order.shippingAddress.postalCode}\nNew Zealand`} />
-                      <a 
+                      <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${order.shippingAddress.address}, ${order.shippingAddress.city}, New Zealand`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -319,7 +299,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
                   </div>
                   <div className="relative w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-text-3" />
-                    <input 
+                    <input
                       type="text"
                       placeholder="Search items..."
                       value={itemSearch}
@@ -377,7 +357,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
             </div>
           </div>
 
-          {/* Email History Section */}
+          {/* Email History */}
           <section className="mt-8">
             <div className="text-cyan text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
               <Mail className="w-3 h-3" /> Email History
@@ -416,151 +396,92 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
           </section>
         </div>
 
-        {/* Modal Footer */}
+        {/* Modal Footer — Email actions + status update */}
         <div className="px-6 py-6 bg-bg-deep border-t border-border flex flex-col gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-text-3 uppercase tracking-widest">Update Order Status</label>
-                <select 
-                  value={status}
-                  onChange={(e) => {
-                    const newStatus = e.target.value as any;
-                    setStatus(newStatus);
-                    if (templates[newStatus]) {
-                      setSelectedTemplate(newStatus);
-                    }
-                  }}
-                  className="w-full bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="refunded">Refunded</option>
-                  <option value="delayed">Delayed</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-text-3 uppercase tracking-widest flex justify-between">
-                  Tracking Number
-                  {order.trackingNumber && (
-                    <a 
-                      href={`https://www.nzpost.co.nz/tools/tracking?track=${order.trackingNumber}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-cyan hover:underline flex items-center gap-1"
-                    >
-                      Track on NZ Post <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                  )}
-                </label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="Enter tracking number..."
-                    className="w-full bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all pr-10"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <CopyButton text={trackingNumber} />
-                  </div>
-                </div>
-                {sendEmail && selectedTemplate === 'shipped' && !trackingNumber.trim() && (
-                  <p className="text-[10px] text-red-400 font-bold animate-pulse">
-                    Tracking number is required for shipping notification
-                  </p>
-                )}
-              </div>
+          {/* Send Email panel */}
+          <div className="space-y-4">
+            <div className="text-cyan text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+              <Send className="w-3 h-3" /> Send Email to Customer
             </div>
-
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-text-3 uppercase tracking-widest">Email Template</label>
-                <select 
-                  value={selectedTemplate}
-                  onChange={(e) => {
-                    const newTemplate = e.target.value;
-                    console.log(`Email template changed to: ${newTemplate}`);
-                    setSelectedTemplate(newTemplate);
-                    // If it's a standard status template, update the order status as well
-                    if (newTemplate !== 'custom' && ['pending', 'shipped', 'delivered', 'cancelled', 'delayed', 'refunded'].includes(newTemplate)) {
-                      console.log(`Updating order status to match template: ${newTemplate}`);
-                      setStatus(newTemplate as any);
-                    }
-                  }}
-                  disabled={!sendEmail}
-                  className="w-full bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all disabled:opacity-50"
-                >
-                  <option value="pending">Pending Payment</option>
-                  <option value="shipped">Order Shipped</option>
-                  <option value="delivered">Order Delivered</option>
-                  <option disabled>─────────────────</option>
-                  <option value="cancelled">Order Cancelled</option>
-                  <option value="delayed">Order Delayed</option>
-                  <option value="refunded">Order Refunded</option>
-                  <option value="custom">Custom Message</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => setSelectedTemplate(e.target.value as Template)}
+                    className="w-full appearance-none bg-bg-input border border-border rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:border-cyan transition-all"
+                  >
+                    <option value="bank_details">{TEMPLATE_LABELS.bank_details}</option>
+                    <option value="shipping">{TEMPLATE_LABELS.shipping}</option>
+                    <option disabled>─────────────────</option>
+                    <option value="cancelled">{TEMPLATE_LABELS.cancelled}</option>
+                    <option value="refunded">{TEMPLATE_LABELS.refunded}</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-text-3 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
 
-              {selectedTemplate === 'custom' && sendEmail && (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <input 
+              {selectedTemplate === 'shipping' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-text-3 uppercase tracking-widest">Tracking Number</label>
+                  <input
                     type="text"
-                    placeholder="Email Subject"
-                    value={customSubject}
-                    onChange={(e) => setCustomSubject(e.target.value)}
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    placeholder="Enter NZ Post tracking..."
                     className="w-full bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
-                  />
-                  <textarea 
-                    placeholder="Email Body (HTML supported)"
-                    value={customBody}
-                    onChange={(e) => setCustomBody(e.target.value)}
-                    rows={3}
-                    className="w-full bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all resize-none"
                   />
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-border/50">
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div className="relative w-10 h-5 bg-bg-input border border-border rounded-full transition-all group-hover:border-cyan/50">
-                <input 
-                  type="checkbox" 
-                  checked={sendEmail}
-                  onChange={(e) => setSendEmail(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className={`absolute top-1 left-1 w-3 h-3 rounded-full transition-all ${sendEmail ? 'translate-x-5 bg-cyan shadow-[0_0_10px_rgba(0,255,255,0.5)]' : 'bg-text-3'}`} />
-              </div>
-              <span className="text-sm font-bold text-text-2 group-hover:text-text-1 transition-colors">Send notification email to customer</span>
-            </label>
+            <div className="bg-bg-input border border-border rounded-lg p-4">
+              <div className="text-[10px] font-bold text-text-3 uppercase tracking-widest mb-2">Preview</div>
+              <pre className="text-xs text-text-2 whitespace-pre-wrap font-mono">{previewTemplate(selectedTemplate, order.orderNumber, trackingNumber)}</pre>
+            </div>
 
-            <button 
-              onClick={handleUpdateStatus}
-              disabled={
-                updating || 
-                (status === order.status && trackingNumber === order.trackingNumber && !sendEmail) ||
-                (sendEmail && selectedTemplate === 'shipped' && !trackingNumber.trim())
-              }
-              className="px-8 py-3 bg-cyan text-bg-deep font-bold rounded-xl hover:bg-cyan/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-cyan/20"
+            <button
+              onClick={handleSendEmail}
+              disabled={emailSending || (selectedTemplate === 'shipping' && !trackingNumber.trim())}
+              className="w-full px-6 py-3 bg-cyan text-bg-deep font-bold rounded-xl hover:bg-cyan/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-cyan/20"
             >
-              {updating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Updating...
-                </>
+              {emailSending ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
               ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  Save Changes
-                </>
+                <><Send className="w-4 h-4" /> Send {TEMPLATE_LABELS[selectedTemplate]} Email</>
               )}
             </button>
+          </div>
+
+          {/* Manual status update (without sending email) */}
+          <div className="pt-4 border-t border-border/50">
+            <div className="text-cyan text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+              <DollarSign className="w-3 h-3" /> Manual Status Update (no email)
+            </div>
+            <div className="flex gap-3">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as Order['status'])}
+                className="flex-1 bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
+              >
+                <option value="pending">Pending</option>
+                <option value="awaiting_payment">Awaiting Payment</option>
+                <option value="paid">Paid</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="refunded">Refunded</option>
+              </select>
+              <button
+                onClick={handleUpdateStatus}
+                disabled={updating || (status === order.status && trackingNumber === (order.trackingNumber || ''))}
+                className="px-6 py-2 bg-bg-input border border-border rounded-lg text-text-1 hover:border-cyan hover:text-cyan transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Save Status
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -568,7 +489,43 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onUpdate }) =
   );
 };
 
-const InfoCard: React.FC<{ icon: React.ReactNode; label: string; value: string; mono?: boolean }> = ({ icon, label, value, mono }) => (
+function previewTemplate(template: Template, orderNumber: string, tracking: string): string {
+  switch (template) {
+    case 'bank_details':
+      return [
+        'BANK TRANSFER DETAILS',
+        '',
+        `Order: ${orderNumber}`,
+        '',
+        'Account Name: Xtreme Peptides NZ',
+        'Account Number: 02-0144-0217479-002',
+        `Reference: ${orderNumber}`,
+        '',
+        'Your order will ship once payment is confirmed.',
+      ].join('\n');
+    case 'shipping':
+      return [
+        'Your order has shipped.',
+        '',
+        `Order: ${orderNumber}`,
+        `Tracking: ${tracking || '<enter tracking number>'}`,
+      ].join('\n');
+    case 'cancelled':
+      return [
+        'Your order has been cancelled.',
+        '',
+        `Order: ${orderNumber}`,
+      ].join('\n');
+    case 'refunded':
+      return [
+        'A refund has been processed for your order.',
+        '',
+        `Order: ${orderNumber}`,
+      ].join('\n');
+  }
+}
+
+const InfoCard = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
   <div className="bg-bg-input border border-border rounded-xl p-4">
     <div className="text-text-3 text-[10px] uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5">
       {icon} {label}

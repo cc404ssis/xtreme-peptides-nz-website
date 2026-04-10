@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle, Truck, Info, Shield, Clock, FlaskConical } from "lucide-react";
+import { Loader2, CheckCircle, Truck } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { supabase } from "@/lib/supabase";
 
@@ -185,28 +185,9 @@ export default function Checkout() {
               <textarea name="notes" value={form.notes} onChange={handleChange} placeholder="OPTIONAL NOTES..." rows={3} className="xp-input" style={{ resize: "none" }} />
             </div>
 
-            {/* Important Information */}
-            <div className="card-dark p-6 space-y-5">
-              <h3 className="!text-base flex items-center gap-2">
-                <Info size={18} style={{ color: "var(--xp-red)" }} /> Important Information
-              </h3>
-              {[
-                { icon: Clock, title: "Payment & Shipping", text: "We accept bank transfer only. Orders are shipped once payment has been confirmed. Please use your order reference as the payment reference to avoid delays." },
-                { icon: Shield, title: "Discrete & Secure", text: "All orders are shipped in plain, unmarked packaging with no external branding or indication of contents. Temperature-sensitive products include insulated packaging." },
-                { icon: FlaskConical, title: "Research Use Only", text: "All products sold by Xtreme Peptides NZ are intended strictly for laboratory research purposes. By placing an order you confirm you are 18+ years of age and that products will not be used for human consumption." },
-              ].map((item) => (
-                <div key={item.title} className="flex items-start gap-3">
-                  <item.icon size={16} className="mt-0.5 shrink-0" style={{ color: "var(--xp-red)" }} />
-                  <div>
-                    <p className="font-heading text-sm" style={{ color: "var(--xp-white)" }}>{item.title}</p>
-                    <p className="font-body text-xs mt-1" style={{ color: "var(--xp-grey-text)" }}>{item.text}</p>
-                  </div>
-                </div>
-              ))}
-              <p className="font-mono text-xs pt-4" style={{ borderTop: "1px solid var(--xp-border)", color: "var(--xp-grey-text)" }}>
-                By placing your order you agree to our <a href="/terms" target="_blank">Terms & Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
-              </p>
-            </div>
+            <p className="font-mono text-xs px-2" style={{ color: "var(--xp-grey-text)" }}>
+              By placing your order you agree to our <a href="/terms" target="_blank">Terms & Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
+            </p>
           </div>
 
           {/* Order Summary */}
@@ -246,8 +227,8 @@ export default function Checkout() {
                   <><Truck size={18} /> Place Order</>
                 )}
               </button>
-              <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-center mt-3" style={{ color: "var(--xp-grey-text)" }}>
-                Bank transfer payment — details provided after order
+              <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-center mt-3 leading-relaxed" style={{ color: "var(--xp-grey-text)" }}>
+                Bank Transfer Payment & Shipping<br />— Details Provided After Order —
               </p>
             </div>
           </div>

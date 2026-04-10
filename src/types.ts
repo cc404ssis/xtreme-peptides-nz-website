@@ -9,7 +9,7 @@ export interface Order {
   orderTotal: number;
   subtotal: number;
   shippingCost: number;
-  status: 'pending' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | 'delayed' | 'paid';
+  status: 'pending' | 'awaiting_payment' | 'paid' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
   paymentMethod?: string;
   paymentStatus?: string;
   trackingNumber?: string;
@@ -44,18 +44,6 @@ export interface EmailLog {
   subject: string;
   body?: string;
   status: string;
-}
-
-export interface SupportTicket {
-  id: string;
-  createdAt: any;
-  updatedAt: any;
-  customerName: string;
-  customerEmail: string;
-  subject: string;
-  message: string;
-  status: 'open' | 'in-progress' | 'closed';
-  priority: 'low' | 'medium' | 'high';
 }
 
 export interface Product {

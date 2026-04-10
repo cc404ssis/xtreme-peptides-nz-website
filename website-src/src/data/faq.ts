@@ -58,7 +58,7 @@ export const faqSections: FaqSection[] = [
       },
       {
         question: "Do you provide Certificates of Analysis?",
-        answer: "Yes, batch-specific COAs are available for all products. You can request COAs via email at support@xtremepeptides.nz or through your account dashboard after placing an order. COAs include HPLC purity data, mass spectrometry results, and batch information.",
+        answer: "Yes, batch-specific COAs are included with every shipment. COAs include HPLC purity data, mass spectrometry results, and batch information.",
       },
       {
         question: "What form do the products come in?",
@@ -84,11 +84,11 @@ export const faqSections: FaqSection[] = [
       },
       {
         question: "Do you offer refunds?",
-        answer: "Due to the nature of research chemicals, we cannot accept returns or offer refunds on opened products. Unopened products may be returned within 14 days of delivery if there is a quality issue. Please contact us to discuss any concerns.",
+        answer: "Due to the nature of research chemicals, we cannot accept returns or offer refunds on opened products. Unopened products may be returned within 14 days of delivery if there is a quality issue. Quality issues are reviewed against your order record.",
       },
       {
-        question: "Can I get a discount for bulk orders?",
-        answer: "Yes, we offer volume discounts for research institutions and bulk purchasers. Contact us at support@xtremepeptides.nz with your requirements for a custom quote. Discounts typically start at orders over $500.",
+        question: "Do you offer bulk pricing?",
+        answer: "Volume discounts are available for orders over $500 — applied automatically at checkout where applicable.",
       },
     ],
   },
@@ -128,7 +128,7 @@ export const faqSections: FaqSection[] = [
       },
       {
         question: "What should I do if my product arrives damaged?",
-        answer: "If your product arrives damaged, do not use it. Take photos of the damage and contact us within 48 hours of delivery at support@xtremepeptides.nz. We will arrange a replacement or refund after reviewing the issue.",
+        answer: "If your product arrives damaged, do not use it. Take photos of the damage. Damage claims must be raised within 48 hours of delivery via your order record. We will arrange a replacement or refund after reviewing the issue.",
       },
       {
         question: "Can I travel with these products?",

@@ -49,7 +49,6 @@ export default function Navigation() {
     { to: "/about", label: "About" },
     { to: "/quality", label: "Quality" },
     { to: "/faq", label: "FAQ" },
-    { to: "/contact", label: "Contact" },
   ];
 
   return (

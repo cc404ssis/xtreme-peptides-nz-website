@@ -59,6 +59,39 @@ export default function AgeVerificationModal() {
     if (meta) meta.content = branded ? "#000000" : "#f5f5f5";
   }, [phase]);
 
+  // ── Idle reset: 5 minutes of no activity returns to fake 404 ──
+  // Only active when user is past the gate (phase === 'done')
+  useEffect(() => {
+    if (phase !== "done") return;
+
+    const IDLE_MS = 5 * 60 * 1000; // 5 minutes
+    let timer: ReturnType<typeof setTimeout>;
+
+    const triggerReset = () => {
+      try {
+        localStorage.removeItem("xp_age_verified");
+      } catch {
+        /* private mode */
+      }
+      // Hard reload — sends user back to fake 404 entry gate
+      window.location.reload();
+    };
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(triggerReset, IDLE_MS);
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"];
+    events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+    };
+  }, [phase]);
+
   // ── Phase transition timers ──
   useEffect(() => {
     if (phase === "wipeIn") {

@@ -16,11 +16,10 @@ export default function Privacy() {
             { title: "3. Data Protection & Security", content: "We implement appropriate security measures to protect your personal information. We use bank transfers only, which means we never handle or store your card details or financial information." },
             { title: "4. Third-Party Services", content: "All third-party service providers are contractually obligated to protect your information and use it only for the purposes we specify. They are prohibited from using your information for their own marketing purposes." },
             { title: "5. Cookies & Tracking Technologies", content: "Our website uses essential cookies for cart functionality and user preferences. We do not use third-party tracking or advertising cookies." },
-            { title: "6. Your Privacy Rights", content: "You have the right to access, correct, or delete your personal information. Contact us at support@xtremepeptides.nz to exercise these rights." },
+            { title: "6. Your Privacy Rights", content: "You have the right to access, correct, or delete your personal information. Communications regarding your privacy rights are handled through your order record." },
             { title: "7. Data Retention", content: "We retain your personal information only for as long as necessary to fulfill the purposes outlined in this policy and as required by law." },
-            { title: "8. Children's Privacy", content: "Our website is not intended for individuals under 18 years of age. If you believe we have inadvertently collected information from a minor, please contact us immediately and we will take steps to delete such information." },
+            { title: "8. Children's Privacy", content: "Our website is not intended for individuals under 18 years of age." },
             { title: "9. Changes to This Policy", content: "We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated revision date." },
-            { title: "10. Contact Us", content: "If you have any questions about this Privacy Policy, your personal information, or how to exercise your privacy rights, please contact us:", email: "support@xtremepeptides.nz" },
           ].map((section) => (
             <section key={section.title}>
               <h2 className="!text-xl mb-3">{section.title}</h2>
@@ -31,11 +30,6 @@ export default function Privacy() {
                     <li key={item} className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{item}</li>
                   ))}
                 </ul>
-              )}
-              {section.email && (
-                <p className="font-body text-sm mt-2" style={{ color: "var(--xp-grey-text)" }}>
-                  Email: <a href={`mailto:${section.email}`}>{section.email}</a>
-                </p>
               )}
             </section>
           ))}

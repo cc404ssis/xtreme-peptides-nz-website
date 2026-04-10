@@ -17,12 +17,11 @@ export default function Terms() {
             { title: "4. Product Information & Accuracy", content: "We make every effort to display accurate product information. However, we do not warrant that product descriptions, pricing, or other content is complete, reliable, or error-free." },
             { title: "5. Ordering & Payment", content: "All orders are subject to product availability and acceptance. We reserve the right to refuse any order for any reason, including but not limited to suspected misuse, violation of these terms, or shipping restrictions to your location.\n\nWe accept bank transfers only. Payment details are provided upon order confirmation." },
             { title: "6. Shipping & Delivery", content: "All orders are shipped in discrete packaging without external markings indicating contents. Temperature-sensitive products are shipped with appropriate cold-chain packaging." },
-            { title: "7. Returns & Refunds", content: "IMPORTANT: Due to the nature of research chemicals, we have specific return policies.\n\nFor damaged or incorrect orders, contact us within 48 hours of delivery with photos of the damaged items. We will replace damaged products or issue a refund at our discretion." },
+            { title: "7. Returns & Refunds", content: "IMPORTANT: Due to the nature of research chemicals, we have specific return policies.\n\nFor damaged or incorrect orders, claims must be raised within 48 hours of delivery via your order record. We will replace damaged products or issue a refund at our discretion." },
             { title: "8. Limitation of Liability", content: "All products are sold for research purposes only. Purchaser assumes full responsibility for compliance with all applicable laws and regulations. XTREME PEPTIDES NZ is not responsible for misuse of products." },
             { title: "9. Indemnification", content: "You agree to indemnify and hold XTREME PEPTIDES NZ harmless from any claims, damages, or expenses arising from your use of our products or violation of these terms." },
             { title: "10. Intellectual Property", content: "All content on this website, including but not limited to text, graphics, logos, images, and software, is the property of XTREME PEPTIDES NZ and is protected by copyright, trademark, and other intellectual property laws." },
             { title: "11. Governing Law", content: "These Terms & Conditions are governed by the laws of New Zealand." },
-            { title: "12. Contact Us", content: "If you have any questions about these Terms & Conditions, please contact us:", email: "support@xtremepeptides.nz" },
           ].map((section) => (
             <section key={section.title}>
               <h2 className="!text-xl mb-3">{section.title}</h2>
@@ -33,11 +32,6 @@ export default function Terms() {
                     <li key={item} className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{item}</li>
                   ))}
                 </ul>
-              )}
-              {section.email && (
-                <p className="font-body text-sm mt-2" style={{ color: "var(--xp-grey-text)" }}>
-                  Email: <a href={`mailto:${section.email}`}>{section.email}</a>
-                </p>
               )}
             </section>
           ))}

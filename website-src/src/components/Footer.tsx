@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="absolute bottom-6 right-6 w-8 h-8" style={{ borderBottom: "1px solid rgba(204,0,0,0.4)", borderRight: "1px solid rgba(204,0,0,0.4)" }} />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Brand */}
           <div className="text-center md:text-left">
             <Link to="/" className="inline-flex items-center gap-2.5 justify-center md:justify-start mb-5" style={{ textDecoration: "none" }}>
@@ -41,7 +41,6 @@ export default function Footer() {
                 { to: "/about", label: "About Us" },
                 { to: "/quality", label: "Quality" },
                 { to: "/faq", label: "FAQ" },
-                { to: "/contact", label: "Contact" },
               ].map((link) => (
                 <li key={link.to}>
                   <Link
@@ -58,26 +57,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
-          <div className="text-center md:text-left">
-            <h4 className="font-heading text-base tracking-[0.15em] uppercase mb-5" style={{ color: "var(--xp-white)" }}>
-              Contact
-            </h4>
-            <ul className="space-y-3">
-              <li>
-                <a
-                  href="mailto:support@xtremepeptides.nz"
-                  className="font-heading text-base tracking-[0.06em] transition-colors"
-                  style={{ color: "var(--xp-red)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--xp-red-bright)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--xp-red)")}
-                >
-                  support@xtremepeptides.nz
-                </a>
-              </li>
-              <li className="font-heading text-base" style={{ color: "var(--xp-grey-text)" }}>New Zealand</li>
-            </ul>
-          </div>
         </div>
 
         {/* Bottom bar */}

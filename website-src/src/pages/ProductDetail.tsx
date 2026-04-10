@@ -155,7 +155,7 @@ export default function ProductDetail() {
             {activeTab === "documentation" && (
               <div className="space-y-3 sm:space-y-4">
                 <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>COAs include batch numbers, testing dates, analytical methods used, and the results of each test. This documentation is essential for research record-keeping and regulatory compliance.</p>
-                <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Contact <a href="mailto:support@xtremepeptides.nz">support@xtremepeptides.nz</a> to request batch-specific documentation.</p>
+                <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Batch-specific documentation is provided with each shipment.</p>
               </div>
             )}
           </div>
