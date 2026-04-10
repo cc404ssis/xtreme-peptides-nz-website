@@ -177,48 +177,47 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-stretch sm:items-center justify-center sm:p-4"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-bg-card border border-border w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+        className="bg-bg-card border-0 sm:border border-border w-full max-w-4xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
         style={{ boxShadow: '0 30px 80px rgba(0,0,0,0.18)' }}
       >
         {/* Modal Header */}
-        <div className="px-6 py-5 bg-bg-deep flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)', borderTop: '2px solid var(--color-xp-red)' }}>
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="xp-section-label text-[9px]">— Order Details —</div>
-              <h2 className="xp-display text-2xl mt-1">
-                #<span style={{ color: 'var(--color-xp-red)' }}>{order.orderNumber}</span>
-              </h2>
-            </div>
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-bg-deep flex justify-between items-center gap-3" style={{ borderBottom: '1px solid var(--color-border)', borderTop: '2px solid var(--color-xp-red)' }}>
+          <div className="min-w-0 flex-1">
+            <div className="xp-section-label text-[9px]">— Order Details —</div>
+            <h2 className="xp-display text-xl sm:text-2xl mt-1 truncate">
+              #<span style={{ color: 'var(--color-xp-red)' }}>{order.orderNumber}</span>
+            </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-bg-input border border-border rounded-none text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
+            className="p-2 bg-bg-input border border-border rounded-none text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all flex-shrink-0"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
           {/* Quick Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <InfoCard icon={<Hash className="w-4 h-4" />} label="Order Number" value={order.orderNumber} mono />
             <InfoCard icon={<Calendar className="w-4 h-4" />} label="Date Placed" value={formatDatePlaced(order.createdAt)} />
             <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || 'Bank Transfer'} />
             <InfoCard icon={<Truck className="w-4 h-4" />} label="Tracking" value={order.trackingNumber || 'Not provided'} mono={!!order.trackingNumber} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {/* Customer & Shipping */}
             <div className="space-y-6">
               <section>
-                <div className="xp-section-label text-[10px] mb-4 flex items-center gap-2">
+                <div className="xp-section-label text-xs mb-4 flex items-center gap-2">
                   <User className="w-3 h-3" /> Customer Information
                 </div>
                 <div className="bg-bg-input border border-border rounded-none p-4 space-y-3">
@@ -261,7 +260,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
               </section>
 
               <section>
-                <div className="xp-section-label text-[10px] mb-4 flex items-center gap-2">
+                <div className="xp-section-label text-xs mb-4 flex items-center gap-2">
                   <MapPin className="w-3 h-3" /> Shipping Address
                 </div>
                 <div className="bg-bg-input border border-border rounded-none p-4">
@@ -297,11 +296,11 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
             {/* Items & Totals */}
             <div className="space-y-6">
               <section>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="xp-section-label text-[10px] flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <div className="xp-section-label text-xs flex items-center gap-2">
                     <Package className="w-3 h-3" /> Order Items
                   </div>
-                  <div className="relative w-48">
+                  <div className="relative w-full sm:w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-text-3" />
                     <input
                       type="text"
@@ -363,7 +362,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
 
           {/* Email History */}
           <section className="mt-8">
-            <div className="xp-section-label text-[10px] mb-4 flex items-center gap-2">
+            <div className="xp-section-label text-xs mb-4 flex items-center gap-2">
               <Mail className="w-3 h-3" /> Email History
             </div>
             <div className="bg-bg-input border border-border rounded-none overflow-hidden">
@@ -401,10 +400,10 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
         </div>
 
         {/* Modal Footer — Email actions + status update */}
-        <div className="px-6 py-6 bg-bg-deep border-t border-border flex flex-col gap-6">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep border-t border-border flex flex-col gap-5 sm:gap-6">
           {/* Send Email panel */}
           <div className="space-y-4">
-            <div className="xp-section-label text-[10px] flex items-center gap-2">
+            <div className="xp-section-label text-xs flex items-center gap-2">
               <Send className="w-3 h-3" /> Send Email to Customer
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -460,10 +459,10 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
 
           {/* Manual status update (without sending email) */}
           <div className="pt-4 border-t border-border/50">
-            <div className="xp-section-label text-[10px] mb-3 flex items-center gap-2">
+            <div className="xp-section-label text-xs mb-3 flex items-center gap-2">
               <DollarSign className="w-3 h-3" /> Manual Status Update (no email)
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as Order['status'])}
@@ -480,7 +479,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
               <button
                 onClick={handleUpdateStatus}
                 disabled={updating || (status === order.status && trackingNumber === (order.trackingNumber || ''))}
-                className="px-6 py-2 bg-bg-input border border-border rounded-none text-text-1 hover:border-cyan hover:text-cyan transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-bg-input border border-border rounded-none text-text-1 hover:border-cyan hover:text-cyan transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 Save Status
@@ -543,10 +542,10 @@ function formatDatePlaced(value: string | number | Date): string {
 
 const InfoCard = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
   <div className="bg-bg-input border border-border rounded-none p-4">
-    <div className="text-text-3 text-[10px] uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5">
+    <div className="text-text-2 text-xs uppercase font-bold tracking-[0.12em] mb-2 flex items-center gap-1.5">
       {icon} {label}
     </div>
-    <div className={`text-sm font-bold text-text-1 ${mono ? 'font-mono text-cyan' : ''}`}>{value}</div>
+    <div className={`text-base font-bold text-text-1 break-words ${mono ? 'font-mono text-cyan' : ''}`}>{value}</div>
   </div>
 );
 
