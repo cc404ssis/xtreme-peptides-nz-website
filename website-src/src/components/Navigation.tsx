@@ -67,16 +67,16 @@ export default function Navigation() {
             {/* Logo wordmark */}
             <Link to="/" className="flex items-center gap-3 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-[2px] h-6" style={{ background: "var(--xp-red)" }} />
+                <div className="w-[2px] h-7" style={{ background: "var(--xp-red)" }} />
                 <div>
-                  <span className="font-display text-lg tracking-[0.22em] text-[var(--xp-white)] leading-none block">
+                  <span className="font-display text-xl tracking-[0.22em] text-[var(--xp-white)] leading-none block">
                     Xtreme Peptides
                   </span>
-                  <span className="font-mono text-[9px] tracking-[0.55em] uppercase block" style={{ color: "rgba(204,0,0,0.7)" }}>
+                  <span className="font-mono text-[10px] tracking-[0.55em] uppercase block" style={{ color: "rgba(204,0,0,0.7)" }}>
                     New Zealand
                   </span>
                 </div>
-                <div className="w-[2px] h-6" style={{ background: "var(--xp-red)" }} />
+                <div className="w-[2px] h-7" style={{ background: "var(--xp-red)" }} />
               </div>
             </Link>
 
@@ -86,7 +86,7 @@ export default function Navigation() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="font-heading text-sm tracking-[0.08em] uppercase transition-colors"
+                  className="font-heading text-base tracking-[0.08em] uppercase transition-colors"
                   style={{
                     color: location.pathname === link.to ? "var(--xp-red)" : "rgba(255,255,255,0.6)",
                     borderBottom: location.pathname === link.to ? "1px solid var(--xp-red)" : "1px solid transparent",
