@@ -170,11 +170,11 @@ async function startServer() {
           textContent = plainTextEmail([
             `BANK TRANSFER DETAILS`,
             ``,
-            `Order: ${orderNumber}`,
-            ``,
-            `Account Name: Xtreme Peptides NZ`,
+            `Account Name: xtpnz`,
             `Account Number: 02-0144-0217479-002`,
             `Reference: ${orderNumber}`,
+            ``,
+            `Please make sure to include the reference when sending payment.`,
             ``,
             `Your order will ship once payment is confirmed.`,
           ]);
