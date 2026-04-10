@@ -205,7 +205,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
           {/* Quick Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <InfoCard icon={<Hash className="w-4 h-4" />} label="Order Number" value={order.orderNumber} mono />
-            <InfoCard icon={<Calendar className="w-4 h-4" />} label="Date Placed" value={new Date(order.createdAt).toLocaleString('en-NZ')} />
+            <InfoCard icon={<Calendar className="w-4 h-4" />} label="Date Placed" value={formatDatePlaced(order.createdAt)} />
             <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || 'Bank Transfer'} />
             <InfoCard icon={<Truck className="w-4 h-4" />} label="Tracking" value={order.trackingNumber || 'Not provided'} mono={!!order.trackingNumber} />
           </div>
@@ -523,6 +523,18 @@ function previewTemplate(template: Template, orderNumber: string, tracking: stri
         `Order: ${orderNumber}`,
       ].join('\n');
   }
+}
+
+function formatDatePlaced(value: string | number | Date): string {
+  const d = new Date(value);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12 || 12;
+  return `${dd}/${mm}/${yyyy} ${hours}:${minutes}${ampm}`;
 }
 
 const InfoCard = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
