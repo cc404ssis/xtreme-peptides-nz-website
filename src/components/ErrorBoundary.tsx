@@ -47,21 +47,27 @@ class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#050b14] flex items-center justify-center p-6 font-sans">
-          <div className="max-w-2xl w-full bg-[#0a1628] border border-[#1a3a5c] rounded-3xl p-8 shadow-2xl">
+        <div className="min-h-screen bg-bg-deep text-text-1 flex items-center justify-center p-6 font-sans">
+          <div className="xp-card max-w-2xl w-full p-8">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 bg-red-400/10 rounded-2xl flex items-center justify-center text-red-400">
+              <div
+                className="w-16 h-16 flex items-center justify-center"
+                style={{ border: '1px solid var(--color-xp-border-red)', color: 'var(--color-xp-red)' }}
+              >
                 <AlertTriangle className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Something went wrong</h1>
-                <p className="text-[#8b9cb5]">The application encountered an unexpected error.</p>
+                <div className="xp-section-label">— Error —</div>
+                <h1 className="xp-display text-3xl mt-1">
+                  Something <span style={{ color: 'var(--color-xp-red)' }}>went wrong</span>
+                </h1>
+                <p className="text-text-2 text-sm mt-1">The application encountered an unexpected error.</p>
               </div>
             </div>
 
-            <div className="bg-[#050b14] border border-[#1a3a5c] rounded-2xl p-6 mb-8 overflow-hidden">
-              <h2 className="text-xs font-bold text-[#8b9cb5] uppercase tracking-widest mb-4">Error Details</h2>
-              <pre className="text-sm text-red-400 font-mono whitespace-pre-wrap break-all max-h-60 overflow-y-auto">
+            <div className="bg-bg-input border border-border p-6 mb-8 overflow-hidden">
+              <h2 className="xp-section-label text-[10px] mb-4">Error Details</h2>
+              <pre className="text-sm font-mono whitespace-pre-wrap break-all max-h-60 overflow-y-auto" style={{ color: 'var(--color-xp-red)' }}>
                 {this.state.errorInfo || this.state.error?.message || 'Unknown error'}
               </pre>
             </div>
@@ -69,22 +75,22 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={this.handleReset}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#00d4ff] text-[#050b14] rounded-2xl font-bold hover:shadow-lg hover:shadow-[#00d4ff]/20 transition-all"
+                className="btn-xp-primary flex-1"
               >
                 <RefreshCw className="w-5 h-5" />
                 Reload Application
               </button>
               <a
                 href="/admin"
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#1a2a3a] text-white rounded-2xl font-bold hover:bg-[#2a3a4a] transition-all border border-[#1a3a5c]"
+                className="btn-xp-outline flex-1"
               >
                 <Home className="w-5 h-5" />
                 Back to Dashboard
               </a>
             </div>
-            
-            <p className="mt-8 text-center text-[#5a6a7d] text-xs">
-              If this issue persists, please contact support with the error details above.
+
+            <p className="mt-8 text-center text-text-3 font-mono text-[10px] tracking-[0.15em] uppercase">
+              If this issue persists, capture the error details above for review.
             </p>
           </div>
         </div>

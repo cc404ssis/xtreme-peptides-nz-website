@@ -187,19 +187,26 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bg-deep text-text-1 flex font-sans">
+    <div className="min-h-screen bg-bg-deep text-text-1 flex font-sans relative">
+      {/* Corner brackets */}
+      <div className="xp-corner xp-corner-tl" />
+      <div className="xp-corner xp-corner-tr" />
+      <div className="xp-corner xp-corner-bl" />
+      <div className="xp-corner xp-corner-br" />
+
       {/* Sidebar */}
-      <aside className="w-64 bg-bg-card border-r border-border flex flex-col sticky top-0 h-screen">
-        <div className="p-6 border-b border-border flex items-center gap-3">
-          <img src="/logo.png" alt="Xtreme Peptides" className="h-10 drop-shadow-[0_2px_8px_rgba(0,212,255,0.25)]" />
-          <div>
-            <h1 className="text-sm font-bold tracking-tight">XTREME PEPTIDES</h1>
-            <p className="text-[10px] text-text-3 font-bold uppercase tracking-widest">Admin Panel</p>
+      <aside className="w-64 bg-bg-card border-r border-border flex flex-col sticky top-0 h-screen" style={{ borderTop: '2px solid var(--color-xp-red)' }}>
+        <div className="p-6 border-b border-border">
+          <div className="xp-wordmark">
+            <div>
+              <div className="xp-wordmark-text">Xtreme Peptides</div>
+              <div className="xp-wordmark-sub">Admin Panel</div>
+            </div>
           </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <div className="pb-2 px-4 text-[10px] font-bold text-text-3 uppercase tracking-widest">Orders</div>
+          <div className="pb-2 px-4 xp-section-label text-[9px]">— Orders —</div>
           <NavButton active={activeTab === 'orders' && statusFilter === 'all'} onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} icon={<Package className="w-4 h-4" />} label="All Orders" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'pending'} onClick={() => { setActiveTab('orders'); setStatusFilter('pending'); }} icon={<Clock className="w-4 h-4" />} label="Pending" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'awaiting_payment'} onClick={() => { setActiveTab('orders'); setStatusFilter('awaiting_payment'); }} icon={<DollarSign className="w-4 h-4" />} label="Awaiting Payment" />
@@ -210,17 +217,17 @@ const AdminDashboard = () => {
           <NavButton active={activeTab === 'orders' && statusFilter === 'cancelled'} onClick={() => { setActiveTab('orders'); setStatusFilter('cancelled'); }} icon={<XCircle className="w-4 h-4" />} label="Cancelled" />
           <NavButton active={activeTab === 'orders' && statusFilter === 'refunded'} onClick={() => { setActiveTab('orders'); setStatusFilter('refunded'); }} icon={<Undo2 className="w-4 h-4" />} label="Refunded" />
 
-          <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-text-3 uppercase tracking-widest">Inventory</div>
+          <div className="pt-4 pb-2 px-4 xp-section-label text-[9px]">— Inventory —</div>
           <NavButton active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package className="w-4 h-4" />} label="Products" />
 
-          <div className="pt-4 pb-2 px-4 text-[10px] font-bold text-text-3 uppercase tracking-widest">Archive</div>
+          <div className="pt-4 pb-2 px-4 xp-section-label text-[9px]">— Archive —</div>
           <NavButton active={activeTab === 'deleted_orders'} onClick={() => setActiveTab('deleted_orders')} icon={<Trash2 className="w-4 h-4" />} label="Deleted Orders" />
         </nav>
 
         <div className="p-4 border-t border-border">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-3 hover:text-red-400 hover:bg-red-400/5 transition-all group"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-none text-text-3 hover:text-red-400 hover:bg-red-400/5 transition-all group"
           >
             <LogOut className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             <span className="text-sm font-bold">Logout</span>
@@ -236,10 +243,10 @@ const AdminDashboard = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-3" />
               <input
                 type="text"
-                placeholder="Search orders, customers..."
+                placeholder="SEARCH ORDERS, CUSTOMERS..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-bg-input border border-border rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
+                className="w-full bg-bg-input border border-border pl-10 pr-4 py-2 text-xs focus:outline-none focus:border-cyan transition-all font-mono tracking-[0.15em] placeholder:text-text-3"
               />
             </div>
           </div>
@@ -247,7 +254,7 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={fetchData}
-              className="p-2 bg-bg-input border border-border rounded-xl text-text-2 hover:text-cyan hover:border-cyan transition-all"
+              className="p-2 bg-bg-input border border-border rounded-none text-text-2 hover:text-cyan hover:border-cyan transition-all"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -269,12 +276,15 @@ const AdminDashboard = () => {
           <div className="mb-8 flex flex-col gap-6">
             <div className="flex justify-between items-end">
               <div>
-                <h2 className="text-2xl font-bold text-text-1 capitalize">
-                  {activeTab === 'orders' ? (statusFilter === 'all' ? 'All Orders' : `${statusFilter} Orders`) : activeTab.replace('_', ' ')}
+                <div className="xp-section-label mb-2">— Dashboard —</div>
+                <h2 className="xp-display text-4xl">
+                  {activeTab === 'orders'
+                    ? (statusFilter === 'all' ? <>All <span style={{ color: 'var(--color-xp-red)' }}>Orders</span></> : <>{statusFilter.replace('_', ' ')} <span style={{ color: 'var(--color-xp-red)' }}>Orders</span></>)
+                    : <span>{activeTab.replace('_', ' ')}</span>}
                 </h2>
-                <p className="text-text-3 text-sm">Manage and monitor your peptide business operations.</p>
+                <p className="text-text-3 text-sm mt-2 font-sans">Manage and monitor your peptide business operations.</p>
               </div>
-              <div className="text-xs font-mono text-cyan bg-cyan/5 border border-cyan/20 px-3 py-1 rounded-full">
+              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-cyan border border-cyan/30 px-3 py-1.5">
                 {filteredOrders.length} {activeTab} found
               </div>
             </div>
@@ -289,7 +299,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-bg-card border border-border rounded-2xl overflow-hidden shadow-xl shadow-black/20">
+              <div className="bg-bg-card border border-border rounded-none overflow-hidden shadow-xl shadow-black/20">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -310,9 +320,9 @@ const AdminDashboard = () => {
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 {product.imageUrl ? (
-                                  <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-lg object-cover border border-border" referrerPolicy="no-referrer" />
+                                  <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-none object-cover border border-border" referrerPolicy="no-referrer" />
                                 ) : (
-                                  <div className="w-10 h-10 rounded-lg bg-bg-input border border-border flex items-center justify-center text-text-3">
+                                  <div className="w-10 h-10 rounded-none bg-bg-input border border-border flex items-center justify-center text-text-3">
                                     <Package className="w-5 h-5" />
                                   </div>
                                 )}
@@ -355,7 +365,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-bg-card border border-border rounded-2xl overflow-hidden shadow-xl shadow-black/20">
+            <div className="bg-bg-card border border-border rounded-none overflow-hidden shadow-xl shadow-black/20">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -406,14 +416,14 @@ const AdminDashboard = () => {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => setSelectedOrder(order)}
-                                className="p-2 bg-bg-input border border-border rounded-lg text-text-2 hover:text-cyan hover:border-cyan transition-all"
+                                className="p-2 bg-bg-input border border-border rounded-none text-text-2 hover:text-cyan hover:border-cyan transition-all"
                                 title="View Details"
                               >
                                 <ChevronRight className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteOrder(order)}
-                                className="p-2 bg-bg-input border border-border rounded-lg text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
+                                className="p-2 bg-bg-input border border-border rounded-none text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
                                 title="Delete Order"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -464,28 +474,31 @@ const EmptyRow = () => (
 );
 
 const StatCard = ({ label, value, icon, color = "text-text-1" }: { label: string; value: string | number; icon: ReactNode; color?: string }) => (
-  <div className="bg-bg-card border border-border p-4 rounded-2xl">
-    <div className="flex items-center gap-3 mb-2">
-      <div className={`p-2 rounded-lg bg-bg-input ${color}`}>{icon}</div>
-      <span className="text-[10px] font-bold text-text-3 uppercase tracking-widest">{label}</span>
+  <div className="xp-card p-4">
+    <div className="flex items-center gap-3 mb-3">
+      <div className={`p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
+      <span className="font-mono text-[10px] tracking-[0.2em] text-text-3 uppercase">{label}</span>
     </div>
-    <div className={`text-xl font-bold ${color}`}>{value}</div>
+    <div className={`xp-display text-2xl ${color}`}>{value}</div>
   </div>
 );
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, { bg: string, text: string, icon: ReactNode, label: string }> = {
-    pending:           { bg: 'bg-yellow-400/10',  text: 'text-yellow-400',  icon: <Clock className="w-3 h-3" />,        label: 'Pending' },
-    awaiting_payment:  { bg: 'bg-orange-400/10',  text: 'text-orange-400',  icon: <DollarSign className="w-3 h-3" />,   label: 'Awaiting Payment' },
-    paid:              { bg: 'bg-cyan/10',        text: 'text-cyan',        icon: <CheckCircle2 className="w-3 h-3" />, label: 'Paid' },
-    shipped:           { bg: 'bg-blue-400/10',    text: 'text-blue-400',    icon: <Truck className="w-3 h-3" />,        label: 'Shipped' },
-    delivered:         { bg: 'bg-green-400/10',   text: 'text-green-400',   icon: <CheckCircle2 className="w-3 h-3" />, label: 'Delivered' },
-    cancelled:         { bg: 'bg-red-400/10',     text: 'text-red-400',     icon: <XCircle className="w-3 h-3" />,      label: 'Cancelled' },
-    refunded:          { bg: 'bg-purple-400/10',  text: 'text-purple-400',  icon: <Undo2 className="w-3 h-3" />,        label: 'Refunded' },
+  const styles: Record<string, { color: string, icon: ReactNode, label: string }> = {
+    pending:           { color: '#b45309', icon: <Clock className="w-3 h-3" />,        label: 'Pending' },
+    awaiting_payment:  { color: '#c2410c', icon: <DollarSign className="w-3 h-3" />,   label: 'Awaiting Payment' },
+    paid:              { color: '#cc0000', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Paid' },
+    shipped:           { color: '#1d4ed8', icon: <Truck className="w-3 h-3" />,        label: 'Shipped' },
+    delivered:         { color: '#15803d', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Delivered' },
+    cancelled:         { color: '#9ca3af', icon: <XCircle className="w-3 h-3" />,      label: 'Cancelled' },
+    refunded:          { color: '#7c3aed', icon: <Undo2 className="w-3 h-3" />,        label: 'Refunded' },
   };
   const style = styles[status] || styles.pending;
   return (
-    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${style.bg} ${style.text} text-[10px] font-bold uppercase tracking-wider`}>
+    <div
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.15em]"
+      style={{ border: `1px solid ${style.color}`, color: style.color }}
+    >
       {style.icon}
       {style.label}
     </div>
@@ -495,12 +508,15 @@ const StatusBadge = ({ status }: { status: string }) => {
 const NavButton = ({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: ReactNode; label: string }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
-      active ? 'bg-cyan text-bg-deep shadow-lg shadow-cyan/20' : 'text-text-3 hover:text-text-1 hover:bg-bg-input'
+    className={`w-full flex items-center gap-3 px-4 py-2.5 transition-all group font-heading uppercase tracking-[0.08em] text-sm ${
+      active
+        ? 'bg-[var(--color-xp-red-dim)] text-[var(--color-xp-red)]'
+        : 'text-text-2 hover:text-text-1 hover:bg-bg-input'
     }`}
+    style={active ? { borderLeft: '2px solid var(--color-xp-red)' } : { borderLeft: '2px solid transparent' }}
   >
-    <div className={`${active ? 'text-bg-deep' : 'text-text-3 group-hover:text-cyan'} transition-colors`}>{icon}</div>
-    <span className="text-sm font-bold">{label}</span>
+    <div className={`${active ? 'text-[var(--color-xp-red)]' : 'text-text-3 group-hover:text-[var(--color-xp-red)]'} transition-colors`}>{icon}</div>
+    <span>{label}</span>
   </button>
 );
 

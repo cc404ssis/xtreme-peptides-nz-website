@@ -57,7 +57,7 @@ const CopyButton = ({ text }: { text: string }) => {
   return (
     <button
       onClick={handleCopy}
-      className="p-1.5 bg-bg-card border border-border rounded-lg text-text-3 hover:text-cyan hover:border-cyan transition-all"
+      className="p-1.5 bg-bg-card border border-border rounded-none text-text-3 hover:text-cyan hover:border-cyan transition-all"
       title="Copy to clipboard"
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -177,24 +177,28 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-bg-card border border-border-hi rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl shadow-cyan/10"
+        className="bg-bg-card border border-border w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+        style={{ boxShadow: '0 30px 80px rgba(0,0,0,0.18)' }}
       >
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-bg-deep border-b border-border flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-6 bg-cyan rounded-full" />
-            <h2 className="text-lg font-bold text-text-1">Order Details</h2>
-            <span className="text-text-3 font-mono text-sm">#{order.orderNumber}</span>
+        <div className="px-6 py-5 bg-bg-deep flex justify-between items-center" style={{ borderBottom: '1px solid var(--color-border)', borderTop: '2px solid var(--color-xp-red)' }}>
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="xp-section-label text-[9px]">— Order Details —</div>
+              <h2 className="xp-display text-2xl mt-1">
+                #<span style={{ color: 'var(--color-xp-red)' }}>{order.orderNumber}</span>
+              </h2>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-bg-input border border-border rounded-lg text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
+            className="p-2 bg-bg-input border border-border rounded-none text-text-2 hover:text-red-400 hover:border-red-400/30 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -214,10 +218,10 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
             {/* Customer & Shipping */}
             <div className="space-y-6">
               <section>
-                <div className="text-cyan text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div className="xp-section-label text-[10px] mb-4 flex items-center gap-2">
                   <User className="w-3 h-3" /> Customer Information
                 </div>
-                <div className="bg-bg-input border border-border rounded-xl p-4 space-y-3">
+                <div className="bg-bg-input border border-border rounded-none p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-cyan/10 rounded-full flex items-center justify-center text-cyan">
                       <User className="w-4 h-4" />
@@ -257,10 +261,10 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
               </section>
 
               <section>
-                <div className="text-cyan text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div className="xp-section-label text-[10px] mb-4 flex items-center gap-2">
                   <MapPin className="w-3 h-3" /> Shipping Address
                 </div>
-                <div className="bg-bg-input border border-border rounded-xl p-4">
+                <div className="bg-bg-input border border-border rounded-none p-4">
                   <div className="flex justify-between items-start mb-4">
                     <div className="text-sm text-text-1 leading-relaxed">
                       {order.shippingAddress.name || order.customerName}<br />
@@ -275,7 +279,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${order.shippingAddress.address}, ${order.shippingAddress.city}, New Zealand`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 bg-bg-card border border-border rounded-lg text-text-3 hover:text-cyan hover:border-cyan transition-all"
+                        className="p-1.5 bg-bg-card border border-border rounded-none text-text-3 hover:text-cyan hover:border-cyan transition-all"
                         title="View on Google Maps"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -294,7 +298,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
             <div className="space-y-6">
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-cyan text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                  <div className="xp-section-label text-[10px] flex items-center gap-2">
                     <Package className="w-3 h-3" /> Order Items
                   </div>
                   <div className="relative w-48">
@@ -304,11 +308,11 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
                       placeholder="Search items..."
                       value={itemSearch}
                       onChange={(e) => setItemSearch(e.target.value)}
-                      className="w-full bg-bg-input border border-border rounded-lg pl-8 pr-3 py-1.5 text-[10px] focus:outline-none focus:border-cyan transition-all"
+                      className="w-full bg-bg-input border border-border rounded-none pl-8 pr-3 py-1.5 text-[10px] focus:outline-none focus:border-cyan transition-all"
                     />
                   </div>
                 </div>
-                <div className="bg-bg-input border border-border rounded-xl overflow-hidden">
+                <div className="bg-bg-input border border-border rounded-none overflow-hidden">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-bg-deep text-text-3 text-[10px] uppercase font-bold">
                       <tr>
@@ -359,10 +363,10 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
 
           {/* Email History */}
           <section className="mt-8">
-            <div className="text-cyan text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+            <div className="xp-section-label text-[10px] mb-4 flex items-center gap-2">
               <Mail className="w-3 h-3" /> Email History
             </div>
-            <div className="bg-bg-input border border-border rounded-xl overflow-hidden">
+            <div className="bg-bg-input border border-border rounded-none overflow-hidden">
               {loadingHistory ? (
                 <div className="p-8 flex justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-cyan" />
@@ -400,7 +404,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
         <div className="px-6 py-6 bg-bg-deep border-t border-border flex flex-col gap-6">
           {/* Send Email panel */}
           <div className="space-y-4">
-            <div className="text-cyan text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+            <div className="xp-section-label text-[10px] flex items-center gap-2">
               <Send className="w-3 h-3" /> Send Email to Customer
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -410,7 +414,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
                   <select
                     value={selectedTemplate}
                     onChange={(e) => setSelectedTemplate(e.target.value as Template)}
-                    className="w-full appearance-none bg-bg-input border border-border rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:border-cyan transition-all"
+                    className="w-full appearance-none bg-bg-input border border-border rounded-none px-4 py-2 pr-10 text-sm focus:outline-none focus:border-cyan transition-all"
                   >
                     <option value="bank_details">{TEMPLATE_LABELS.bank_details}</option>
                     <option value="shipping">{TEMPLATE_LABELS.shipping}</option>
@@ -430,13 +434,13 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
                     placeholder="Enter NZ Post tracking..."
-                    className="w-full bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
+                    className="w-full bg-bg-input border border-border rounded-none px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
                   />
                 </div>
               )}
             </div>
 
-            <div className="bg-bg-input border border-border rounded-lg p-4">
+            <div className="bg-bg-input border border-border rounded-none p-4">
               <div className="text-[10px] font-bold text-text-3 uppercase tracking-widest mb-2">Preview</div>
               <pre className="text-xs text-text-2 whitespace-pre-wrap font-mono">{previewTemplate(selectedTemplate, order.orderNumber, trackingNumber)}</pre>
             </div>
@@ -444,7 +448,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
             <button
               onClick={handleSendEmail}
               disabled={emailSending || (selectedTemplate === 'shipping' && !trackingNumber.trim())}
-              className="w-full px-6 py-3 bg-cyan text-bg-deep font-bold rounded-xl hover:bg-cyan/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-cyan/20"
+              className="btn-xp-primary w-full"
             >
               {emailSending ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
@@ -456,14 +460,14 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
 
           {/* Manual status update (without sending email) */}
           <div className="pt-4 border-t border-border/50">
-            <div className="text-cyan text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+            <div className="xp-section-label text-[10px] mb-3 flex items-center gap-2">
               <DollarSign className="w-3 h-3" /> Manual Status Update (no email)
             </div>
             <div className="flex gap-3">
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as Order['status'])}
-                className="flex-1 bg-bg-input border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
+                className="flex-1 bg-bg-input border border-border rounded-none px-4 py-2 text-sm focus:outline-none focus:border-cyan transition-all"
               >
                 <option value="pending">Pending</option>
                 <option value="awaiting_payment">Awaiting Payment</option>
@@ -476,7 +480,7 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
               <button
                 onClick={handleUpdateStatus}
                 disabled={updating || (status === order.status && trackingNumber === (order.trackingNumber || ''))}
-                className="px-6 py-2 bg-bg-input border border-border rounded-lg text-text-1 hover:border-cyan hover:text-cyan transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-bg-input border border-border rounded-none text-text-1 hover:border-cyan hover:text-cyan transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 Save Status
@@ -538,7 +542,7 @@ function formatDatePlaced(value: string | number | Date): string {
 }
 
 const InfoCard = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
-  <div className="bg-bg-input border border-border rounded-xl p-4">
+  <div className="bg-bg-input border border-border rounded-none p-4">
     <div className="text-text-3 text-[10px] uppercase font-bold tracking-widest mb-1 flex items-center gap-1.5">
       {icon} {label}
     </div>

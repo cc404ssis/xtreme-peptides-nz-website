@@ -1,23 +1,188 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400&family=Share+Tech+Mono&display=swap");
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════
+   Xtreme Peptides Admin — Light Wireframe Theme
+   Design tokens kept under their original names so
+   existing class strings (bg-bg-deep, text-cyan etc.)
+   keep working — only the *values* are remapped.
+   ═══════════════════════════════════════════════ */
 @theme {
-  --color-bg-deep: #060e1a;
-  --color-bg-dark: #0a1628;
-  --color-bg-card: #0f1f33;
-  --color-bg-raised: #132030;
-  --color-bg-input: #1a2a3a;
-  --color-border: #1a3a5c;
-  --color-border-hi: #234d6e;
-  --color-cyan: #00d4ff;
-  --color-text-1: #e8eef5;
-  --color-text-2: #8b9cb5;
-  --color-text-3: #4a6080;
-  
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Backgrounds — light palette */
+  --color-bg-deep:    #fafafa;  /* page bg — off-white */
+  --color-bg-dark:    #ffffff;  /* lightest surface */
+  --color-bg-card:    #ffffff;  /* card surface */
+  --color-bg-raised:  #f5f5f5;  /* raised pill / chip */
+  --color-bg-input:   #f8f8f8;  /* input fill */
+
+  /* Borders */
+  --color-border:     #e5e5e5;
+  --color-border-hi:  #d0d0d0;
+
+  /* Accent — red replaces the old cyan */
+  --color-cyan:        #cc0000;
+  --color-cyan-bright: #ff1a1a;
+
+  /* Text */
+  --color-text-1: #0a0a0a;  /* primary near-black */
+  --color-text-2: #555555;  /* secondary grey */
+  --color-text-3: #888888;  /* tertiary muted */
+
+  /* Brand-aligned XP tokens (same as storefront) */
+  --color-xp-red:        #cc0000;
+  --color-xp-red-bright: #ff1a1a;
+  --color-xp-red-dim:    rgba(204,0,0,0.08);
+  --color-xp-border-red: rgba(204,0,0,0.3);
+
+  /* Fonts */
+  --font-sans:    "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bebas Neue", sans-serif;
+  --font-heading: "Barlow Condensed", sans-serif;
+  --font-mono:    "Share Tech Mono", ui-monospace, monospace;
 }
 
 @layer base {
   body {
-    @apply bg-bg-dark text-text-1 font-sans;
+    @apply bg-bg-deep text-text-1 font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Make all custom selects/inputs play nice on white */
+  select, input, textarea {
+    color-scheme: light;
+  }
+}
+
+@layer components {
+
+  /* ── Brand wordmark (matches storefront nav) ── */
+  .xp-wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .xp-wordmark::before,
+  .xp-wordmark::after {
+    content: '';
+    width: 2px;
+    height: 26px;
+    background: var(--color-xp-red);
+  }
+  .xp-wordmark-text {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    letter-spacing: 0.22em;
+    color: #0a0a0a;
+    line-height: 1;
+  }
+  .xp-wordmark-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.55em;
+    color: rgba(204,0,0,0.7);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ── Section header pattern ── */
+  .xp-section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--color-xp-red);
+    text-transform: uppercase;
+  }
+  .xp-section-rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(204,0,0,0.5), rgba(204,0,0,0.5), transparent);
+  }
+  .xp-display {
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
+    color: #0a0a0a;
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+
+  /* ── Cards ── */
+  .xp-card {
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-top: 2px solid var(--color-xp-red);
+    position: relative;
+  }
+  .xp-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 36px; height: 36px;
+    border-bottom: 1px solid var(--color-xp-border-red);
+    border-right: 1px solid var(--color-xp-border-red);
+    pointer-events: none;
+  }
+
+  /* ── Corner brackets (used at viewport edges) ── */
+  .xp-corner {
+    position: fixed;
+    width: 36px; height: 36px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .xp-corner-tl { top: 16px;    left: 16px;  border-top: 1px solid rgba(204,0,0,0.5); border-left: 1px solid rgba(204,0,0,0.5); }
+  .xp-corner-tr { top: 16px;    right: 16px; border-top: 1px solid rgba(204,0,0,0.5); border-right: 1px solid rgba(204,0,0,0.5); }
+  .xp-corner-bl { bottom: 16px; left: 16px;  border-bottom: 1px solid rgba(204,0,0,0.5); border-left: 1px solid rgba(204,0,0,0.5); }
+  .xp-corner-br { bottom: 16px; right: 16px; border-bottom: 1px solid rgba(204,0,0,0.5); border-right: 1px solid rgba(204,0,0,0.5); }
+
+  /* ── Buttons ── */
+  .btn-xp-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: var(--color-xp-red);
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-xp-primary:hover {
+    background: var(--color-xp-red-bright);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(204,0,0,0.25);
+  }
+  .btn-xp-primary:disabled {
+    background: #d0d0d0;
+    color: #fff;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-xp-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--color-text-2);
+    border: 1px solid var(--color-border-hi);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-xp-outline:hover {
+    border-color: var(--color-xp-red);
+    color: var(--color-xp-red);
   }
 }

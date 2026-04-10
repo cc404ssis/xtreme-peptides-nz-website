@@ -32,58 +32,99 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-dark bg-[radial-gradient(ellipse_at_50%_0%,_#0d2040_0%,_#0a1628_70%)]">
+    <div className="min-h-screen flex items-center justify-center bg-bg-deep relative overflow-hidden">
+      {/* Soft red glow */}
+      <div
+        aria-hidden
+        className="absolute pointer-events-none"
+        style={{
+          top: '-200px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '700px',
+          height: '500px',
+          background: 'radial-gradient(ellipse, rgba(204,0,0,0.08) 0%, transparent 65%)',
+        }}
+      />
+
+      {/* Corner brackets */}
+      <div className="xp-corner xp-corner-tl" />
+      <div className="xp-corner xp-corner-tr" />
+      <div className="xp-corner xp-corner-bl" />
+      <div className="xp-corner xp-corner-br" />
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-bg-card p-10 rounded-2xl border border-border-hi w-full max-w-md shadow-[0_0_0_1px_rgba(0,212,255,0.12),0_30px_60px_rgba(0,0,0,0.5)]"
+        className="xp-card w-full max-w-md mx-6 relative z-10"
       >
-        <div className="text-center mb-8">
-          <img src="/logo.png" alt="Logo" className="w-48 mx-auto mb-4 drop-shadow-[0_4px_14px_rgba(0,212,255,0.28)]" referrerPolicy="no-referrer" />
-          <p className="text-text-2 text-[11px] tracking-[3px] uppercase">Admin Dashboard</p>
+        <div className="px-10 pt-12 pb-2 text-center">
+          <div className="xp-wordmark mx-auto justify-center">
+            <div>
+              <div className="xp-wordmark-text">Xtreme Peptides</div>
+              <div className="xp-wordmark-sub">New Zealand</div>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-[10px] font-bold text-text-3 uppercase tracking-widest mb-1.5">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoComplete="username"
-              className="w-full bg-bg-input border border-border rounded-lg px-4 py-2.5 text-sm text-text-1 focus:outline-none focus:border-cyan transition-all"
-              placeholder="Enter username"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-text-3 uppercase tracking-widest mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full bg-bg-input border border-border rounded-lg px-4 py-2.5 text-sm text-text-1 focus:outline-none focus:border-cyan transition-all"
-              placeholder="Enter password"
-            />
+        <div className="mx-10 my-6">
+          <div className="xp-section-rule" />
+        </div>
+
+        <div className="px-10 pb-10">
+          <div className="text-center mb-6">
+            <div className="xp-section-label">— Restricted Access —</div>
+            <h1 className="xp-display text-3xl mt-3">
+              Admin <span style={{ color: 'var(--color-xp-red)' }}>Panel</span>
+            </h1>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-gradient-to-br from-[#07c8f0] to-[#0585b8] text-white py-3 px-6 rounded-lg font-semibold shadow-[0_4px_14px_rgba(0,180,220,0.3)] hover:shadow-[0_6px_18px_rgba(0,200,240,0.45)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-text-3 uppercase tracking-[0.2em] mb-1.5">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoComplete="username"
+                className="w-full bg-bg-input border border-border px-4 py-2.5 text-sm text-text-1 focus:outline-none focus:border-cyan transition-all font-sans"
+                placeholder="Enter username"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono font-bold text-text-3 uppercase tracking-[0.2em] mb-1.5">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full bg-bg-input border border-border px-4 py-2.5 text-sm text-text-1 focus:outline-none focus:border-cyan transition-all font-sans"
+                placeholder="Enter password"
+              />
+            </div>
 
-        {error && (
-          <div className="mt-4 p-3 bg-red-500/10 border border-red-500/25 text-red-400 rounded-lg text-sm text-center">
-            {error}
-          </div>
-        )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-xp-primary w-full mt-2"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          {error && (
+            <div className="mt-4 p-3 border border-[var(--color-xp-red)] bg-[var(--color-xp-red-dim)] text-[var(--color-xp-red)] text-sm text-center font-mono uppercase tracking-widest">
+              {error}
+            </div>
+          )}
+
+          <p className="font-mono text-[9px] tracking-[0.2em] uppercase text-center mt-8" style={{ color: 'var(--color-text-3)' }}>
+            Authorised personnel only · Xtreme Peptides NZ
+          </p>
+        </div>
       </motion.div>
     </div>
   );
