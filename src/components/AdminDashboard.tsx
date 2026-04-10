@@ -294,15 +294,15 @@ const AdminDashboard = () => {
         </header>
 
         <div className="p-4 md:p-8">
-          {/* Stats Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-4 mb-4 md:mb-8">
+          {/* Stats Bar — one single row of 7 tiny cards on mobile, full grid on desktop */}
+          <div className="grid grid-cols-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-1 sm:gap-4 mb-4 md:mb-8">
             <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} />
-            <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-400" />
-            <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-400" />
+            <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-500" />
+            <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-500" />
             <StatCard label="Paid" value={stats.paid} icon={<CheckCircle2 className="w-4 h-4" />} color="text-cyan" />
-            <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-400" />
-            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-400" />
-            <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" />
+            <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-500" />
+            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-500" />
+            <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} mobileValue={formatRevenueCompact(stats.revenue)} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" />
           </div>
 
           <div className="mb-4 md:mb-8 flex flex-col gap-4 md:gap-6">
@@ -623,13 +623,27 @@ const EmptyRow = () => (
   </tr>
 );
 
-const StatCard = ({ label, value, icon, color = "text-text-1" }: { label: string; value: string | number; icon: ReactNode; color?: string }) => (
-  <div className="xp-card p-3 sm:p-5">
-    <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-3">
-      <div className={`p-1 sm:p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
-      <span className="font-mono text-[10px] sm:text-xs tracking-[0.12em] sm:tracking-[0.15em] text-text-2 uppercase font-bold truncate">{label}</span>
+function formatRevenueCompact(v: number): string {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}m`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}k`;
+  return `$${v.toFixed(0)}`;
+}
+
+const StatCard = ({ label, value, icon, color = "text-text-1", mobileValue }: { label: string; value: string | number; icon: ReactNode; color?: string; mobileValue?: string | number }) => (
+  <div className="xp-card p-1.5 sm:p-5">
+    {/* Mobile: tiny icon + number only, centered */}
+    <div className="sm:hidden flex flex-col items-center justify-center text-center gap-0.5 py-1" title={label}>
+      <div className={color}>{icon}</div>
+      <div className={`xp-display text-sm leading-none ${color}`}>{mobileValue ?? value}</div>
     </div>
-    <div className={`xp-display text-2xl sm:text-4xl ${color}`}>{value}</div>
+    {/* Desktop: full card with label + big number */}
+    <div className="hidden sm:block">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
+        <span className="font-mono text-xs tracking-[0.15em] text-text-2 uppercase font-bold">{label}</span>
+      </div>
+      <div className={`xp-display text-4xl ${color}`}>{value}</div>
+    </div>
   </div>
 );
 

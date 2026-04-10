@@ -399,8 +399,8 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
           </section>
         </div>
 
-        {/* Modal Footer — Email actions + status update. Capped at ~50% on mobile so order details stay visible above. */}
-        <div className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep border-t border-border flex flex-col gap-5 sm:gap-6 max-h-[50vh] sm:max-h-none overflow-y-auto sm:overflow-visible">
+        {/* Modal Footer — Email actions + status update. Capped at ~33% on mobile so order details dominate above. */}
+        <div className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep border-t border-border flex flex-col gap-5 sm:gap-6 max-h-[33vh] sm:max-h-none overflow-y-auto sm:overflow-visible">
           {/* Send Email panel */}
           <div className="space-y-4">
             <div className="xp-section-label text-xs flex items-center gap-2">
