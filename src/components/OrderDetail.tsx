@@ -205,8 +205,8 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
-          {/* Quick Info Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          {/* Quick Info Grid — 4 compact cards in a row on mobile */}
+          <div className="grid grid-cols-4 gap-2 sm:gap-4">
             <InfoCard icon={<Hash className="w-4 h-4" />} label="Order Number" value={order.orderNumber} mono />
             <InfoCard icon={<Calendar className="w-4 h-4" />} label="Date Placed" value={formatDatePlaced(order.createdAt)} />
             <InfoCard icon={<CreditCard className="w-4 h-4" />} label="Payment" value={order.paymentMethod || 'Bank Transfer'} />
@@ -399,8 +399,8 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
           </section>
         </div>
 
-        {/* Modal Footer — Email actions + status update */}
-        <div className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep border-t border-border flex flex-col gap-5 sm:gap-6">
+        {/* Modal Footer — Email actions + status update. Capped at ~50% on mobile so order details stay visible above. */}
+        <div className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep border-t border-border flex flex-col gap-5 sm:gap-6 max-h-[50vh] sm:max-h-none overflow-y-auto sm:overflow-visible">
           {/* Send Email panel */}
           <div className="space-y-4">
             <div className="xp-section-label text-xs flex items-center gap-2">
@@ -439,9 +439,9 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
               )}
             </div>
 
-            <div className="bg-bg-input border border-border rounded-none p-4">
+            <div className="bg-bg-input border border-border rounded-none p-3 sm:p-4">
               <div className="text-[10px] font-bold text-text-3 uppercase tracking-widest mb-2">Preview</div>
-              <pre className="text-xs text-text-2 whitespace-pre-wrap font-mono">{previewTemplate(selectedTemplate, order.orderNumber, trackingNumber)}</pre>
+              <pre className="text-[11px] sm:text-xs text-text-2 whitespace-pre-wrap font-mono leading-snug">{previewTemplate(selectedTemplate, order.orderNumber, trackingNumber)}</pre>
             </div>
 
             <button
@@ -541,11 +541,20 @@ function formatDatePlaced(value: string | number | Date): string {
 }
 
 const InfoCard = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
-  <div className="bg-bg-input border border-border rounded-none p-4">
-    <div className="text-text-2 text-xs uppercase font-bold tracking-[0.12em] mb-2 flex items-center gap-1.5">
-      {icon} {label}
+  <div className="bg-bg-input border border-border rounded-none p-2 sm:p-4">
+    {/* Mobile: centered icon + tiny label + value */}
+    <div className="sm:hidden flex flex-col items-center text-center">
+      <div className="text-[var(--color-xp-red)] mb-1">{icon}</div>
+      <div className="text-text-2 text-[8px] uppercase font-bold tracking-wider leading-tight">{label}</div>
+      <div className={`text-[11px] font-bold text-text-1 mt-0.5 truncate w-full ${mono ? 'font-mono text-cyan' : ''}`}>{value}</div>
     </div>
-    <div className={`text-base font-bold text-text-1 break-words ${mono ? 'font-mono text-cyan' : ''}`}>{value}</div>
+    {/* Desktop: icon + label on top, value below */}
+    <div className="hidden sm:block">
+      <div className="text-text-2 text-xs uppercase font-bold tracking-[0.12em] mb-2 flex items-center gap-1.5">
+        {icon} {label}
+      </div>
+      <div className={`text-base font-bold text-text-1 break-words ${mono ? 'font-mono text-cyan' : ''}`}>{value}</div>
+    </div>
   </div>
 );
 

@@ -295,7 +295,7 @@ const AdminDashboard = () => {
 
         <div className="p-4 md:p-8">
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 md:gap-4 mb-6 md:mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-4 mb-4 md:mb-8">
             <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} />
             <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-400" />
             <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-400" />
@@ -305,18 +305,18 @@ const AdminDashboard = () => {
             <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" />
           </div>
 
-          <div className="mb-6 md:mb-8 flex flex-col gap-6">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+          <div className="mb-4 md:mb-8 flex flex-col gap-4 md:gap-6">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3 md:gap-4">
               <div className="min-w-0">
-                <div className="xp-section-label mb-2">— Dashboard —</div>
+                <div className="xp-section-label mb-1 md:mb-2">— Dashboard —</div>
                 <h2 className="xp-display text-2xl sm:text-3xl md:text-4xl break-words">
                   {activeTab === 'orders'
                     ? (statusFilter === 'all' ? <>All <span style={{ color: 'var(--color-xp-red)' }}>Orders</span></> : <>{statusFilter.replace('_', ' ')} <span style={{ color: 'var(--color-xp-red)' }}>Orders</span></>)
                     : <span>{activeTab.replace('_', ' ')}</span>}
                 </h2>
-                <p className="text-text-2 text-base mt-3 font-sans">Manage and monitor your peptide business operations.</p>
+                <p className="hidden md:block text-text-2 text-base mt-3 font-sans">Manage and monitor your peptide business operations.</p>
               </div>
-              <div className="font-mono text-xs font-bold tracking-[0.15em] uppercase text-cyan border border-cyan/30 px-3 py-2 self-start md:self-auto whitespace-nowrap">
+              <div className="font-mono text-xs font-bold tracking-[0.15em] uppercase text-cyan border border-cyan/30 px-3 py-1.5 md:py-2 self-start md:self-auto whitespace-nowrap">
                 {filteredOrders.length} {activeTab} found
               </div>
             </div>
@@ -624,12 +624,12 @@ const EmptyRow = () => (
 );
 
 const StatCard = ({ label, value, icon, color = "text-text-1" }: { label: string; value: string | number; icon: ReactNode; color?: string }) => (
-  <div className="xp-card p-4 sm:p-5">
-    <div className="flex items-center gap-3 mb-3">
-      <div className={`p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
-      <span className="font-mono text-xs tracking-[0.15em] text-text-2 uppercase font-bold">{label}</span>
+  <div className="xp-card p-3 sm:p-5">
+    <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-3">
+      <div className={`p-1 sm:p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
+      <span className="font-mono text-[10px] sm:text-xs tracking-[0.12em] sm:tracking-[0.15em] text-text-2 uppercase font-bold truncate">{label}</span>
     </div>
-    <div className={`xp-display text-3xl sm:text-4xl ${color}`}>{value}</div>
+    <div className={`xp-display text-2xl sm:text-4xl ${color}`}>{value}</div>
   </div>
 );
 
