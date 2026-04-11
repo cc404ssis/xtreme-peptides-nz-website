@@ -294,15 +294,15 @@ const AdminDashboard = () => {
         </header>
 
         <div className="p-4 md:p-8">
-          {/* Stats Bar — one single row of 7 tiny cards on mobile, full grid on desktop */}
+          {/* Stats Bar — one single row of 7 tiny cards on mobile, full grid on desktop. Each card jumps to its filter. */}
           <div className="grid grid-cols-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-1 sm:gap-4 mb-4 md:mb-8">
-            <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} />
-            <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-500" />
-            <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-500" />
-            <StatCard label="Paid" value={stats.paid} icon={<CheckCircle2 className="w-4 h-4" />} color="text-cyan" />
-            <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-500" />
-            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-500" />
-            <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} mobileValue={formatRevenueCompact(stats.revenue)} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" />
+            <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} />
+            <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-500" onClick={() => { setActiveTab('orders'); setStatusFilter('pending'); }} />
+            <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-500" onClick={() => { setActiveTab('orders'); setStatusFilter('awaiting_payment'); }} />
+            <StatCard label="Paid" value={stats.paid} icon={<CheckCircle2 className="w-4 h-4" />} color="text-cyan" onClick={() => { setActiveTab('orders'); setStatusFilter('paid'); }} />
+            <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-500" onClick={() => { setActiveTab('orders'); setStatusFilter('shipped'); }} />
+            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-500" onClick={() => { setActiveTab('orders'); setStatusFilter('delivered'); }} />
+            <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} mobileValue={formatRevenueCompact(stats.revenue)} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} />
           </div>
 
           <div className="mb-4 md:mb-8 flex flex-col gap-4 md:gap-6">
@@ -629,23 +629,44 @@ function formatRevenueCompact(v: number): string {
   return `$${v.toFixed(0)}`;
 }
 
-const StatCard = ({ label, value, icon, color = "text-text-1", mobileValue }: { label: string; value: string | number; icon: ReactNode; color?: string; mobileValue?: string | number }) => (
-  <div className="xp-card p-1.5 sm:p-5">
-    {/* Mobile: tiny icon + number only, centered */}
-    <div className="sm:hidden flex flex-col items-center justify-center text-center gap-0.5 py-1" title={label}>
-      <div className={color}>{icon}</div>
-      <div className={`xp-display text-sm leading-none ${color}`}>{mobileValue ?? value}</div>
-    </div>
-    {/* Desktop: full card with label + big number */}
-    <div className="hidden sm:block">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
-        <span className="font-mono text-xs tracking-[0.15em] text-text-2 uppercase font-bold">{label}</span>
+const StatCard = ({ label, value, icon, color = "text-text-1", mobileValue, onClick }: { label: string; value: string | number; icon: ReactNode; color?: string; mobileValue?: string | number; onClick?: () => void }) => {
+  const Inner = (
+    <>
+      {/* Mobile: tiny icon + number only, centered */}
+      <div className="sm:hidden flex flex-col items-center justify-center text-center gap-0.5 py-1">
+        <div className={color}>{icon}</div>
+        <div className={`xp-display text-sm leading-none ${color}`}>{mobileValue ?? value}</div>
       </div>
-      <div className={`xp-display text-4xl ${color}`}>{value}</div>
+      {/* Desktop: full card with label + big number */}
+      <div className="hidden sm:block">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`p-2 ${color}`} style={{ border: '1px solid var(--color-xp-border-red)' }}>{icon}</div>
+          <span className="font-mono text-xs tracking-[0.15em] text-text-2 uppercase font-bold">{label}</span>
+        </div>
+        <div className={`xp-display text-4xl ${color}`}>{value}</div>
+      </div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        title={label}
+        className="xp-card p-1.5 sm:p-5 text-left w-full cursor-pointer transition-all hover:border-[var(--color-xp-red)] hover:shadow-[0_8px_24px_rgba(204,0,0,0.12)] sm:hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus:border-[var(--color-xp-red)]"
+      >
+        {Inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className="xp-card p-1.5 sm:p-5" title={label}>
+      {Inner}
     </div>
-  </div>
-);
+  );
+};
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, { color: string, icon: ReactNode, label: string }> = {
