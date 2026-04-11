@@ -60,16 +60,21 @@ export default function AgeVerificationModal() {
   }, [phase]);
 
   // ── Idle reset: 5 minutes of no activity returns to fake 404 ──
-  // Only active when user is past the gate (phase === 'done')
+  // Only active when user is past the gate (phase === 'done').
+  // Uses a Date.now() timestamp + visibility/focus checks rather than
+  // a bare setTimeout, because iOS Safari throttles timers when the
+  // tab is backgrounded — so a screen-locked phone would never fire.
   useEffect(() => {
     if (phase !== "done") return;
 
     const IDLE_MS = 5 * 60 * 1000; // 5 minutes
-    let timer: ReturnType<typeof setTimeout>;
+    const ACTIVITY_KEY = "xp_last_activity";
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
     const triggerReset = () => {
       try {
         localStorage.removeItem("xp_age_verified");
+        sessionStorage.removeItem(ACTIVITY_KEY);
       } catch {
         /* private mode */
       }
@@ -77,18 +82,66 @@ export default function AgeVerificationModal() {
       window.location.reload();
     };
 
-    const resetTimer = () => {
-      clearTimeout(timer);
+    const stamp = () => {
+      try {
+        sessionStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+      } catch {
+        /* private mode */
+      }
+    };
+
+    const checkIdle = () => {
+      try {
+        const last = parseInt(sessionStorage.getItem(ACTIVITY_KEY) || "0", 10);
+        if (last && Date.now() - last >= IDLE_MS) {
+          triggerReset();
+          return true;
+        }
+      } catch {
+        /* private mode */
+      }
+      return false;
+    };
+
+    const armTimer = () => {
+      if (timer) clearTimeout(timer);
       timer = setTimeout(triggerReset, IDLE_MS);
     };
 
-    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"];
-    events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
-    resetTimer();
+    const onActivity = () => {
+      stamp();
+      armTimer();
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        // Tab regained focus — if we've been idle longer than the cap,
+        // reset right now even if the setTimeout never fired.
+        if (!checkIdle()) {
+          stamp();
+          armTimer();
+        }
+      }
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel", "click"];
+    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+
+    // On first mount of the "done" phase, check whether a previous
+    // session already burned the timer. This handles the SPA case where
+    // the modal effect re-runs after a navigation.
+    if (!checkIdle()) {
+      stamp();
+      armTimer();
+    }
 
     return () => {
-      clearTimeout(timer);
-      events.forEach((e) => window.removeEventListener(e, resetTimer));
+      if (timer) clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, onActivity));
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
     };
   }, [phase]);
 
@@ -130,10 +183,12 @@ export default function AgeVerificationModal() {
   }, [phase]);
 
   // ── Search submit ──
+  // Anything that isn't the secret code (case-insensitive, trimmed)
+  // opens a real Google search in a new tab — preserves the cover.
   const handleSearchSubmit = useCallback(() => {
     const trimmed = searchInput.trim();
     if (!trimmed) return;
-    if (trimmed === SECRET) {
+    if (trimmed.toLowerCase() === SECRET) {
       setPhase("wipeIn");
     } else {
       window.open(
