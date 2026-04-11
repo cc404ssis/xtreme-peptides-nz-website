@@ -296,12 +296,12 @@ const AdminDashboard = () => {
         <div className="p-4 md:p-8">
           {/* Stats Bar — one single row of 7 tiny cards on mobile, full grid on desktop. Each card jumps to its filter. */}
           <div className="grid grid-cols-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-1 sm:gap-4 mb-4 md:mb-8">
-            <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} />
-            <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-500" onClick={() => { setActiveTab('orders'); setStatusFilter('pending'); }} />
-            <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-500" onClick={() => { setActiveTab('orders'); setStatusFilter('awaiting_payment'); }} />
-            <StatCard label="Paid" value={stats.paid} icon={<CheckCircle2 className="w-4 h-4" />} color="text-cyan" onClick={() => { setActiveTab('orders'); setStatusFilter('paid'); }} />
-            <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-500" onClick={() => { setActiveTab('orders'); setStatusFilter('shipped'); }} />
-            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-500" onClick={() => { setActiveTab('orders'); setStatusFilter('delivered'); }} />
+            <StatCard label="Total Orders" value={stats.total} icon={<Package className="w-4 h-4" />} onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} isActive={activeTab === 'orders' && statusFilter === 'all'} />
+            <StatCard label="Pending" value={stats.pending} icon={<Clock className="w-4 h-4" />} color="text-yellow-500" onClick={() => { setActiveTab('orders'); setStatusFilter('pending'); }} isActive={activeTab === 'orders' && statusFilter === 'pending'} />
+            <StatCard label="Awaiting Pmt" value={stats.awaitingPayment} icon={<DollarSign className="w-4 h-4" />} color="text-orange-500" onClick={() => { setActiveTab('orders'); setStatusFilter('awaiting_payment'); }} isActive={activeTab === 'orders' && statusFilter === 'awaiting_payment'} />
+            <StatCard label="Paid" value={stats.paid} icon={<CheckCircle2 className="w-4 h-4" />} color="text-cyan" onClick={() => { setActiveTab('orders'); setStatusFilter('paid'); }} isActive={activeTab === 'orders' && statusFilter === 'paid'} />
+            <StatCard label="Shipped" value={stats.shipped} icon={<Truck className="w-4 h-4" />} color="text-blue-500" onClick={() => { setActiveTab('orders'); setStatusFilter('shipped'); }} isActive={activeTab === 'orders' && statusFilter === 'shipped'} />
+            <StatCard label="Delivered" value={stats.delivered} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-500" onClick={() => { setActiveTab('orders'); setStatusFilter('delivered'); }} isActive={activeTab === 'orders' && statusFilter === 'delivered'} />
             <StatCard label="Revenue" value={`$${stats.revenue.toFixed(2)}`} mobileValue={formatRevenueCompact(stats.revenue)} icon={<DollarSign className="w-4 h-4" />} color="text-cyan" onClick={() => { setActiveTab('orders'); setStatusFilter('all'); }} />
           </div>
 
@@ -629,7 +629,7 @@ function formatRevenueCompact(v: number): string {
   return `$${v.toFixed(0)}`;
 }
 
-const StatCard = ({ label, value, icon, color = "text-text-1", mobileValue, onClick }: { label: string; value: string | number; icon: ReactNode; color?: string; mobileValue?: string | number; onClick?: () => void }) => {
+const StatCard = ({ label, value, icon, color = "text-text-1", mobileValue, onClick, isActive }: { label: string; value: string | number; icon: ReactNode; color?: string; mobileValue?: string | number; onClick?: () => void; isActive?: boolean }) => {
   const Inner = (
     <>
       {/* Mobile: tiny icon + number only, centered */}
@@ -649,12 +649,16 @@ const StatCard = ({ label, value, icon, color = "text-text-1", mobileValue, onCl
   );
 
   if (onClick) {
+    const activeClasses = isActive
+      ? 'border-[var(--color-xp-red)] bg-[var(--color-xp-red-dim)] shadow-[0_8px_24px_rgba(204,0,0,0.18)] sm:-translate-y-0.5'
+      : 'hover:border-[var(--color-xp-red)] hover:shadow-[0_8px_24px_rgba(204,0,0,0.12)] sm:hover:-translate-y-0.5';
     return (
       <button
         type="button"
         onClick={onClick}
         title={label}
-        className="xp-card p-1.5 sm:p-5 text-left w-full cursor-pointer transition-all hover:border-[var(--color-xp-red)] hover:shadow-[0_8px_24px_rgba(204,0,0,0.12)] sm:hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus:border-[var(--color-xp-red)]"
+        aria-pressed={isActive ? 'true' : 'false'}
+        className={`xp-card p-1.5 sm:p-5 text-left w-full cursor-pointer transition-all active:scale-[0.98] focus:outline-none focus:border-[var(--color-xp-red)] ${activeClasses}`}
       >
         {Inner}
       </button>
