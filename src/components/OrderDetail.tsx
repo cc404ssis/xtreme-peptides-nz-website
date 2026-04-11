@@ -400,7 +400,10 @@ const OrderDetail = ({ order, onClose, onUpdate }: OrderDetailProps) => {
         </div>
 
         {/* Modal Footer — Email actions + status update. Capped at ~33vh on all sizes so order details dominate the modal. */}
-        <div className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep border-t border-border flex flex-col gap-5 sm:gap-6 max-h-[33vh] overflow-y-auto">
+        <div
+          className="px-4 sm:px-6 py-4 sm:py-6 bg-bg-deep flex flex-col gap-5 sm:gap-6 max-h-[33vh] overflow-y-auto relative"
+          style={{ borderTop: '3px solid var(--color-xp-red)', boxShadow: '0 -8px 24px rgba(0,0,0,0.08)' }}
+        >
           {/* Send Email panel */}
           <div className="space-y-4">
             <div className="xp-section-label text-xs flex items-center gap-2">
