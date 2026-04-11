@@ -24,6 +24,40 @@ import {
 import { AnimatePresence } from 'motion/react';
 import OrderDetail from './OrderDetail';
 
+// Canonical product name → storefront image URL.
+// Used as a fallback when a DB row is missing image_url so the admin
+// product list always shows a thumbnail (storefront serves these from /).
+const PRODUCT_IMAGE_MAP: Record<string, string> = {
+  'bac water 3ml': '/product_bac_water_3ml.png',
+  'bac water 10ml': '/product_bac_water_10ml.png',
+  'bpc-157 10mg': '/product_bpc157_10mg.png',
+  'tb-500 10mg': '/product_tb500_10mg.png',
+  'ghk-cu 50mg': '/product_ghkcu_50mg.png',
+  'ghk-cu 100mg': '/product_ghkcu_100mg.png',
+  'cjc-1295 w/ dac 5mg': '/product_cjc1295_5mg.png',
+  'ipamorelin 5mg': '/product_ipamorelin_5mg.png',
+  'ghrp-6 5mg': '/product_ghrp6_5mg.png',
+  'sermorelin 10mg': '/product_sermorelin_10mg.png',
+  'tesamorelin 10mg': '/product_tesamorelin_10mg.png',
+  'dsip 15mg': '/product_dsip_15mg.png',
+  'epitalon 50mg': '/product_epitalon_50mg.png',
+  'retatrutide 10mg': '/product_retatrutide_10mg.png',
+  'mots-c 40mg': '/product_motsc_40mg.png',
+  'thymosin alpha-1 10mg': '/product_thymosin_a1_10mg.png',
+  'ss-31 10mg': '/product_ss31_10mg.png',
+  'nad+ 100mg': '/product_nad_100mg.png',
+  'nad+ 500mg': '/product_nad_500mg.png',
+  'melanotan ii 10mg': '/product_melanotan2_10mg.png',
+  'pt-141 10mg': '/product_pt141_10mg.png',
+  'kisspeptin-10 10mg': '/product_kisspeptin_10mg.png',
+  'snap-8 10mg': '/product_snap8_10mg.png',
+};
+
+function getProductImage(name: string | undefined | null): string | undefined {
+  if (!name) return undefined;
+  return PRODUCT_IMAGE_MAP[name.toLowerCase().trim()];
+}
+
 // Map Supabase snake_case rows to camelCase TypeScript types
 function mapOrder(row: any): Order {
   return {
@@ -47,12 +81,15 @@ function mapOrder(row: any): Order {
 }
 
 function mapProduct(row: any): Product {
+  const name = row.name ?? '';
   return {
     id: row.id,
-    name: row.name ?? '',
+    name,
     description: row.description ?? '',
     price: row.price ?? 0,
-    imageUrl: row.image_url ?? row.imageUrl,
+    // Prefer DB value, fall back to canonical name → image map so existing
+    // rows with missing image_url still show their thumbnail.
+    imageUrl: row.image_url ?? row.imageUrl ?? getProductImage(name),
     isActive: row.is_active ?? row.isActive ?? true,
     createdAt: row.created_at ?? row.createdAt,
     updatedAt: row.updated_at ?? row.updatedAt,
@@ -317,20 +354,13 @@ const AdminDashboard = () => {
                 <p className="hidden md:block text-text-2 text-base mt-3 font-sans">Manage and monitor your peptide business operations.</p>
               </div>
               <div className="font-mono text-xs font-bold tracking-[0.15em] uppercase text-cyan border border-cyan/30 px-3 py-1.5 md:py-2 self-start md:self-auto whitespace-nowrap">
-                {filteredOrders.length} {activeTab} found
+                {activeTab === 'products' ? `${filteredProducts.length} products found` : `${filteredOrders.length} ${activeTab.replace('_', ' ')} found`}
               </div>
             </div>
           </div>
 
           {activeTab === 'products' ? (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div />
-                <div className="text-xs font-mono text-cyan bg-cyan/5 border border-cyan/20 px-3 py-1 rounded-full">
-                  {filteredProducts.length} Products found
-                </div>
-              </div>
-
               <div className="bg-bg-card border border-border rounded-none overflow-hidden shadow-xl shadow-black/20">
                 {/* Desktop / tablet table */}
                 <div className="hidden lg:block overflow-x-auto">
