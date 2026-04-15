@@ -74,7 +74,7 @@ export default function ProductDetail() {
 
           {/* Info */}
           <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            <div className="xp-badge mb-4">Research Peptide</div>
+            <div className="xp-badge mb-4">Research Grade</div>
             <h1 className="!text-3xl sm:!text-4xl mb-1">{product.name}</h1>
             <span className="font-heading text-base" style={{ color: "var(--xp-grey-text)" }}>{product.size}</span>
             <p className="font-mono text-xs mt-1" style={{ color: "var(--xp-grey-text)" }}>{product.catalog}</p>

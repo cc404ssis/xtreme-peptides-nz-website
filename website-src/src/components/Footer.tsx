@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { useSiteConfig } from "@/lib/useSiteConfig";
 
 export default function Footer() {
+  const { brandName, tagline, footerDesc, copyright } = useSiteConfig();
   return (
     <footer className="relative" style={{ background: "var(--xp-black)", borderTop: "1px solid var(--xp-red)", zIndex: 3 }}>
       {/* Corner brackets */}
@@ -17,16 +19,16 @@ export default function Footer() {
               <div className="w-[2px] h-7" style={{ background: "var(--xp-red)" }} />
               <div>
                 <span className="font-display text-xl tracking-[0.22em] text-[var(--xp-white)] leading-none block">
-                  Xtreme Peptides
+                  {brandName}
                 </span>
                 <span className="font-mono text-[10px] tracking-[0.55em] uppercase block" style={{ color: "rgba(204,0,0,0.7)" }}>
-                  New Zealand
+                  {tagline}
                 </span>
               </div>
               <div className="w-[2px] h-7" style={{ background: "var(--xp-red)" }} />
             </Link>
             <p className="font-body text-base" style={{ color: "var(--xp-grey-text)" }}>
-              Premium research peptides and laboratory compounds. Verified purity, NZ-based supply, transparent testing documentation.
+              {footerDesc}
             </p>
           </div>
 
@@ -70,7 +72,7 @@ export default function Footer() {
             <Link to="/terms" className="transition-colors hover:!text-[var(--xp-red)]">Terms & Conditions</Link>
           </div>
           <p className="font-mono text-xs tracking-[0.15em] uppercase text-center mt-4" style={{ color: "rgba(255,255,255,0.12)" }}>
-            © {new Date().getFullYear()} Xtreme Peptides NZ. All rights reserved.
+            © {new Date().getFullYear()} {copyright}. All rights reserved.
           </p>
         </div>
       </div>

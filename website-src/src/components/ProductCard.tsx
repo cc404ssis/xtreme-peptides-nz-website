@@ -39,7 +39,7 @@ export default function ProductCard({ product }: Props) {
         <div className="p-3 sm:p-4">
           {/* Category badge */}
           <div className="font-mono text-[9px] sm:text-[10px] tracking-[0.3em] uppercase mb-2" style={{ color: "var(--xp-red)" }}>
-            Research Peptide
+            Research Grade
           </div>
           {/* Product name */}
           <h3 className="font-display text-base sm:text-lg tracking-[0.04em] leading-tight mb-1" style={{ color: "var(--xp-white)" }}>

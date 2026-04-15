@@ -346,6 +346,94 @@ async function startServer() {
     }
   });
 
+  // Site config — brand name and UI copy served server-side
+  app.get("/api/site-config", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    return res.json({
+      brandName: "Xtreme Peptides",
+      tagline: "New Zealand",
+      siteTitle: "XTREME PEPTIDES NZ",
+      footerDesc: "Premium research compounds. Verified purity, NZ-based supply, transparent testing documentation.",
+      copyright: "Xtreme Peptides NZ",
+      productBadge: "Research Grade",
+      shopSubheading: "Browse our complete catalog of laboratory-grade research compounds.",
+    });
+  });
+
+  // Terms page content
+  app.get("/api/terms-content", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    return res.json([
+      { title: "1. Acceptance of Terms", content: "By accessing and using the XTREME PEPTIDES NZ website, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use this website or purchase any products." },
+      { title: "2. Age Restriction", content: "You must be 18 years of age or older to use this website and purchase products. By using our website, you confirm that you meet this age requirement." },
+      { title: "3. Research Use Only — CRITICAL", content: "ALL PRODUCTS ARE FOR RESEARCH PURPOSES ONLY. By purchasing from XTREME PEPTIDES NZ, you acknowledge and agree that:", list: ["Products are intended exclusively for legitimate laboratory research", "Products are not for human consumption, veterinary use, or therapeutic application", "You are a qualified researcher or represent a research institution", "You will comply with all applicable laws and regulations"] },
+      { title: "4. Product Information & Accuracy", content: "We make every effort to display accurate product information. However, we do not warrant that product descriptions, pricing, or other content is complete, reliable, or error-free." },
+      { title: "5. Ordering & Payment", content: "All orders are subject to product availability and acceptance. We reserve the right to refuse any order for any reason, including but not limited to suspected misuse, violation of these terms, or shipping restrictions to your location.\n\nWe accept bank transfers only. Payment details are provided upon order confirmation." },
+      { title: "6. Shipping & Delivery", content: "All orders are shipped in discrete packaging without external markings indicating contents. Temperature-sensitive products are shipped with appropriate cold-chain packaging." },
+      { title: "7. Returns & Refunds", content: "IMPORTANT: Due to the nature of research chemicals, we have specific return policies.\n\nFor damaged or incorrect orders, claims must be raised within 48 hours of delivery via your order record. We will replace damaged products or issue a refund at our discretion." },
+      { title: "8. Limitation of Liability", content: "All products are sold for research purposes only. Purchaser assumes full responsibility for compliance with all applicable laws and regulations. XTREME PEPTIDES NZ is not responsible for misuse of products." },
+      { title: "9. Indemnification", content: "You agree to indemnify and hold XTREME PEPTIDES NZ harmless from any claims, damages, or expenses arising from your use of our products or violation of these terms." },
+      { title: "10. Intellectual Property", content: "All content on this website, including but not limited to text, graphics, logos, images, and software, is the property of XTREME PEPTIDES NZ and is protected by copyright, trademark, and other intellectual property laws." },
+      { title: "11. Governing Law", content: "These Terms & Conditions are governed by the laws of New Zealand." },
+    ]);
+  });
+
+  // About page content
+  app.get("/api/about-content", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    return res.json({
+      headingPre: "About",
+      headingAccent: "Xtreme Peptides",
+      subheading: "We supply high-purity research compounds with transparent testing, fast NZ shipping, and discrete packaging.",
+      mission: "XTREME PEPTIDES NZ sells laboratory research chemicals intended exclusively for research purposes. All products sold by Xtreme Peptides NZ are strictly for laboratory research purposes. We do not condone or support any use of these compounds outside of controlled research settings.",
+      features: [
+        { title: "Verified Purity", desc: "All compounds meet or exceed 99.8% purity with independent HPLC testing and batch COAs." },
+        { title: "Quality Assurance", desc: "Every batch is tracked, stored cold, and shipped with full documentation." },
+        { title: "Fast NZ Shipping", desc: "Express overnight delivery across New Zealand. All orders tracked with discrete packaging." },
+        { title: "Research Support", desc: "Dedicated support team ready to help with product questions and documentation requests." },
+      ],
+      qualityPara1: "Whether you're running cell assays or endocrine studies, consistency matters. Every batch is tracked, stored cold, and shipped with documentation.",
+      qualityPara2: "We verify identity and purity by HPLC and provide batch COAs. Products are stored cold and shipped with tracking and documentation.",
+    });
+  });
+
+  // Quality page content
+  app.get("/api/quality-content", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    return res.json({
+      features: [
+        { title: "HPLC Purity Testing", description: "All compounds meet or exceed 99.897% purity as verified by independent HPLC testing." },
+        { title: "Batch Documentation", description: "Every batch we supply comes with a comprehensive Certificate of Analysis. This document provides detailed information about the product's identity, purity, and testing methodology." },
+        { title: "Cold-Chain Storage", description: "Products are stored in temperature-controlled environments. Cold-chain integrity is maintained from storage through shipping." },
+      ],
+      sections: [
+        {
+          title: "Testing Standards",
+          body: "All compounds meet or exceed 99.897% purity as verified by independent HPLC testing.",
+          body2: "Each product undergoes rigorous quality control including:",
+          list: [
+            "High-Performance Liquid Chromatography (HPLC) for purity verification",
+            "Mass Spectrometry for identity confirmation",
+            "Sterility testing for injectable-grade products",
+            "Endotoxin testing where applicable",
+          ],
+        },
+        {
+          title: "Certificates of Analysis",
+          body: "Every batch we supply comes with a comprehensive Certificate of Analysis. This document provides detailed information about the product's identity, purity, and testing methodology.",
+          body2: "COAs include batch numbers, testing dates, analytical methods used, and the results of each test. This documentation is essential for research record-keeping and regulatory compliance.",
+          body3: "Batch-specific COAs are included with every shipment.",
+        },
+        {
+          title: "Storage & Shipping",
+          body: "Products require refrigeration. Storage guidance is printed on each label.",
+          body2: "All orders are shipped in discrete packaging without external markings indicating contents. Temperature-sensitive products are shipped with appropriate cold-chain packaging.",
+          body3: "Insulated packaging for compound stability during transit.",
+        },
+      ],
+    });
+  });
+
   // Serve the React admin app
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

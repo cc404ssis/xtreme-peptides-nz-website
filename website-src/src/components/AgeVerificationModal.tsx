@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSiteConfig } from "@/lib/useSiteConfig";
 
 /* ═══════════════════════════════════════════════
    3-Layer Entry Gate — Xtreme Peptides NZ
@@ -35,6 +36,7 @@ function setHeadLink(rel: string, href: string) {
 }
 
 export default function AgeVerificationModal() {
+  const { brandName, tagline, siteTitle } = useSiteConfig();
   const [phase, setPhase] = useState<GatePhase>(() => {
     try {
       return localStorage.getItem("xp_age_verified") === "true"
@@ -52,12 +54,12 @@ export default function AgeVerificationModal() {
   // ── Dynamic browser branding (title, favicon, theme-color) ──
   useEffect(() => {
     const branded = phase !== "fake404" && phase !== "search";
-    document.title = branded ? "XTREME PEPTIDES NZ" : "404 \u2014 Page Not Found";
+    document.title = branded ? (siteTitle || document.title) : "404 \u2014 Page Not Found";
     setHeadLink("icon", branded ? "/favicon.svg" : "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
     setHeadLink("apple-touch-icon", branded ? "/apple-touch-icon.png" : "");
     const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (meta) meta.content = branded ? "#000000" : "#f5f5f5";
-  }, [phase]);
+  }, [phase, siteTitle]);
 
   // ── Idle reset: 5 minutes of no activity returns to fake 404 ──
   // Only active when user is past the gate (phase === 'done').
@@ -408,8 +410,8 @@ export default function AgeVerificationModal() {
                 <div className="agv-logo-wrap">
                   <div className="agv-logo-pip" />
                   <div>
-                    <div className="agv-logo-text">Xtreme Peptides</div>
-                    <div className="agv-logo-sub">New Zealand</div>
+                    <div className="agv-logo-text">{brandName}</div>
+                    <div className="agv-logo-sub">{tagline}</div>
                   </div>
                   <div className="agv-logo-pip" />
                 </div>

@@ -1,6 +1,37 @@
+import { useState, useEffect } from "react";
 import { FlaskConical, FileText, Thermometer, Shield, CheckCircle } from "lucide-react";
 
+interface QualityFeature {
+  title: string;
+  description: string;
+}
+
+interface QualitySection {
+  title: string;
+  body: string;
+  body2?: string;
+  body3?: string;
+  list?: string[];
+}
+
+interface QualityContent {
+  features: QualityFeature[];
+  sections: QualitySection[];
+}
+
+const featureIcons = [FlaskConical, FileText, Thermometer];
+const sectionIcons = [Shield, FileText, Thermometer];
+
 export default function Quality() {
+  const [content, setContent] = useState<QualityContent | null>(null);
+
+  useEffect(() => {
+    fetch("/api/quality-content")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: QualityContent | null) => { if (data) setContent(data); })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen pt-24 sm:pt-28 md:pt-36 pb-12 sm:pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,82 +48,52 @@ export default function Quality() {
 
         {/* Feature cards */}
         <div className="grid md:grid-cols-3 gap-4 sm:gap-6 mb-16 stagger-children">
-          {[
-            { icon: FlaskConical, title: "HPLC Purity Testing", description: "All peptides meet or exceed 99.897% purity as verified by independent HPLC testing." },
-            { icon: FileText, title: "Batch Documentation", description: "Every batch we supply comes with a comprehensive Certificate of Analysis. This document provides detailed information about the product's identity, purity, and testing methodology." },
-            { icon: Thermometer, title: "Storage Monitoring", description: "Products are stored in temperature-controlled environments. Cold-chain integrity is maintained from storage through shipping." },
-          ].map((feature) => (
-            <div key={feature.title} className="card-dark card-glow card-red-top p-6 sm:p-8 text-center">
-              <div className="w-12 h-12 flex items-center justify-center mx-auto mb-4" style={{ border: "1px solid var(--xp-border-red)" }}>
-                <feature.icon size={24} style={{ color: "var(--xp-red)" }} />
+          {content?.features.map((feature, i) => {
+            const Icon = featureIcons[i];
+            return (
+              <div key={feature.title} className="card-dark card-glow card-red-top p-6 sm:p-8 text-center">
+                <div className="w-12 h-12 flex items-center justify-center mx-auto mb-4" style={{ border: "1px solid var(--xp-border-red)" }}>
+                  <Icon size={24} style={{ color: "var(--xp-red)" }} />
+                </div>
+                <h3 className="!text-base sm:!text-lg mb-2">{feature.title}</h3>
+                <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{feature.description}</p>
               </div>
-              <h3 className="!text-base sm:!text-lg mb-2">{feature.title}</h3>
-              <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{feature.description}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Detailed Sections */}
         <div className="space-y-6">
-          <div className="card-dark p-6 sm:p-8">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-2 shrink-0" style={{ border: "1px solid var(--xp-border-red)" }}>
-                <Shield size={24} style={{ color: "var(--xp-red)" }} />
-              </div>
-              <div>
-                <h3 className="!text-lg mb-3">Testing Standards</h3>
-                <div className="space-y-3">
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>All peptides meet or exceed 99.897% purity as verified by independent HPLC testing.</p>
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Each product undergoes rigorous quality control including:</p>
-                  <ul className="space-y-2 ml-4">
-                    {[
-                      "High-Performance Liquid Chromatography (HPLC) for purity verification",
-                      "Mass Spectrometry for identity confirmation",
-                      "Sterility testing for injectable-grade products",
-                      "Endotoxin testing where applicable",
-                    ].map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <CheckCircle size={14} className="mt-0.5 shrink-0" style={{ color: "var(--xp-red)" }} />
-                        <span className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+          {content?.sections.map((section, i) => {
+            const Icon = sectionIcons[i];
+            return (
+              <div key={section.title} className="card-dark p-6 sm:p-8">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-2 shrink-0" style={{ border: "1px solid var(--xp-border-red)" }}>
+                    <Icon size={24} style={{ color: "var(--xp-red)" }} />
+                  </div>
+                  <div>
+                    <h3 className="!text-lg mb-3">{section.title}</h3>
+                    <div className="space-y-3">
+                      <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{section.body}</p>
+                      {section.body2 && <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{section.body2}</p>}
+                      {section.list && (
+                        <ul className="space-y-2 ml-4">
+                          {section.list.map((item) => (
+                            <li key={item} className="flex items-start gap-2">
+                              <CheckCircle size={14} className="mt-0.5 shrink-0" style={{ color: "var(--xp-red)" }} />
+                              <span className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {section.body3 && <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>{section.body3}</p>}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="card-dark p-6 sm:p-8">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-2 shrink-0" style={{ border: "1px solid var(--xp-border-red)" }}>
-                <FileText size={24} style={{ color: "var(--xp-red)" }} />
-              </div>
-              <div>
-                <h3 className="!text-lg mb-3">Certificates of Analysis</h3>
-                <div className="space-y-3">
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Every batch we supply comes with a comprehensive Certificate of Analysis. This document provides detailed information about the product's identity, purity, and testing methodology.</p>
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>COAs include batch numbers, testing dates, analytical methods used, and the results of each test. This documentation is essential for research record-keeping and regulatory compliance.</p>
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Batch-specific COAs are included with every shipment.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="card-dark p-6 sm:p-8">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-2 shrink-0" style={{ border: "1px solid var(--xp-border-red)" }}>
-                <Thermometer size={24} style={{ color: "var(--xp-red)" }} />
-              </div>
-              <div>
-                <h3 className="!text-lg mb-3">Storage & Shipping</h3>
-                <div className="space-y-3">
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Most peptides require refrigeration. Storage guidance is printed on each label.</p>
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>All orders are shipped in discrete packaging without external markings indicating contents. Temperature-sensitive products are shipped with appropriate cold-chain packaging.</p>
-                  <p className="font-body text-sm" style={{ color: "var(--xp-grey-text)" }}>Insulated packaging for peptide stability during transit.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </div>

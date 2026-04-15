@@ -30,7 +30,7 @@ export default function Shop() {
           </h2>
           <div className="section-rule" />
           <p className="font-heading font-300 text-sm sm:text-base max-w-xl mx-auto mt-3" style={{ color: "var(--xp-grey-text)" }}>
-            Browse our complete catalog of laboratory-grade research peptides and compounds.
+            Browse our complete catalog of laboratory-grade research compounds.
           </p>
         </div>
 

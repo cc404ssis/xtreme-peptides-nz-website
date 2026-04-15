@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCart, Search, Menu, X } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import { useSiteConfig } from "@/lib/useSiteConfig";
 
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
@@ -12,6 +13,7 @@ export default function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const { count } = useCart();
+  const { brandName, tagline } = useSiteConfig();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -69,10 +71,10 @@ export default function Navigation() {
                 <div className="w-[2px] h-7" style={{ background: "var(--xp-red)" }} />
                 <div>
                   <span className="font-display text-xl tracking-[0.22em] text-[var(--xp-white)] leading-none block">
-                    Xtreme Peptides
+                    {brandName}
                   </span>
                   <span className="font-mono text-[10px] tracking-[0.55em] uppercase block" style={{ color: "rgba(204,0,0,0.7)" }}>
-                    New Zealand
+                    {tagline}
                   </span>
                 </div>
                 <div className="w-[2px] h-7" style={{ background: "var(--xp-red)" }} />
