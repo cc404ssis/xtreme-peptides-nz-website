@@ -280,10 +280,9 @@ async function startServer() {
   // Serve static files from the /website directory
   const websitePath = path.join(process.cwd(), 'website');
   app.use(express.static(websitePath));
-  app.use(express.static(process.cwd()));
 
   app.get('*', (req, res) => {
-    res.sendFile(path.join(websitePath, 'index.html'));
+    res.status(404).sendFile(path.join(websitePath, 'index.html'));
   });
 
   app.listen(PORT, "0.0.0.0", () => {
