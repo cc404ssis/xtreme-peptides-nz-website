@@ -281,8 +281,19 @@ async function startServer() {
   const websitePath = path.join(process.cwd(), 'website');
   app.use(express.static(websitePath));
 
+  // Known SPA routes — serve the React app
+  const spaRoutes = [
+    /^\/$/, /^\/shop(\/.*)?$/, /^\/product\//, /^\/cart$/,
+    /^\/checkout$/, /^\/about$/, /^\/quality$/, /^\/faq$/,
+    /^\/privacy$/, /^\/terms$/,
+  ];
+
   app.get('*', (req, res) => {
-    res.status(404).sendFile(path.join(websitePath, 'index.html'));
+    const isSpa = spaRoutes.some((r) => r.test(req.path));
+    if (isSpa) {
+      return res.sendFile(path.join(websitePath, 'index.html'));
+    }
+    res.status(404).sendFile(path.join(websitePath, '404.html'));
   });
 
   app.listen(PORT, "0.0.0.0", () => {
