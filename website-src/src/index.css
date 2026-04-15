@@ -14,7 +14,7 @@
   --xp-red-dim:     rgba(204,0,0,0.15);
   --xp-white:       #ffffff;
   --xp-grey:        rgba(255,255,255,0.08);
-  --xp-grey-text:   rgba(255,255,255,0.38);
+  --xp-grey-text:   rgba(255,255,255,0.65);
   --xp-border:      rgba(255,255,255,0.07);
   --xp-border-red:  rgba(204,0,0,0.3);
 }
@@ -32,7 +32,7 @@
   --color-xp-red: #cc0000;
   --color-xp-red-bright: #ff1a1a;
   --color-xp-white: #ffffff;
-  --color-xp-grey-text: rgba(255,255,255,0.38);
+  --color-xp-grey-text: rgba(255,255,255,0.65);
 }
 
 /* ── Base ── */
