@@ -5,6 +5,8 @@ import { Resend } from "resend";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { products as productCatalog } from "./website-src/src/data/products";
+import { faqSections } from "./website-src/src/data/faq";
+import { buyerNames, nzLocations } from "./website-src/src/data/social-proof";
 
 dotenv.config();
 
@@ -276,6 +278,51 @@ async function startServer() {
       .slice(0, 4);
 
     return res.json({ ...product, related });
+  });
+
+  // FAQ content
+  app.get("/api/faq", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    return res.json(faqSections);
+  });
+
+  // Social proof data for live sales feed
+  app.get("/api/social-proof", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
+    const productNames = productCatalog.map((p) => `${p.name} ${p.size}`);
+    return res.json({ buyerNames, nzLocations, productNames });
+  });
+
+  // Shipping methods
+  app.get("/api/shipping-methods", (_req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+    return res.json([
+      { value: "express", label: "Express Shipping", desc: "Business day overnight", price: 16 },
+      { value: "rural",   label: "Rural Delivery",   desc: "1-2 business days",     price: 22 },
+    ]);
+  });
+
+  // Payment details — bank account info served server-side only
+  app.get("/api/payment-details", (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.json({
+      accountName:   process.env.BANK_ACCOUNT_NAME   || "Xtreme Peptides NZ",
+      accountNumber: process.env.BANK_ACCOUNT_NUMBER || "02-0144-0217479-002",
+    });
+  });
+
+  // Featured products — spotlight selection served server-side
+  app.get("/api/featured-products", async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    const featuredIds = [
+      "bpc-157-10mg", "retatrutide-10mg", "ghk-cu-50mg",
+      "dsip-15mg", "mots-c-40mg", "ss-31-10mg",
+    ];
+    const hiddenSet = await getHiddenSet();
+    const featured = featuredIds
+      .map((id) => productCatalog.find((p) => p.id === id))
+      .filter((p) => p && !hiddenSet.has(`${p.name} ${p.size}`.toLowerCase()));
+    return res.json(featured);
   });
 
   // Hidden products (used by storefront to filter inactive products)

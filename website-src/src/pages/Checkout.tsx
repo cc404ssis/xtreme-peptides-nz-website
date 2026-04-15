@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle, Truck } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { supabase } from "@/lib/supabase";
 
-type ShippingMethod = "express" | "rural";
+interface ShippingOption {
+  value: string;
+  label: string;
+  desc: string;
+  price: number;
+}
+
+interface PaymentDetails {
+  accountName: string;
+  accountNumber: string;
+}
 
 export default function Checkout() {
   const { items, total, clearCart } = useCart();
@@ -12,18 +22,26 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderRef, setOrderRef] = useState("");
-  const [shipping, setShipping] = useState<ShippingMethod>("express");
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedShipping, setSelectedShipping] = useState<string>("");
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
 
-  const shippingCost = shipping === "express" ? 16 : 22;
+  useEffect(() => {
+    fetch("/api/shipping-methods")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: ShippingOption[]) => {
+        setShippingOptions(data);
+        if (data.length > 0) setSelectedShipping(data[0].value);
+      })
+      .catch(() => {});
+  }, []);
+
+  const activeOption = shippingOptions.find((o) => o.value === selectedShipping);
+  const shippingCost = activeOption?.price ?? 0;
   const grandTotal = total + shippingCost;
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    address: "",
-    city: "",
-    postcode: "",
-    notes: "",
+    name: "", email: "", address: "", city: "", postcode: "", notes: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -32,7 +50,7 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || !activeOption) return;
     setLoading(true);
 
     try {
@@ -42,7 +60,7 @@ export default function Checkout() {
         customer_name: form.name,
         customer_email: form.email,
         shipping_address: `${form.address}, ${form.city} ${form.postcode}`,
-        shipping_method: shipping === "express" ? "Express Shipping" : "Rural Delivery",
+        shipping_method: activeOption.label,
         shipping_cost: shippingCost,
         items: items.map((i) => ({ id: i.id, name: i.name, size: i.size, qty: i.quantity, price: i.price })),
         subtotal: total,
@@ -54,6 +72,11 @@ export default function Checkout() {
       if (error) throw error;
 
       setOrderRef(ref);
+
+      // Fetch payment details now — only after a real order is placed
+      const pd = await fetch("/api/payment-details").then((r) => r.ok ? r.json() : null).catch(() => null);
+      setPaymentDetails(pd);
+
       setSuccess(true);
       clearCart();
 
@@ -69,7 +92,7 @@ export default function Checkout() {
             subtotal: total,
             shippingCost,
             total: grandTotal,
-            shippingMethod: shipping === "express" ? "Express Shipping" : "Rural Delivery",
+            shippingMethod: activeOption.label,
           }),
         });
       } catch {}
@@ -94,8 +117,14 @@ export default function Checkout() {
         <div className="card-dark card-red-top max-w-md mx-auto p-6 text-left">
           <h3 className="!text-base mb-3">Payment Details — Bank Transfer</h3>
           <div className="space-y-2 font-body text-sm">
-            <p style={{ color: "var(--xp-grey-text)" }}>Account Name: <span style={{ color: "var(--xp-white)" }}>Xtreme Peptides NZ</span></p>
-            <p style={{ color: "var(--xp-grey-text)" }}>Account Number: <span className="font-mono" style={{ color: "var(--xp-white)" }}>02-0144-0217479-002</span></p>
+            {paymentDetails ? (
+              <>
+                <p style={{ color: "var(--xp-grey-text)" }}>Account Name: <span style={{ color: "var(--xp-white)" }}>{paymentDetails.accountName}</span></p>
+                <p style={{ color: "var(--xp-grey-text)" }}>Account Number: <span className="font-mono" style={{ color: "var(--xp-white)" }}>{paymentDetails.accountNumber}</span></p>
+              </>
+            ) : (
+              <p style={{ color: "var(--xp-grey-text)" }}>Payment details will be sent to your email shortly.</p>
+            )}
             <p style={{ color: "var(--xp-grey-text)" }}>Reference: <span className="font-mono" style={{ color: "var(--xp-red)" }}>{orderRef}</span></p>
             <p style={{ color: "var(--xp-grey-text)" }}>Amount: <span className="font-display" style={{ color: "var(--xp-white)" }}>${grandTotal.toFixed(2)} NZD</span></p>
           </div>
@@ -130,7 +159,6 @@ export default function Checkout() {
         </div>
 
         <form onSubmit={handleSubmit} className="grid md:grid-cols-3 gap-8">
-          {/* Form Fields */}
           <div className="md:col-span-2 space-y-4">
             <div className="card-dark p-6 space-y-4">
               <h3 className="!text-base mb-2">Contact Information</h3>
@@ -147,38 +175,37 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="card-dark p-6 space-y-4">
-              <h3 className="!text-base mb-2">Shipping Method</h3>
-              {[
-                { value: "express" as const, label: "Express Shipping", desc: "Business day overnight", price: 16 },
-                { value: "rural" as const, label: "Rural Delivery", desc: "1-2 business days", price: 22 },
-              ].map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex items-center justify-between p-4 cursor-pointer transition-colors"
-                  style={{
-                    border: shipping === opt.value ? "1px solid var(--xp-red)" : "1px solid var(--xp-border)",
-                    background: shipping === opt.value ? "var(--xp-red-dim)" : "transparent",
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      value={opt.value}
-                      checked={shipping === opt.value}
-                      onChange={() => setShipping(opt.value)}
-                      className="accent-[var(--xp-red)]"
-                    />
-                    <div>
-                      <p className="font-heading text-sm" style={{ color: "var(--xp-white)" }}>{opt.label}</p>
-                      <p className="font-mono text-xs" style={{ color: "var(--xp-grey-text)" }}>{opt.desc}</p>
+            {shippingOptions.length > 0 && (
+              <div className="card-dark p-6 space-y-4">
+                <h3 className="!text-base mb-2">Shipping Method</h3>
+                {shippingOptions.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex items-center justify-between p-4 cursor-pointer transition-colors"
+                    style={{
+                      border: selectedShipping === opt.value ? "1px solid var(--xp-red)" : "1px solid var(--xp-border)",
+                      background: selectedShipping === opt.value ? "var(--xp-red-dim)" : "transparent",
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="shipping"
+                        value={opt.value}
+                        checked={selectedShipping === opt.value}
+                        onChange={() => setSelectedShipping(opt.value)}
+                        className="accent-[var(--xp-red)]"
+                      />
+                      <div>
+                        <p className="font-heading text-sm" style={{ color: "var(--xp-white)" }}>{opt.label}</p>
+                        <p className="font-mono text-xs" style={{ color: "var(--xp-grey-text)" }}>{opt.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                  <span className="font-display" style={{ color: "var(--xp-white)" }}>${opt.price.toFixed(2)}</span>
-                </label>
-              ))}
-            </div>
+                    <span className="font-display" style={{ color: "var(--xp-white)" }}>${opt.price.toFixed(2)}</span>
+                  </label>
+                ))}
+              </div>
+            )}
 
             <div className="card-dark p-6">
               <h3 className="!text-base mb-2">Order Notes</h3>
@@ -218,14 +245,10 @@ export default function Checkout() {
               </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || shippingOptions.length === 0}
                 className="btn-primary w-full !py-3 mt-6 disabled:opacity-50"
               >
-                {loading ? (
-                  <><Loader2 size={18} className="animate-spin" /> Processing...</>
-                ) : (
-                  <><Truck size={18} /> Place Order</>
-                )}
+                {loading ? <><Loader2 size={18} className="animate-spin" /> Processing...</> : <><Truck size={18} /> Place Order</>}
               </button>
               <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-center mt-3 leading-relaxed" style={{ color: "var(--xp-grey-text)" }}>
                 Bank Transfer Payment & Shipping<br />— Details Provided After Order —

@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, Search } from "lucide-react";
-import { faqSections } from "@/data/faq";
+import type { FaqSection } from "@/data/faq";
 
 export default function FAQ() {
+  const [sections, setSections] = useState<FaqSection[]>([]);
   const [activeSection, setActiveSection] = useState("general");
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const currentSection = faqSections.find((s) => s.id === activeSection);
+  useEffect(() => {
+    fetch("/api/faq")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: FaqSection[]) => setSections(data))
+      .catch(() => {});
+  }, []);
+
+  const currentSection = sections.find((s) => s.id === activeSection);
 
   const filteredItems = search
-    ? faqSections.flatMap((s) =>
+    ? sections.flatMap((s) =>
         s.items.filter(
           (item) =>
             item.question.toLowerCase().includes(search.toLowerCase()) ||
@@ -38,68 +46,67 @@ export default function FAQ() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--xp-grey-text)" }} />
           <input
             type="text"
+            placeholder="Search questions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="SEARCH FAQ..."
-            className="xp-input !pl-10"
+            className="xp-input pl-9 w-full"
           />
         </div>
 
-        {/* Category Tabs */}
-        {!search && (
-          <div className="flex gap-2 mb-8 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-            {faqSections.map((section) => (
+        {!search && sections.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8">
+            {sections.map((s) => (
               <button
-                key={section.id}
-                onClick={() => { setActiveSection(section.id); setOpenQuestion(null); }}
-                className="px-4 py-2 font-mono text-xs tracking-[0.15em] uppercase whitespace-nowrap transition-colors cursor-pointer"
+                key={s.id}
+                onClick={() => { setActiveSection(s.id); setOpenQuestion(null); }}
+                className="font-heading text-xs tracking-[0.1em] uppercase px-4 py-2 transition-colors"
                 style={{
-                  background: activeSection === section.id ? "var(--xp-red-dim)" : "transparent",
-                  color: activeSection === section.id ? "var(--xp-red)" : "var(--xp-grey-text)",
-                  border: activeSection === section.id ? "1px solid var(--xp-border-red)" : "1px solid var(--xp-border)",
+                  border: activeSection === s.id ? "1px solid var(--xp-red)" : "1px solid var(--xp-border)",
+                  color: activeSection === s.id ? "var(--xp-white)" : "var(--xp-grey-text)",
+                  background: activeSection === s.id ? "var(--xp-red-dim)" : "transparent",
                 }}
               >
-                {section.name}
+                {s.name}
               </button>
             ))}
           </div>
         )}
 
-        {/* Questions */}
-        <div className="space-y-3 stagger-children">
+        <div className="space-y-2">
           {filteredItems.map((item, i) => {
-            const key = `${item.question}-${i}`;
+            const key = `${activeSection}-${i}`;
             const isOpen = openQuestion === key;
             return (
-              <div key={key} className="card-dark overflow-hidden">
+              <div key={key} className="card-dark overflow-hidden" style={{ border: "1px solid var(--xp-border)" }}>
                 <button
                   onClick={() => setOpenQuestion(isOpen ? null : key)}
-                  className="w-full flex items-center justify-between p-5 text-left cursor-pointer"
-                  style={{ background: "transparent", border: "none" }}
+                  className="w-full flex items-center justify-between p-4 sm:p-5 text-left gap-4"
                 >
-                  <span className="font-heading text-sm tracking-[0.04em] pr-4" style={{ color: "var(--xp-white)" }}>{item.question}</span>
+                  <span className="font-heading text-sm sm:text-base tracking-[0.03em]" style={{ color: "var(--xp-white)" }}>
+                    {item.question}
+                  </span>
                   <ChevronDown
                     size={18}
-                    className={`shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                    style={{ color: "var(--xp-grey-text)" }}
+                    className="shrink-0 transition-transform"
+                    style={{ color: "var(--xp-red)", transform: isOpen ? "rotate(180deg)" : "none" }}
                   />
                 </button>
-                <div
-                  className="overflow-hidden transition-all duration-200 ease-in-out"
-                  style={{ maxHeight: isOpen ? "500px" : "0px", opacity: isOpen ? 1 : 0 }}
-                >
-                  <div className="px-5 pb-5 font-body text-sm whitespace-pre-line" style={{ color: "var(--xp-grey-text)" }}>
-                    {item.answer}
+                {isOpen && (
+                  <div className="px-4 sm:px-5 pb-4 sm:pb-5">
+                    <p className="font-body text-sm whitespace-pre-line" style={{ color: "var(--xp-grey-text)" }}>
+                      {item.answer}
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
+          {filteredItems.length === 0 && sections.length > 0 && (
+            <p className="font-heading text-sm text-center py-8" style={{ color: "var(--xp-grey-text)" }}>
+              No results found.
+            </p>
+          )}
         </div>
-
-        {filteredItems.length === 0 && (
-          <p className="text-center py-8 font-heading text-sm" style={{ color: "var(--xp-grey-text)" }}>No results found.</p>
-        )}
       </div>
     </div>
   );
