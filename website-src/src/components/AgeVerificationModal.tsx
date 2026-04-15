@@ -211,6 +211,7 @@ export default function AgeVerificationModal() {
   const handleEnter = () => {
     try {
       localStorage.setItem("xp_age_verified", "true");
+      sessionStorage.setItem("xp_last_activity", String(Date.now()));
     } catch {
       /* private browsing */
     }
