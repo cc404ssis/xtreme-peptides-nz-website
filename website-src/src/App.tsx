@@ -6,7 +6,6 @@ import Footer from "@/components/Footer";
 import AgeVerificationModal from "@/components/AgeVerificationModal";
 import LiveSalesFeed from "@/components/LiveSalesFeed";
 import ScrollToTop from "@/components/ScrollToTop";
-import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Quality from "@/pages/Quality";
 import FAQ from "@/pages/FAQ";
@@ -14,6 +13,7 @@ import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import NotFound from "@/pages/NotFound";
 
+const Home = lazy(() => import("@/pages/Home"));
 const Shop = lazy(() => import("@/pages/Shop"));
 const ProductDetail = lazy(() => import("@/pages/ProductDetail"));
 const Cart = lazy(() => import("@/pages/Cart"));

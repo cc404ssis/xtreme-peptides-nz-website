@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { ShoppingBag } from "lucide-react";
-import { products } from "@/data/products";
 import { buyerNames, nzLocations } from "@/data/social-proof";
+
+const productNames = [
+  "BPC-157 10mg", "TB-500 10mg", "GHK-Cu 50mg", "GHK-Cu 100mg",
+  "BPC-157 5mg", "BAC Water 10ml", "BAC Water 3ml", "DSIP 15mg",
+  "Retatrutide 10mg", "MOTSC 40mg", "SS-31 10mg", "Epitalon 50mg",
+  "Sermorelin 10mg", "CJC-1295 5mg", "Ipamorelin 5mg", "GHRP-6 5mg",
+  "NAD+ 100mg", "NAD+ 500mg", "PT-141 10mg", "Melanotan II 10mg",
+  "Tesamorelin 10mg", "Kisspeptin 10mg", "SNAP-8 10mg", "Thymosin α1 10mg",
+];
 
 interface Notification {
   id: number;
@@ -18,13 +26,13 @@ export default function LiveSalesFeed() {
   const generateNotification = useCallback((): Notification => {
     const name = buyerNames[Math.floor(Math.random() * buyerNames.length)];
     const location = nzLocations[Math.floor(Math.random() * nzLocations.length)];
-    const product = products[Math.floor(Math.random() * products.length)];
+    const product = productNames[Math.floor(Math.random() * productNames.length)];
     const minutes = Math.floor(Math.random() * 30) + 1;
     return {
       id: Date.now(),
       name,
       location,
-      product: `${product.name} ${product.size}`,
+      product,
       time: `${minutes}m ago`,
     };
   }, []);
