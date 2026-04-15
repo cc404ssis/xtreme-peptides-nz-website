@@ -159,7 +159,10 @@ export default function AgeVerificationModal() {
       return () => clearTimeout(t);
     }
     if (phase === "ageExiting") {
-      const t = setTimeout(() => setPhase("done"), 550);
+      const t = setTimeout(() => {
+        setPhase("done");
+        window.dispatchEvent(new Event("xp:gate_cleared"));
+      }, 550);
       return () => clearTimeout(t);
     }
   }, [phase]);

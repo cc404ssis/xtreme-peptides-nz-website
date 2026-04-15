@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import GlobalBackground from "@/components/GlobalBackground";
 import Navigation from "@/components/Navigation";
@@ -20,6 +20,17 @@ const Cart = lazy(() => import("@/pages/Cart"));
 const Checkout = lazy(() => import("@/pages/Checkout"));
 
 export default function App() {
+  const [gateCleared, setGateCleared] = useState(() => {
+    try { return localStorage.getItem("xp_age_verified") === "true"; }
+    catch { return false; }
+  });
+
+  useEffect(() => {
+    const handler = () => setGateCleared(true);
+    window.addEventListener("xp:gate_cleared", handler);
+    return () => window.removeEventListener("xp:gate_cleared", handler);
+  }, []);
+
   return (
     <>
       <ScrollToTop />
@@ -27,24 +38,28 @@ export default function App() {
       <GlobalBackground />
       <div style={{ position: "relative", zIndex: 1 }}>
         <Navigation />
-        <main>
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/quality" element={<Quality />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </main>
-        <Footer />
+        {gateCleared && (
+          <>
+            <main>
+              <Suspense fallback={null}>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/shop" element={<Shop />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/quality" element={<Quality />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </main>
+            <Footer />
+          </>
+        )}
       </div>
       <LiveSalesFeed />
     </>
