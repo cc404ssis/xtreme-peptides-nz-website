@@ -1,0 +1,1 @@
+import{r as s}from"./index-B3usXIbQ.js";function n(){const[r,c]=s.useState([]),[u,o]=s.useState(!0);return s.useEffect(()=>{let e=!1;return fetch("/api/products").then(t=>t.ok?t.json():[]).then(t=>{e||(c(t),o(!1))}).catch(()=>{e||o(!1)}),()=>{e=!0}},[]),{products:r,loading:u}}export{n as u};

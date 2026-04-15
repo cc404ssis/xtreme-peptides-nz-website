@@ -1,22 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ShoppingCart, ArrowLeft, FlaskConical, Thermometer, FileText, Package } from "lucide-react";
-import { products } from "@/data/products";
+import type { Product } from "@/data/products";
 import { useCart } from "@/lib/cart";
-import { useProductVisible } from "@/lib/useVisibleProducts";
 import ProductCard from "@/components/ProductCard";
 
 type Tab = "description" | "storage" | "documentation";
+type ProductWithRelated = Product & { related: Product[] };
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const product = products.find((p) => p.id === id);
+  const [data, setData] = useState<ProductWithRelated | null>(null);
+  const [loading, setLoading] = useState(true);
   const { addItem } = useCart();
   const [activeTab, setActiveTab] = useState<Tab>("description");
   const [added, setAdded] = useState(false);
-  const { visible, loading: visLoading } = useProductVisible(id);
 
-  if (!product || (!visLoading && !visible)) {
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/products/${id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: ProductWithRelated | null) => { if (!cancelled) { setData(d); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (loading) return null;
+
+  if (!data) {
     return (
       <div className="min-h-screen pt-32 sm:pt-40 text-center px-4">
         <p className="font-heading text-lg" style={{ color: "var(--xp-grey-text)" }}>Product not found.</p>
@@ -25,13 +38,14 @@ export default function ProductDetail() {
     );
   }
 
+  const product = data;
+  const related = data.related ?? [];
+
   const handleAdd = () => {
     addItem({ id: product.id, name: product.name, size: product.size, price: product.price, image: product.image });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
-
-  const related = products.filter((p) => p.id !== product.id).slice(0, 4);
 
   const tabs: { key: Tab; label: string; icon: typeof FlaskConical }[] = [
     { key: "description", label: "Description", icon: FlaskConical },
@@ -61,9 +75,7 @@ export default function ProductDetail() {
           {/* Info */}
           <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             <div className="xp-badge mb-4">Research Peptide</div>
-            <h1 className="!text-3xl sm:!text-4xl mb-1">
-              {product.name}
-            </h1>
+            <h1 className="!text-3xl sm:!text-4xl mb-1">{product.name}</h1>
             <span className="font-heading text-base" style={{ color: "var(--xp-grey-text)" }}>{product.size}</span>
             <p className="font-mono text-xs mt-1" style={{ color: "var(--xp-grey-text)" }}>{product.catalog}</p>
 
@@ -166,9 +178,7 @@ export default function ProductDetail() {
           <div className="mt-12 sm:mt-20">
             <div className="section-header">
               <div className="section-label">— More Products —</div>
-              <h2>
-                Related <span className="text-accent">Products</span>
-              </h2>
+              <h2>Related <span className="text-accent">Products</span></h2>
               <div className="section-rule" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">

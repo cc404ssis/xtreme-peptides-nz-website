@@ -4,6 +4,7 @@ import path from "path";
 import { Resend } from "resend";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { products as productCatalog } from "./website-src/src/data/products";
 
 dotenv.config();
 
@@ -238,6 +239,43 @@ async function startServer() {
       console.error("Status email error:", error);
       res.status(500).json({ error: "Failed to send status email." });
     }
+  });
+
+  // Product catalog — serves product data server-side so it never ships in client bundles
+  async function getHiddenSet(): Promise<Set<string>> {
+    try {
+      const supabase = getSupabase();
+      const { data, error } = await supabase.from('products').select('name').eq('is_active', false);
+      if (error || !data) return new Set();
+      return new Set((data as { name: string }[]).map((r) => r.name.toLowerCase()));
+    } catch {
+      return new Set();
+    }
+  }
+
+  app.get("/api/products", async (req, res) => {
+    res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
+    const hiddenSet = await getHiddenSet();
+    const visible = productCatalog.filter(
+      (p) => !hiddenSet.has(`${p.name} ${p.size}`.toLowerCase())
+    );
+    return res.json(visible);
+  });
+
+  app.get("/api/products/:id", async (req, res) => {
+    const product = productCatalog.find((p) => p.id === req.params.id);
+    if (!product) return res.status(404).json({ error: "Not found" });
+
+    const hiddenSet = await getHiddenSet();
+    if (hiddenSet.has(`${product.name} ${product.size}`.toLowerCase())) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    const related = productCatalog
+      .filter((p) => p.id !== product.id && !hiddenSet.has(`${p.name} ${p.size}`.toLowerCase()))
+      .slice(0, 4);
+
+    return res.json({ ...product, related });
   });
 
   // Hidden products (used by storefront to filter inactive products)
