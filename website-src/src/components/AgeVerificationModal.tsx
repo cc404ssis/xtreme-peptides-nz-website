@@ -93,7 +93,7 @@ export default function AgeVerificationModal() {
     const checkIdle = () => {
       try {
         const last = parseInt(sessionStorage.getItem(ACTIVITY_KEY) || "0", 10);
-        if (last && Date.now() - last >= IDLE_MS) {
+        if (!last || Date.now() - last >= IDLE_MS) {
           triggerReset();
           return true;
         }
