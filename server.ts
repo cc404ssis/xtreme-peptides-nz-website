@@ -173,8 +173,8 @@ async function startServer() {
           textContent = plainTextEmail([
             `BANK TRANSFER DETAILS`,
             ``,
-            `Account Name: xtpnz`,
-            `Account Number: 02-0144-0217479-002`,
+            `Account Name: ${process.env.BANK_ACCOUNT_NAME ?? ''}`,
+            `Account Number: ${process.env.BANK_ACCOUNT_NUMBER ?? ''}`,
             `Reference: ${orderNumber}`,
             ``,
             `Please make sure to include the reference when sending payment.`,
@@ -306,8 +306,8 @@ async function startServer() {
   app.get("/api/payment-details", (_req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     return res.json({
-      accountName:   process.env.BANK_ACCOUNT_NAME   || "Xtreme Peptides NZ",
-      accountNumber: process.env.BANK_ACCOUNT_NUMBER || "02-0144-0217479-002",
+      accountName:   process.env.BANK_ACCOUNT_NAME,
+      accountNumber: process.env.BANK_ACCOUNT_NUMBER,
     });
   });
 
