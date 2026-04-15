@@ -9,7 +9,7 @@ export interface CartItem {
   image: string;
 }
 
-const CART_KEY = "xtreme-cart";
+const CART_KEY = "xp-c";
 
 function getStoredCart(): CartItem[] {
   try {
